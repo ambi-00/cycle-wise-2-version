@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Building2, Plus, TrendingUp, TrendingDown, DollarSign, Activity, RefreshCw, Lock } from "lucide-react";
+import { Building2, Plus, TrendingUp, TrendingDown, DollarSign, Activity, RefreshCw, Lock, Lightbulb } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -224,7 +224,7 @@ export default function PropFirmAccounts() {
             transition={{ delay: 0.2 }}
             className="mt-8 rounded-2xl bg-gradient-to-br from-primary/10 to-secondary/10 border border-primary/20 p-6"
           >
-            <h3 className="font-semibold text-foreground mb-2">💡 So funktioniert's</h3>
+            <h3 className="font-semibold text-foreground mb-2 flex items-center gap-2"><Lightbulb className="h-5 w-5" /> So funktioniert's</h3>
             <div className="space-y-3 text-sm text-muted-foreground">
               <p>
                 <strong className="text-foreground">1. Choose Prop Firm</strong> - Find your prop firm in the list (FTMO, The5ers, E8, etc.)
@@ -238,8 +238,9 @@ export default function PropFirmAccounts() {
             </div>
 
             <div className="mt-4 p-3 rounded-lg bg-accent/10 border border-accent/20">
-              <p className="text-sm text-accent-foreground">
-                🔒 <strong>100% Secure:</strong> With the investor password we can only read - never trade or withdraw money.
+              <p className="text-sm text-accent-foreground flex items-start gap-2">
+                <Lock className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                <span><strong>100% Secure:</strong> With the investor password we can only read - never trade or withdraw money.</span>
               </p>
             </div>
           </motion.div>

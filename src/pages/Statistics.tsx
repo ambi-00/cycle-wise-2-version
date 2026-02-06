@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Legend, ResponsiveContainer, Tooltip } from 'recharts';
 import RRROptimizationAnalysis from '@/components/RRROptimizationAnalysis';
-import { Lightbulb, Plus, TrendingUp, Lock } from 'lucide-react';
+import { Lightbulb, Plus, TrendingUp, Lock, Moon, Sprout, Zap, AlertTriangle, BarChart3 } from 'lucide-react';
 import { useSubscription } from '@/hooks/use-subscription';
 
 interface Trade {
@@ -334,20 +334,77 @@ export default function Statistics() {
             <h1 className="text-3xl font-serif font-bold tracking-tight text-foreground mb-2">Trade Statistics</h1>
             <p className="text-sm text-muted-foreground">Analyze your trading performance and upcoming market events</p>
           </div>
-          
-          <div className="rounded-2xl bg-card p-12 shadow-card text-center">
-            <div className="mx-auto w-fit rounded-full bg-primary/10 p-6">
-              <TrendingUp className="h-16 w-16 text-primary" />
-            </div>
-            <h2 className="mt-6 font-serif text-2xl font-bold text-foreground">No Statistics Yet</h2>
-            <p className="mt-2 text-muted-foreground max-w-md mx-auto">
-              Start logging your trades to see detailed performance statistics, win rate analysis, and comprehensive trading insights.
-            </p>
-            <Button onClick={() => navigate('/new-trade')} className="mt-6 gap-2">
-              <Plus className="h-4 w-4" />
-              Log Your First Trade
-            </Button>
-          </div>
+
+          <Tabs defaultValue="calendar" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="calendar">Calendar</TabsTrigger>
+              <TabsTrigger value="metrics">Metrics</TabsTrigger>
+              <TabsTrigger value="analysis">Analysis</TabsTrigger>
+            </TabsList>
+
+            {/* Calendar Tab */}
+            <TabsContent value="calendar" className="space-y-6 relative">
+              <Card className="rounded-2xl shadow-soft border">
+                <CardHeader className="border-b pb-4">
+                  <CardTitle className="text-xl font-serif font-semibold">No data yet</CardTitle>
+                </CardHeader>
+                <CardContent className="p-12 text-center">
+                  <div className="mx-auto w-fit rounded-full bg-primary/10 p-6 mb-6">
+                    <TrendingUp className="h-12 w-12 text-primary" />
+                  </div>
+                  <p className="text-muted-foreground max-w-md mx-auto mb-6">
+                    Start logging your trades to see calendar analytics and performance patterns.
+                  </p>
+                  <Button onClick={() => navigate('/new-trade')} className="gap-2">
+                    <Plus className="h-4 w-4" />
+                    Log Your First Trade
+                  </Button>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Metrics Tab */}
+            <TabsContent value="metrics" className="space-y-6">
+              <Card className="rounded-2xl shadow-soft border">
+                <CardHeader className="border-b pb-4">
+                  <CardTitle className="text-xl font-serif font-semibold">No data yet</CardTitle>
+                </CardHeader>
+                <CardContent className="p-12 text-center">
+                  <div className="mx-auto w-fit rounded-full bg-primary/10 p-6 mb-6">
+                    <TrendingUp className="h-12 w-12 text-primary" />
+                  </div>
+                  <p className="text-muted-foreground max-w-md mx-auto mb-6">
+                    Start logging your trades to see equity curves, win rate development, and trading metrics.
+                  </p>
+                  <Button onClick={() => navigate('/new-trade')} className="gap-2">
+                    <Plus className="h-4 w-4" />
+                    Log Your First Trade
+                  </Button>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Analysis Tab */}
+            <TabsContent value="analysis" className="space-y-6">
+              <Card className="rounded-2xl shadow-soft border">
+                <CardHeader className="border-b pb-4">
+                  <CardTitle className="text-xl font-serif font-semibold">No data yet</CardTitle>
+                </CardHeader>
+                <CardContent className="p-12 text-center">
+                  <div className="mx-auto w-fit rounded-full bg-primary/10 p-6 mb-6">
+                    <TrendingUp className="h-12 w-12 text-primary" />
+                  </div>
+                  <p className="text-muted-foreground max-w-md mx-auto mb-6">
+                    Start logging your trades to see RRR analysis and cycle phase performance insights.
+                  </p>
+                  <Button onClick={() => navigate('/new-trade')} className="gap-2">
+                    <Plus className="h-4 w-4" />
+                    Log Your First Trade
+                  </Button>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
         </div>
       </main>
     );
@@ -1298,11 +1355,11 @@ export default function Statistics() {
               <CardContent className="p-6">
                 <div className="grid gap-6 md:grid-cols-2">
                   {[
-                    { phase: 'Menstrual', emoji: '🌑', color: 'from-gray-500/20 to-gray-600/20', borderColor: 'border-gray-500' },
-                    { phase: 'Follicular', emoji: '🌱', color: 'from-green-500/20 to-emerald-500/20', borderColor: 'border-green-500' },
-                    { phase: 'Ovulatory', emoji: '⚡', color: 'from-yellow-500/20 to-orange-500/20', borderColor: 'border-yellow-500' },
-                    { phase: 'Luteal', emoji: '🌙', color: 'from-purple-500/20 to-indigo-500/20', borderColor: 'border-purple-500' }
-                  ].map(({ phase, emoji, color, borderColor }) => {
+                    { phase: 'Menstrual', icon: 'moon', color: 'from-gray-500/20 to-gray-600/20', borderColor: 'border-gray-500' },
+                    { phase: 'Follicular', icon: 'sprout', color: 'from-green-500/20 to-emerald-500/20', borderColor: 'border-green-500' },
+                    { phase: 'Ovulatory', icon: 'zap', color: 'from-yellow-500/20 to-orange-500/20', borderColor: 'border-yellow-500' },
+                    { phase: 'Luteal', icon: 'moon', color: 'from-purple-500/20 to-indigo-500/20', borderColor: 'border-purple-500' }
+                  ].map(({ phase, icon, color, borderColor }) => {
                     const phaseTrades = allTrades.filter(t => t.cyclePhase === phase && t.status === 'closed');
                     const wins = phaseTrades.filter(t => t.result === 'win').length;
                     const losses = phaseTrades.filter(t => t.result === 'loss').length;
@@ -1315,7 +1372,9 @@ export default function Statistics() {
                       <div key={phase} className={`p-4 rounded-xl bg-gradient-to-br ${color} border-2 ${borderColor}`}>
                         <div className="flex items-center justify-between mb-3">
                           <div className="flex items-center gap-2">
-                            <span className="text-2xl">{emoji}</span>
+                          {icon === 'moon' && <Moon className="h-6 w-6" />}
+                          {icon === 'sprout' && <Sprout className="h-6 w-6" />}
+                          {icon === 'zap' && <Zap className="h-6 w-6" />}
                             <h3 className="font-semibold text-lg">{phase}</h3>
                           </div>
                           <Badge variant="outline">{phaseTrades.length} trades</Badge>
@@ -1496,7 +1555,7 @@ export default function Statistics() {
             <Card className="rounded-2xl shadow-soft border bg-gradient-to-br from-primary/10 to-secondary/10">
               <CardHeader className="border-b pb-4">
                 <CardTitle className="text-xl font-serif font-semibold flex items-center gap-2">
-                  <span>📊</span>
+                  <BarChart3 className="h-5 w-5" />
                   Personalized Recommendations
                 </CardTitle>
               </CardHeader>
@@ -1517,7 +1576,7 @@ export default function Statistics() {
                       <>
                         {bestPhase && bestPhase.trades > 5 && (
                           <div className="flex items-start gap-3 p-4 rounded-lg bg-accent/20 border border-accent/40">
-                            <span className="text-2xl">✨</span>
+                            <Zap className="h-6 w-6 text-accent-foreground flex-shrink-0 mt-0.5" />
                             <div>
                               <p className="font-semibold">Optimize Your Peak Phase</p>
                               <p className="text-sm text-muted-foreground mt-1">
@@ -1530,7 +1589,7 @@ export default function Statistics() {
 
                         {worstPhase && worstPhase.trades > 5 && worstPhase.winRate < 50 && (
                           <div className="flex items-start gap-3 p-4 rounded-lg bg-destructive/20 border border-destructive/40">
-                            <span className="text-2xl">⚠️</span>
+                            <AlertTriangle className="h-6 w-6 text-destructive flex-shrink-0 mt-0.5" />
                             <div>
                               <p className="font-semibold">Protect During Low Phase</p>
                               <p className="text-sm text-muted-foreground mt-1">
@@ -1542,7 +1601,7 @@ export default function Statistics() {
                         )}
 
                         <div className="flex items-start gap-3 p-4 rounded-lg bg-card border">
-                          <span className="text-2xl">💡</span>
+                          <Lightbulb className="h-6 w-6 text-muted-foreground flex-shrink-0 mt-0.5" />
                           <div>
                             <p className="font-semibold">Track & Adapt</p>
                             <p className="text-sm text-muted-foreground mt-1">
