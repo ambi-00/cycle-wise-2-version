@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { CyclePhaseIndicator } from "@/components/CyclePhaseIndicator";
 import { SafetyModeToggle } from "@/components/SafetyModeToggle";
 import { PerformanceCard } from "@/components/PerformanceCard";
+import { DailyHealthCheckIn } from "@/components/DailyHealthCheckIn";
 import { useWeeklyInsightGeneration } from "@/hooks/use-weekly-insights";
 import { useXPNotifications } from "@/hooks/use-xp-notifications";
 import MigrationDialog from "@/components/MigrationDialog";
@@ -70,11 +71,9 @@ export default function Dashboard() {
     return localStorage.getItem('cw_safety_mode_enabled') === 'true';
   });
   const [userName, setUserName] = useState<string>("");
-
-  // Save Safety Mode to localStorage for browser extension
-  useEffect(() => {
-    localStorage.setItem('cw_safety_mode_enabled', safetyModeEnabled.toString());
-  }, [safetyModeEnabled]);
+  const [showHealthCheckIn, setShowHealthCheckIn] = useState(false);
+  const [healthCheckData, setHealthCheckData] = useState<any>(null);
+  const [riskAdjustment, setRiskAdjustment] = useState<number>(0); // percentage to reduce risk by
 
   // Enable automatic weekly AI insights generation
   useWeeklyInsightGeneration();
@@ -90,6 +89,18 @@ export default function Dashboard() {
 
   // Enable XP notifications
   useXPNotifications();
+
+  // Check if daily health check-in needs to be shown
+  useEffect(() => {
+    const today = new Date().toISOString().split('T')[0];
+    const lastCheckinKey = `cw_daily_checkin_${today}`;
+    const hasCheckedInToday = localStorage.getItem(lastCheckinKey);
+    
+    if (!hasCheckedInToday) {
+      // Show health check-in only once per day
+      setShowHealthCheckIn(true);
+    }
+  }, []);
 
   useEffect(() => {
     // Load user name from Supabase
@@ -234,15 +245,32 @@ export default function Dashboard() {
     visible: { opacity: 1, y: 0 },
   };
 
+  const handleHealthCheckInComplete = (data: any) => {
+    setHealthCheckData(data);
+    setRiskAdjustment(data.riskReduction);
+    setShowHealthCheckIn(false);
+    
+    // Store in localStorage so it persists
+    localStorage.setItem(`cw_daily_checkin_${data.date}`, JSON.stringify(data));
+  };
+
   return (
     <main className="min-h-screen bg-background pb-24 pt-20 lg:pl-64 lg:pt-8">
       <MigrationDialog />
+      <DailyHealthCheckIn isOpen={showHealthCheckIn} onComplete={handleHealthCheckInComplete} />
       <DashboardTour />
       <motion.div variants={containerVariants} initial="hidden" animate="visible" className="mx-auto max-w-7xl p-4 lg:p-8">
         <motion.header variants={itemVariants} className="dashboard-header mb-8 flex items-center justify-between">
           <div>
             <h1 className="font-serif text-2xl font-bold text-foreground lg:text-3xl">Welcome back, {userName ? userName : "Trader"}</h1>
             <p className="mt-1 text-muted-foreground">Let's make today profitable and aligned with your body.</p>
+            {riskAdjustment > 0 && (
+              <div className="mt-2 flex items-center gap-2">
+                <span className="inline-block rounded-full bg-warning/20 px-3 py-1 text-xs font-semibold text-warning">
+                  ⚠️ Recommended Risk Reduction: -{riskAdjustment}%
+                </span>
+              </div>
+            )}
           </div>
           <div className="flex items-center gap-3">
             <button className="relative rounded-xl bg-card p-2.5 text-muted-foreground shadow-soft hover:text-foreground">
