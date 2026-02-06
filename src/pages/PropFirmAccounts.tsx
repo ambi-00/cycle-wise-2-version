@@ -1,9 +1,11 @@
 import { motion } from "framer-motion";
-import { Building2, Plus, TrendingUp, TrendingDown, DollarSign, Activity, RefreshCw } from "lucide-react";
+import { Building2, Plus, TrendingUp, TrendingDown, DollarSign, Activity, RefreshCw, Lock } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import PropFirmConnect from "@/components/PropFirmConnect";
-import { FeatureGuard } from "@/components/FeatureGuard";
+import { useSubscription } from "@/hooks/use-subscription";
 
 type PropFirmAccount = {
   id: string;
@@ -23,6 +25,8 @@ type PropFirmAccount = {
 };
 
 export default function PropFirmAccounts() {
+  const { hasFeature } = useSubscription();
+  const navigate = useNavigate();
   const [accounts, setAccounts] = useState<PropFirmAccount[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -89,14 +93,30 @@ export default function PropFirmAccounts() {
   });
 
   return (
-    <FeatureGuard feature="propfirm_integration" requiredTier="pro">
     <main className="pb-24 pt-20 lg:pl-64 lg:pt-8">
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="mx-auto max-w-6xl p-4 lg:p-8"
-      >
-        {/* Header */}
+      {!hasFeature('propfirm_integration') && (
+        <div className="fixed inset-y-0 right-0 left-0 lg:left-64 z-50 flex items-center justify-center p-6 bg-black/20 backdrop-blur-sm">
+          <Card className="max-w-md w-full">
+            <CardContent className="p-8 text-center">
+              <Lock className="h-12 w-12 text-primary mx-auto mb-4" />
+              <h3 className="font-semibold text-xl mb-2">Pro Feature</h3>
+              <p className="text-sm text-muted-foreground mb-6">
+                Upgrade to Pro for automatic prop firm account integration and real-time trading synchronization.
+              </p>
+              <Button onClick={() => navigate('/pricing')} size="lg" className="w-full">
+                Upgrade to Pro - €19.99/mo
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+      <div className={hasFeature('propfirm_integration') ? '' : 'blur-sm pointer-events-none'}>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="mx-auto max-w-6xl p-4 lg:p-8"
+        >
+          {/* Header */}
         <div className="mb-8 flex items-center justify-between">
           <div>
             <h1 className="font-serif text-2xl font-bold text-foreground lg:text-3xl flex items-center gap-3">
@@ -216,7 +236,7 @@ export default function PropFirmAccounts() {
                 <strong className="text-foreground">3. Automatic Synchronization</strong> - Your trades will be automatically imported and analyzed
               </p>
             </div>
-            
+
             <div className="mt-4 p-3 rounded-lg bg-accent/10 border border-accent/20">
               <p className="text-sm text-accent-foreground">
                 🔒 <strong>100% Secure:</strong> With the investor password we can only read - never trade or withdraw money.
@@ -225,7 +245,7 @@ export default function PropFirmAccounts() {
           </motion.div>
         )}
       </motion.div>
+      </div>
     </main>
-    </FeatureGuard>
   );
 }

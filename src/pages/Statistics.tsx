@@ -425,7 +425,24 @@ export default function Statistics() {
           </div>
 
           {/* Calendar Tab */}
-          <TabsContent value="calendar" className="space-y-6">
+          <TabsContent value="calendar" className="space-y-6 relative">
+            {!hasFeature('full_statistics') && (
+              <div className="fixed inset-y-0 right-0 left-0 lg:left-64 z-50 flex items-center justify-center p-6 bg-black/20 backdrop-blur-sm">
+                <Card className="max-w-md w-full">
+                  <CardContent className="p-8 text-center">
+                    <Lock className="h-12 w-12 text-primary mx-auto mb-4" />
+                    <h3 className="font-semibold text-xl mb-2">Premium Feature</h3>
+                    <p className="text-sm text-muted-foreground mb-6">
+                      Upgrade to Premium for detailed calendar analytics and performance insights.
+                    </p>
+                    <Button onClick={() => navigate('/pricing')} size="lg" className="w-full">
+                      Upgrade to Premium - €9.99/mo
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+            <div className={!hasFeature('full_statistics') ? 'blur-sm pointer-events-none' : ''}>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Calendar */}
           <Card className="rounded-2xl shadow-soft border lg:col-span-2">
@@ -954,6 +971,7 @@ export default function Statistics() {
         )}
 
         {/* Yearly Performance */}
+            </div>
         <Card className="rounded-2xl shadow-soft border mt-6">
           <CardHeader className="border-b pb-4">
             <div className="flex items-center justify-between">
