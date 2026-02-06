@@ -91,9 +91,9 @@ export default function Pricing() {
   };
 
   const handleManageSubscription = () => {
-    // TODO: Integrate Stripe Customer Portal
-    console.log('Manage subscription');
-    alert('Coming soon: Stripe Customer Portal\n\nFor now, you can manage your subscription in the Supabase dashboard.');
+    // Navigate to Stripe Customer Portal or Supabase dashboard
+    const stripeCustomerPortalUrl = 'https://billing.stripe.com/p/login/test';
+    window.location.href = stripeCustomerPortalUrl;
   };
 
   const currentTierName = subscription.tier.charAt(0).toUpperCase() + subscription.tier.slice(1);

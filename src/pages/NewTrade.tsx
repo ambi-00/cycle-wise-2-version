@@ -97,6 +97,11 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
 
   const [tfSmall, setTfSmall] = useState('5m');
   const [tfLarge, setTfLarge] = useState('1h');
+  
+  // AI Insights Data Collection
+  const [sessionTime, setSessionTime] = useState<'london' | 'newyork' | 'asia' | 'other'>('london'); // Session Timing Success
+  const [emotionalStateTrading, setEmotionalStateTrading] = useState<'anxious' | 'calm' | 'neutral'>('calm'); // Emotional State Impact
+  const [sessionStartTime, setSessionStartTime] = useState(new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })); // For winning streak tracking
 
   const [imageBeforeSmall, setImageBeforeSmall] = useState<string | null>(null);
   const [imageBeforeLarge, setImageBeforeLarge] = useState<string | null>(null);
@@ -519,6 +524,9 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
         status: (close ? 'closed' : result ? 'closed' : 'open') as 'open' | 'closed',
         cycle_day: cycleDay,
         cycle_phase: cyclePhase,
+        session_time: sessionTime,
+        emotional_state_trading: emotionalStateTrading,
+        session_start_time: sessionStartTime,
       };
 
       if (editingId) {
@@ -578,6 +586,9 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
         createdAt: Date.now(),
         cycleDay: cycleDay,
         cyclePhase: cyclePhase,
+        sessionTime: sessionTime,
+        emotionalStateTrading: emotionalStateTrading,
+        sessionStartTime: sessionStartTime,
       };
 
       if (editingId) {
@@ -669,6 +680,39 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
                         )}
 
                         {strategy && <div className="text-sm text-muted-foreground">Min confirmations required: <strong>{minRequired}</strong></div>}
+
+                        {/* Session Timing - For AI Insights */}
+                        <div>
+                          <label className="text-xs text-muted-foreground mb-1.5 block">Trading Session</label>
+                          <Select onValueChange={(v) => setSessionTime(v as any)}>
+                            <SelectTrigger>
+                              <SelectValue placeholder={sessionTime} />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="london">🇬🇧 London (08:00-17:00 UTC)</SelectItem>
+                              <SelectItem value="newyork">🇺🇸 New York (13:00-22:00 UTC)</SelectItem>
+                              <SelectItem value="asia">🌏 Asia (23:00-08:00 UTC)</SelectItem>
+                              <SelectItem value="other">🔄 Other/Overlap</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <p className="text-xs text-muted-foreground mt-1">Helps AI track session timing patterns</p>
+                        </div>
+
+                        {/* Emotional State - For AI Insights */}
+                        <div>
+                          <label className="text-xs text-muted-foreground mb-1.5 block">Your Emotional State</label>
+                          <Select onValueChange={(v) => setEmotionalStateTrading(v as any)}>
+                            <SelectTrigger>
+                              <SelectValue placeholder={emotionalStateTrading} />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="anxious">😰 Anxious - High stress, fear-based</SelectItem>
+                              <SelectItem value="calm">😌 Calm - Focused, confident</SelectItem>
+                              <SelectItem value="neutral">😐 Neutral - Detached, mechanical</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <p className="text-xs text-muted-foreground mt-1">AI tracks emotional impact on trades</p>
+                        </div>
                       </div>
                     </section>
 

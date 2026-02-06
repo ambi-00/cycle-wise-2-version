@@ -655,25 +655,9 @@ export default function Statistics() {
               </CardContent>
             </Card>
 
-            {/* Cycle Phase Analysis */}
+            {/* Cycle Phase Analysis - Always accessible for free users */}
             <div className="relative">
-              {!hasFeature('full_statistics') && (
-                <div className="fixed inset-y-0 right-0 left-0 lg:left-64 z-50 flex items-center justify-center p-6 bg-black/20 backdrop-blur-sm">
-                  <Card className="max-w-md w-full">
-                    <CardContent className="p-8 text-center">
-                      <Lock className="h-12 w-12 text-primary mx-auto mb-4" />
-                      <h3 className="font-semibold text-xl mb-2">Premium Feature</h3>
-                      <p className="text-sm text-muted-foreground mb-6">
-                        Upgrade to Premium for cycle phase analysis.
-                      </p>
-                      <Button onClick={() => navigate('/#pricing')} size="lg" className="w-full">
-                        Upgrade to Premium - €9.99/mo
-                      </Button>
-                    </CardContent>
-                  </Card>
-                </div>
-              )}
-              <Card className={`rounded-2xl shadow-soft border bg-gradient-to-br from-primary/5 to-primary/10 ${!hasFeature('full_statistics') ? 'blur-sm pointer-events-none' : ''}`}>
+              <Card className="rounded-2xl shadow-soft border bg-gradient-to-br from-primary/5 to-primary/10">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-lg font-serif font-semibold flex items-center gap-2">
                     Cycle Phase Analysis

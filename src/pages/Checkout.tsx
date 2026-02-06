@@ -83,18 +83,31 @@ export default function Checkout() {
   const handlePayment = async () => {
     setIsProcessing(true);
     
-    // TODO: Integrate with Stripe or other payment provider
-    // For now, show a message
-    setTimeout(() => {
+    try {
+      // Integrate with Stripe Checkout
+      const response = await fetch('/api/stripe/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tier: tier,
+          paymentMethod: selectedPayment,
+          userId: subscription.userId
+        })
+      });
+      
+      const { url } = await response.json();
+      
+      // Redirect to Stripe Checkout
+      if (url) {
+        window.location.href = url;
+      } else {
+        throw new Error('Failed to create checkout session');
+      }
+    } catch (error) {
+      console.error('Payment error:', error);
+      alert('Payment processing failed. Please try again or contact support.');
       setIsProcessing(false);
-      alert(
-        `Stripe Integration Coming Soon!\n\n` +
-        `Selected Plan: ${plan.name}\n` +
-        `Price: ${plan.price}/month\n` +
-        `Payment Method: ${paymentMethods.find(m => m.id === selectedPayment)?.name}\n\n` +
-        `For now, you can manually update your subscription in the Supabase dashboard.`
-      );
-    }, 1500);
+    }
   };
 
   return (
