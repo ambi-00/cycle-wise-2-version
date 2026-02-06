@@ -23,6 +23,24 @@ interface DailyHealthCheckInProps {
   isOpen: boolean;
 }
 
+const RatingButtons = ({ value, onChange, max = 10 }: { value: number; onChange: (v: number) => void; max?: number }) => (
+  <div className="flex gap-2 flex-wrap justify-center">
+    {Array.from({ length: max }, (_, i) => i + 1).map((num) => (
+      <button
+        key={num}
+        onClick={() => onChange(num)}
+        className={`h-10 w-10 rounded-full font-semibold transition-all ${
+          value === num
+            ? 'bg-gradient-to-r from-primary to-primary/70 text-primary-foreground shadow-lg scale-110'
+            : 'bg-muted hover:bg-muted/80 text-muted-foreground'
+        }`}
+      >
+        {num}
+      </button>
+    ))}
+  </div>
+);
+
 export function DailyHealthCheckIn({ onComplete, isOpen }: DailyHealthCheckInProps) {
   const [step, setStep] = useState(1); // 1-5 for questions, 6 for recommendations
   const [nutrition, setNutrition] = useState<'poor' | 'fair' | 'good' | 'excellent'>('good');
@@ -148,215 +166,173 @@ export function DailyHealthCheckIn({ onComplete, isOpen }: DailyHealthCheckInPro
 
   const { recommendations, riskReduction } = generateRecommendations();
 
+  // Progress bar
+  const progress = (step / 6) * 100;
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <CardHeader className="bg-gradient-to-r from-primary/10 to-primary/5 border-b">
-          <div className="flex items-center gap-3">
+        <CardHeader className="bg-gradient-to-r from-primary/15 to-primary/5 border-b sticky top-0">
+          <div className="flex items-center gap-3 mb-3">
             <Heart className="w-6 h-6 text-destructive" />
-            <div>
-              <CardTitle>Daily Trading Health Check-In 💚</CardTitle>
+            <div className="flex-1">
+              <CardTitle>Daily Trading Health Check-In</CardTitle>
               <CardDescription>Let's assess your readiness to trade today</CardDescription>
             </div>
           </div>
+          {/* Progress bar */}
+          <div className="w-full bg-muted rounded-full h-1.5">
+            <div
+              className="bg-gradient-to-r from-primary to-primary/70 h-1.5 rounded-full transition-all"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
         </CardHeader>
 
-        <CardContent className="pt-6 pb-24">
+        <CardContent className="pt-8 pb-24">
           {step === 1 && (
-            <div className="space-y-6">
+            <div className="space-y-8">
               <div>
-                <label className="text-sm font-semibold mb-3 block">🍎 Nutrition - Did you eat enough today?</label>
-                <div className="grid grid-cols-4 gap-2">
+                <label className="text-lg font-semibold mb-6 block">🍎 Nutrition - Did you eat enough today?</label>
+                <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
                   {(['poor', 'fair', 'good', 'excellent'] as const).map((opt) => (
                     <button
                       key={opt}
                       onClick={() => setNutrition(opt)}
-                      className={`py-2 px-3 rounded-lg text-sm font-medium transition ${
+                      className={`py-3 px-4 rounded-xl font-medium transition-all ${
                         nutrition === opt
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-muted hover:bg-muted/80'
+                          ? 'bg-gradient-to-r from-primary to-primary/70 text-primary-foreground shadow-lg'
+                          : 'bg-muted hover:bg-muted/80 text-foreground'
                       }`}
                     >
-                      {opt === 'poor' && '😟 Poor'}
-                      {opt === 'fair' && '😐 Fair'}
-                      {opt === 'good' && '😊 Good'}
-                      {opt === 'excellent' && '😄 Excellent'}
+                      {opt === 'poor' && '😟\nPoor'}
+                      {opt === 'fair' && '😐\nFair'}
+                      {opt === 'good' && '😊\nGood'}
+                      {opt === 'excellent' && '😄\nExcellent'}
                     </button>
                   ))}
                 </div>
               </div>
 
-              <Button onClick={() => setStep(2)} className="w-full">Next →</Button>
+              <Button onClick={() => setStep(2)} className="w-full h-11">Next →</Button>
             </div>
           )}
 
           {step === 2 && (
-            <div className="space-y-6">
+            <div className="space-y-8">
               <div>
-                <label className="text-sm font-semibold mb-3 block flex items-center gap-2">
-                  <Brain className="w-4 h-4" />
-                  How's your mood right now? (1 = terrible, 10 = fantastic)
-                </label>
-                <div className="flex items-center gap-4">
-                  <input
-                    type="range"
-                    min="1"
-                    max="10"
-                    value={mood}
-                    onChange={(e) => setMood(Number(e.target.value))}
-                    className="flex-1"
-                  />
-                  <span className="text-2xl font-bold min-w-[3rem] text-center">{mood}</span>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-lg font-semibold flex items-center gap-2">
+                    <Brain className="w-5 h-5" />
+                    How's your mood?
+                  </label>
+                  <span className="text-3xl font-bold text-primary">{mood}</span>
                 </div>
-                <div className="mt-2 text-xs text-muted-foreground">
-                  {mood <= 3 && '😞 Very low'}
-                  {mood > 3 && mood <= 5 && '😕 Below average'}
-                  {mood > 5 && mood <= 7 && '😐 Neutral'}
-                  {mood > 7 && mood <= 8 && '😊 Good'}
-                  {mood > 8 && '🤩 Excellent!'}
-                </div>
+                <p className="text-sm text-muted-foreground mb-6">1 = terrible, 10 = fantastic</p>
+                <RatingButtons value={mood} onChange={setMood} />
               </div>
 
               <div className="flex gap-2">
-                <Button onClick={() => setStep(1)} variant="outline" className="flex-1">← Back</Button>
-                <Button onClick={() => setStep(3)} className="flex-1">Next →</Button>
+                <Button onClick={() => setStep(1)} variant="outline" className="flex-1 h-11">← Back</Button>
+                <Button onClick={() => setStep(3)} className="flex-1 h-11">Next →</Button>
               </div>
             </div>
           )}
 
           {step === 3 && (
-            <div className="space-y-6">
+            <div className="space-y-8">
               <div>
-                <label className="text-sm font-semibold mb-3 block flex items-center gap-2">
-                  <Zap className="w-4 h-4" />
-                  How's your concentration? (1 = can't focus, 10 = laser-focused)
-                </label>
-                <div className="flex items-center gap-4">
-                  <input
-                    type="range"
-                    min="1"
-                    max="10"
-                    value={concentration}
-                    onChange={(e) => setConcentration(Number(e.target.value))}
-                    className="flex-1"
-                  />
-                  <span className="text-2xl font-bold min-w-[3rem] text-center">{concentration}</span>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-lg font-semibold flex items-center gap-2">
+                    <Zap className="w-5 h-5" />
+                    How's your concentration?
+                  </label>
+                  <span className="text-3xl font-bold text-primary">{concentration}</span>
                 </div>
-                <div className="mt-2 text-xs text-muted-foreground">
-                  {concentration <= 3 && '🌫️ Very foggy'}
-                  {concentration > 3 && concentration <= 5 && '😵 Scattered'}
-                  {concentration > 5 && concentration <= 7 && '📍 Decent'}
-                  {concentration > 7 && concentration <= 8 && '🎯 Focused'}
-                  {concentration > 8 && '🔥 Locked in!'}
-                </div>
+                <p className="text-sm text-muted-foreground mb-6">1 = can't focus, 10 = laser-focused</p>
+                <RatingButtons value={concentration} onChange={setConcentration} />
               </div>
 
               <div className="flex gap-2">
-                <Button onClick={() => setStep(2)} variant="outline" className="flex-1">← Back</Button>
-                <Button onClick={() => setStep(4)} className="flex-1">Next →</Button>
+                <Button onClick={() => setStep(2)} variant="outline" className="flex-1 h-11">← Back</Button>
+                <Button onClick={() => setStep(4)} className="flex-1 h-11">Next →</Button>
               </div>
             </div>
           )}
 
           {step === 4 && (
-            <div className="space-y-6">
+            <div className="space-y-8">
               <div>
-                <label className="text-sm font-semibold mb-3 block">😴 How was your sleep last night?</label>
-                <div className="flex items-center gap-4">
-                  <input
-                    type="range"
-                    min="1"
-                    max="10"
-                    value={sleep}
-                    onChange={(e) => setSleep(Number(e.target.value))}
-                    className="flex-1"
-                  />
-                  <span className="text-2xl font-bold min-w-[3rem] text-center">{sleep}</span>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-lg font-semibold">😴 How was your sleep last night?</label>
+                  <span className="text-3xl font-bold text-primary">{sleep}</span>
                 </div>
-                <div className="mt-2 text-xs text-muted-foreground">
-                  {sleep <= 3 && '😫 Terrible'}
-                  {sleep > 3 && sleep <= 5 && '😴 Poor'}
-                  {sleep > 5 && sleep <= 7 && '😐 Average'}
-                  {sleep > 7 && sleep <= 8 && '😊 Good'}
-                  {sleep > 8 && '😍 Excellent!'}
-                </div>
+                <p className="text-sm text-muted-foreground mb-6">1 = terrible, 10 = excellent</p>
+                <RatingButtons value={sleep} onChange={setSleep} />
               </div>
 
               <div className="flex gap-2">
-                <Button onClick={() => setStep(3)} variant="outline" className="flex-1">← Back</Button>
-                <Button onClick={() => setStep(5)} className="flex-1">Next →</Button>
+                <Button onClick={() => setStep(3)} variant="outline" className="flex-1 h-11">← Back</Button>
+                <Button onClick={() => setStep(5)} className="flex-1 h-11">Next →</Button>
               </div>
             </div>
           )}
 
           {step === 5 && (
-            <div className="space-y-6">
+            <div className="space-y-8">
               <div>
-                <label className="text-sm font-semibold mb-3 block">😰 Current stress level? (1 = calm, 10 = very stressed)</label>
-                <div className="flex items-center gap-4">
-                  <input
-                    type="range"
-                    min="1"
-                    max="10"
-                    value={stress}
-                    onChange={(e) => setStress(Number(e.target.value))}
-                    className="flex-1"
-                  />
-                  <span className="text-2xl font-bold min-w-[3rem] text-center">{stress}</span>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-lg font-semibold">😰 Current stress level?</label>
+                  <span className="text-3xl font-bold text-primary">{stress}</span>
                 </div>
-                <div className="mt-2 text-xs text-muted-foreground">
-                  {stress <= 2 && '😌 Very calm'}
-                  {stress > 2 && stress <= 4 && '😊 Relaxed'}
-                  {stress > 4 && stress <= 6 && '😐 Moderate'}
-                  {stress > 6 && stress <= 8 && '😟 Stressed'}
-                  {stress > 8 && '😰 Very stressed'}
-                </div>
+                <p className="text-sm text-muted-foreground mb-6">1 = calm, 10 = very stressed</p>
+                <RatingButtons value={stress} onChange={setStress} />
               </div>
 
-              <div className="space-y-3">
-                <label className="text-sm font-semibold block">💪 Have you exercised today?</label>
-                <div className="flex items-center gap-2">
+              <div className="space-y-4">
+                <label className="text-lg font-semibold block">💪 Have you exercised today?</label>
+                <div className="flex items-center gap-3 p-4 rounded-xl bg-muted/50">
                   <Checkbox
                     checked={hasExercised}
                     onCheckedChange={(checked) => setHasExercised(!!checked)}
                     id="exercise"
+                    className="w-5 h-5"
                   />
-                  <label htmlFor="exercise" className="text-sm">Yes, I exercised or moved around</label>
+                  <label htmlFor="exercise" className="text-base cursor-pointer">Yes, I exercised or moved around</label>
                 </div>
               </div>
 
               <div className="flex gap-2">
-                <Button onClick={() => setStep(4)} variant="outline" className="flex-1">← Back</Button>
-                <Button onClick={() => setStep(6)} className="flex-1">See Recommendations →</Button>
+                <Button onClick={() => setStep(4)} variant="outline" className="flex-1 h-11">← Back</Button>
+                <Button onClick={() => setStep(6)} className="flex-1 h-11">See Recommendations →</Button>
               </div>
             </div>
           )}
 
           {step === 6 && (
             <div className="space-y-6">
-              <div className="bg-primary/5 rounded-lg p-4 border border-primary/20">
+              <div className="bg-primary/5 rounded-2xl p-6 border border-primary/20">
                 <div className="flex items-start gap-3 mb-4">
                   <Heart className="w-6 h-6 text-destructive mt-1 flex-shrink-0" />
                   <div>
-                    <h3 className="font-semibold text-lg">Your Trading Readiness Assessment</h3>
-                    <p className="text-sm text-muted-foreground">Based on your health check-in</p>
+                    <h3 className="font-semibold text-xl">Your Trading Readiness</h3>
+                    <p className="text-sm text-muted-foreground">Based on your health assessment</p>
                   </div>
                 </div>
 
                 {/* Risk Adjustment Badge */}
-                <div className="mb-4">
+                <div className="mb-6">
                   {riskReduction > 0 ? (
-                    <div className="flex items-center gap-2 mb-2">
-                      <Badge variant="destructive" className="gap-1">
-                        <TrendingDown className="w-3 h-3" />
-                        Risk Reduction: {riskReduction}%
+                    <div className="flex items-center gap-2">
+                      <Badge variant="destructive" className="gap-2 px-4 py-2 text-sm">
+                        <TrendingDown className="w-4 h-4" />
+                        Risk Reduction: -{riskReduction}%
                       </Badge>
-                      <span className="text-sm text-muted-foreground">Recommended</span>
                     </div>
                   ) : (
-                    <div className="flex items-center gap-2 mb-2">
-                      <Badge variant="default" className="gap-1 bg-green-600">
-                        <CheckCircle2 className="w-3 h-3" />
+                    <div className="flex items-center gap-2">
+                      <Badge variant="default" className="gap-2 px-4 py-2 text-sm bg-green-600 hover:bg-green-700">
+                        <CheckCircle2 className="w-4 h-4" />
                         Green Light - Trade Normally
                       </Badge>
                     </div>
@@ -364,35 +340,39 @@ export function DailyHealthCheckIn({ onComplete, isOpen }: DailyHealthCheckInPro
                 </div>
 
                 {/* Recommendations */}
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {recommendations.map((rec, idx) => (
-                    <div key={idx} className="flex items-start gap-2 text-sm">
-                      <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0 text-warning" />
-                      <span>{rec}</span>
+                    <div key={idx} className="flex items-start gap-3 text-sm bg-background/50 p-3 rounded-lg">
+                      <AlertCircle className="w-5 h-5 mt-0.5 flex-shrink-0 text-warning" />
+                      <span className="leading-relaxed">{rec}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* Summary Stats */}
-              <div className="grid grid-cols-3 gap-3">
-                <div className="bg-muted rounded-lg p-3 text-center">
-                  <div className="text-xs text-muted-foreground">Nutrition</div>
+              {/* Summary Grid */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="bg-muted/50 rounded-xl p-4 text-center">
+                  <div className="text-xs text-muted-foreground mb-1">Nutrition</div>
                   <div className="text-sm font-semibold capitalize">{nutrition}</div>
                 </div>
-                <div className="bg-muted rounded-lg p-3 text-center">
-                  <div className="text-xs text-muted-foreground">Avg Score</div>
-                  <div className="text-sm font-semibold">{Math.round((mood + concentration + sleep) / 3)}/10</div>
+                <div className="bg-muted/50 rounded-xl p-4 text-center">
+                  <div className="text-xs text-muted-foreground mb-1">Mood</div>
+                  <div className="text-sm font-semibold">{mood}/10</div>
                 </div>
-                <div className="bg-muted rounded-lg p-3 text-center">
-                  <div className="text-xs text-muted-foreground">Stress Level</div>
-                  <div className="text-sm font-semibold">{stress}/10</div>
+                <div className="bg-muted/50 rounded-xl p-4 text-center">
+                  <div className="text-xs text-muted-foreground mb-1">Focus</div>
+                  <div className="text-sm font-semibold">{concentration}/10</div>
+                </div>
+                <div className="bg-muted/50 rounded-xl p-4 text-center">
+                  <div className="text-xs text-muted-foreground mb-1">Sleep</div>
+                  <div className="text-sm font-semibold">{sleep}/10</div>
                 </div>
               </div>
 
               <div className="flex gap-2">
-                <Button onClick={() => setStep(5)} variant="outline" className="flex-1">← Edit</Button>
-                <Button onClick={handleComplete} className="flex-1 bg-gradient-to-r from-primary to-primary/70">
+                <Button onClick={() => setStep(5)} variant="outline" className="flex-1 h-11">← Edit</Button>
+                <Button onClick={handleComplete} className="flex-1 h-11 bg-gradient-to-r from-primary to-primary/70">
                   Start Trading ✅
                 </Button>
               </div>

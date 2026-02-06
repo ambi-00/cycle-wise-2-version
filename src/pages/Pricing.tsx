@@ -87,7 +87,16 @@ export default function Pricing() {
   const navigate = useNavigate();
 
   const handleUpgrade = (tierName: string) => {
-    navigate(`/checkout?tier=${tierName.toLowerCase()}`);
+    // Stripe Payment Links
+    const paymentLinks = {
+      premium: 'https://buy.stripe.com/test_28E8wO7ZpfZNblVdiu0x203',
+      pro: 'https://buy.stripe.com/test_14A8wOa7x5l9du36U60x202',
+    };
+    
+    const link = paymentLinks[tierName.toLowerCase() as keyof typeof paymentLinks];
+    if (link) {
+      window.location.href = link;
+    }
   };
 
   const handleManageSubscription = () => {

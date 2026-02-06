@@ -114,13 +114,13 @@ export default function Strategies() {
                 <div>
                   <h3 className="text-xl font-semibold text-foreground">{strategy.name}</h3>
                   <div className="mt-2 flex flex-wrap gap-1.5">
-                    {strategy.markets.map(market => (
-                      <span key={market} className="rounded-lg bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground">
+                    {strategy.markets.map((market, idx) => (
+                      <span key={`market-${strategy.id}-${idx}`} className="rounded-lg bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground">
                         {market}
                       </span>
                     ))}
-                    {strategy.timeframes.map(tf => (
-                      <span key={tf} className="rounded-lg bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                    {strategy.timeframes.map((tf, idx) => (
+                      <span key={`tf-${strategy.id}-${idx}`} className="rounded-lg bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
                         {tf}
                       </span>
                     ))}
@@ -152,7 +152,7 @@ export default function Strategies() {
                 <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Confirmation Checklist</p>
                 <div className="mt-3 space-y-2">
                   {strategy.confirmations.slice(0, 3).map((conf, i) => (
-                    <div key={i} className="flex items-center gap-2 text-sm text-foreground">
+                    <div key={`conf-${strategy.id}-${i}`} className="flex items-center gap-2 text-sm text-foreground">
                       <CheckCircle className="h-4 w-4 text-accent-foreground" />
                       {conf}
                     </div>

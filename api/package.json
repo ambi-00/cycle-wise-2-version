@@ -1,0 +1,9 @@
+{
+  "name": "cyclewise-api",
+  "version": "1.0.0",
+  "dependencies": {
+    "@vercel/node": "^3.0.0",
+    "@supabase/supabase-js": "^2.91.1",
+    "stripe": "^17.6.0"
+  }
+}

@@ -50,8 +50,7 @@ CREATE TRIGGER update_subscriptions_updated_at
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
--- Insert default free tier for existing users (optional)
--- Uncomment if you want to give all existing users a free subscription record
--- INSERT INTO public.subscriptions (user_id, tier, status)
--- SELECT id, 'free', 'active' FROM auth.users
--- ON CONFLICT (user_id) DO NOTHING;
+-- Insert default free tier for existing users
+INSERT INTO public.subscriptions (user_id, tier, status)
+SELECT id, 'free', 'active' FROM auth.users
+ON CONFLICT (user_id) DO NOTHING;

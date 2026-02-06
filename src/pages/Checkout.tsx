@@ -91,7 +91,6 @@ export default function Checkout() {
         body: JSON.stringify({
           tier: tier,
           paymentMethod: selectedPayment,
-          userId: subscription.userId
         })
       });
       

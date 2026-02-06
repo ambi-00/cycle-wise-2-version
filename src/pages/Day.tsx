@@ -553,7 +553,6 @@ export default function Day() {
                     </div>
                   </div>
                 </div>
-                </div>
 
                 {/* Selbstvertrauen */}
                 <div className="space-y-2">
