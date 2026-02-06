@@ -325,91 +325,6 @@ export default function Statistics() {
     weeks.push(days.slice(i, i + 7));
   }
 
-  // Empty state when no trades at all
-  if (allTrades.length === 0) {
-    return (
-      <main className="pb-24 pt-20 lg:pl-64 lg:pt-8">
-        <div className="mx-auto max-w-7xl p-4 lg:p-8">
-          <div className="mb-8">
-            <h1 className="text-3xl font-serif font-bold tracking-tight text-foreground mb-2">Trade Statistics</h1>
-            <p className="text-sm text-muted-foreground">Analyze your trading performance and upcoming market events</p>
-          </div>
-
-          <Tabs defaultValue="calendar" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="calendar">Calendar</TabsTrigger>
-              <TabsTrigger value="metrics">Metrics</TabsTrigger>
-              <TabsTrigger value="analysis">Analysis</TabsTrigger>
-            </TabsList>
-
-            {/* Calendar Tab */}
-            <TabsContent value="calendar" className="space-y-6 relative">
-              <Card className="rounded-2xl shadow-soft border">
-                <CardHeader className="border-b pb-4">
-                  <CardTitle className="text-xl font-serif font-semibold">No data yet</CardTitle>
-                </CardHeader>
-                <CardContent className="p-12 text-center">
-                  <div className="mx-auto w-fit rounded-full bg-primary/10 p-6 mb-6">
-                    <TrendingUp className="h-12 w-12 text-primary" />
-                  </div>
-                  <p className="text-muted-foreground max-w-md mx-auto mb-6">
-                    Start logging your trades to see calendar analytics and performance patterns.
-                  </p>
-                  <Button onClick={() => navigate('/new-trade')} className="gap-2">
-                    <Plus className="h-4 w-4" />
-                    Log Your First Trade
-                  </Button>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* Metrics Tab */}
-            <TabsContent value="metrics" className="space-y-6">
-              <Card className="rounded-2xl shadow-soft border">
-                <CardHeader className="border-b pb-4">
-                  <CardTitle className="text-xl font-serif font-semibold">No data yet</CardTitle>
-                </CardHeader>
-                <CardContent className="p-12 text-center">
-                  <div className="mx-auto w-fit rounded-full bg-primary/10 p-6 mb-6">
-                    <TrendingUp className="h-12 w-12 text-primary" />
-                  </div>
-                  <p className="text-muted-foreground max-w-md mx-auto mb-6">
-                    Start logging your trades to see equity curves, win rate development, and trading metrics.
-                  </p>
-                  <Button onClick={() => navigate('/new-trade')} className="gap-2">
-                    <Plus className="h-4 w-4" />
-                    Log Your First Trade
-                  </Button>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* Analysis Tab */}
-            <TabsContent value="analysis" className="space-y-6">
-              <Card className="rounded-2xl shadow-soft border">
-                <CardHeader className="border-b pb-4">
-                  <CardTitle className="text-xl font-serif font-semibold">No data yet</CardTitle>
-                </CardHeader>
-                <CardContent className="p-12 text-center">
-                  <div className="mx-auto w-fit rounded-full bg-primary/10 p-6 mb-6">
-                    <TrendingUp className="h-12 w-12 text-primary" />
-                  </div>
-                  <p className="text-muted-foreground max-w-md mx-auto mb-6">
-                    Start logging your trades to see RRR analysis and cycle phase performance insights.
-                  </p>
-                  <Button onClick={() => navigate('/new-trade')} className="gap-2">
-                    <Plus className="h-4 w-4" />
-                    Log Your First Trade
-                  </Button>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        </div>
-      </main>
-    );
-  }
-
   return (
     <main className="pb-24 pt-20 lg:pl-64 lg:pt-8">
       <div className="mx-auto max-w-7xl p-4 lg:p-8">
@@ -418,58 +333,60 @@ export default function Statistics() {
           <p className="text-sm text-muted-foreground">Analyze your trading performance and upcoming market events</p>
         </div>
 
-        {/* Monthly Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <Card className="rounded-2xl shadow-soft border">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Total Trades</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-foreground">{monthStats.totalTrades}</div>
-              <p className="text-xs text-muted-foreground mt-1">
-                {monthStats.wins}W / {monthStats.losses}L
-              </p>
-            </CardContent>
-          </Card>
+        {/* Monthly Stats Cards - Show only if there's data */}
+        {allTrades.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <Card className="rounded-2xl shadow-soft border">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Total Trades</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-foreground">{monthStats.totalTrades}</div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {monthStats.wins}W / {monthStats.losses}L
+                </p>
+              </CardContent>
+            </Card>
 
-          <Card className="rounded-2xl shadow-soft border">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Win Rate</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-foreground">{monthStats.winRate}%</div>
-              <p className="text-xs text-muted-foreground mt-1">
-                {monthStats.wins} wins / {monthStats.wins + monthStats.losses} total
-              </p>
-            </CardContent>
-          </Card>
+            <Card className="rounded-2xl shadow-soft border">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Win Rate</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-foreground">{monthStats.winRate}%</div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {monthStats.wins} wins / {monthStats.wins + monthStats.losses} total
+                </p>
+              </CardContent>
+            </Card>
 
-          <Card className="rounded-2xl shadow-soft border">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Monthly P&L</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className={`text-2xl font-bold ${monthStats.totalPnl >= 0 ? 'text-accent-foreground' : 'text-destructive'}`}>
-                {monthStats.percentage}{monthStats.totalPnl.toFixed(2)} $
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                {monthStats.percentage}{((monthStats.totalPnl / 10000) * 100).toFixed(2)}%
-              </p>
-            </CardContent>
-          </Card>
+            <Card className="rounded-2xl shadow-soft border">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Monthly P&L</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className={`text-2xl font-bold ${monthStats.totalPnl >= 0 ? 'text-accent-foreground' : 'text-destructive'}`}>
+                  {monthStats.percentage}{monthStats.totalPnl.toFixed(2)} $
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {monthStats.percentage}{((monthStats.totalPnl / 10000) * 100).toFixed(2)}%
+                </p>
+              </CardContent>
+            </Card>
 
-          <Card className="rounded-2xl shadow-soft border">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Avg Trade</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className={`text-2xl font-bold ${monthStats.totalPnl >= 0 ? 'text-accent-foreground' : 'text-destructive'}`}>
-                {monthStats.totalTrades > 0 ? (monthStats.totalPnl / monthStats.totalTrades).toFixed(2) : '0.00'} $
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">Per trade average</p>
-            </CardContent>
-          </Card>
-        </div>
+            <Card className="rounded-2xl shadow-soft border">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Avg Trade</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className={`text-2xl font-bold ${monthStats.totalPnl >= 0 ? 'text-accent-foreground' : 'text-destructive'}`}>
+                  {monthStats.totalTrades > 0 ? (monthStats.totalPnl / monthStats.totalTrades).toFixed(2) : '0.00'} $
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">Per trade average</p>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         {/* Tabs for different views */}
         <Tabs defaultValue="calendar" className="space-y-6">
