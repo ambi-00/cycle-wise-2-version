@@ -6,52 +6,64 @@ import { Link } from "react-router-dom";
 const plans = [
   {
     name: "Free",
-    price: "$0",
+    price: "€0",
     period: "forever",
     description: "Perfect for getting started",
+    explanation: "Start tracking your trades and build the foundation. Perfect for understanding the basics of your trading patterns.",
     features: [
-      "Up to 50 trades/month",
+      "50 trades/month",
       "Basic cycle tracking",
-      "Trade journal",
-      "3 strategies",
+      "Trade journal with basic filters",
+      "Day view & mood tracking",
+      "2 screenshots (1 before + 1 after)",
+      "1 strategy",
+      "Local storage only",
       "Community access",
     ],
     cta: "Get Started",
     popular: false,
   },
   {
-    name: "Pro",
-    price: "$19",
+    name: "Premium",
+    price: "€9.99",
     period: "per month",
     description: "For serious traders",
+    explanation: "Discover what truly impacts your trading. Recognize how your menstrual cycle, emotions, and external factors influence your decisions.",
     features: [
-      "Unlimited trades",
-      "Full cycle analytics",
-      "AI-powered insights",
+      "100 trades/month",
+      "Full cycle tracker",
       "Unlimited strategies",
-      "Safety Mode",
-      "Prop firm tracker",
-      "Priority support",
+      "Advanced statistics",
+      "Ideal RRR Calculator",
+      "Ideal SL Size Calculator",
+      "PropFirm discount codes",
+      "4 screenshots (2 before + 2 after)",
+      "Cloud backup & multi-device sync",
+      "Advanced filters & analytics",
+      "Custom win/loss reasons",
       "Export reports",
     ],
     cta: "Start Free Trial",
     popular: true,
   },
   {
-    name: "Team",
-    price: "$49",
+    name: "Pro",
+    price: "€19.99",
     period: "per month",
-    description: "For trading communities",
+    description: "For professional traders",
+    explanation: "Your cheat code to profitability. AI does the heavy lifting - skip years of trial and error. The fastest way to unlock consistent profits.",
     features: [
-      "Everything in Pro",
-      "Up to 10 members",
-      "Team leaderboards",
-      "Mentor mode",
-      "Custom challenges",
-      "API access",
-      "Dedicated support",
+      "Everything in Premium",
+      "Unlimited trades",
+      "AI insights (daily)",
+      "Smart cycle predictions",
+      "Personalized trading tips",
+      "PropFirm integration (unlimited)",
+      "Safety Mode browser extension",
+      "Advanced risk analytics",
+      "Early access to new features",
     ],
-    cta: "Contact Sales",
+    cta: "Start Free Trial",
     popular: false,
   },
 ];
@@ -125,6 +137,11 @@ const Pricing = () => {
                   <span className="text-muted-foreground">/{plan.period}</span>
                 </div>
                 <p className="text-sm text-muted-foreground mt-2">{plan.description}</p>
+                {plan.explanation && (
+                  <p className="text-xs text-muted-foreground mt-3 italic leading-relaxed">
+                    {plan.explanation}
+                  </p>
+                )}
               </div>
 
               <ul className="space-y-3 mb-8">
@@ -143,7 +160,9 @@ const Pricing = () => {
                 }`}
                 variant={plan.popular ? "default" : "secondary"}
               >
-                <Link to={plan.cta === "Contact Sales" ? "/contact" : "/register"}>{plan.cta}</Link>
+                <Link to={plan.name === 'Free' ? '/register' : `/checkout?tier=${plan.name.toLowerCase()}`}>
+                  {plan.cta}
+                </Link>
               </Button>
             </motion.div>
           ))}

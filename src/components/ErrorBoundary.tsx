@@ -21,7 +21,7 @@ export class ErrorBoundary extends React.Component<{}, State> {
     if (this.state.hasError) {
       return (
         <div className="rounded-lg border bg-card p-6 text-destructive">
-          <h3 className="text-lg font-semibold">Fehler beim Laden der Komponente</h3>
+          <h3 className="text-lg font-semibold">Error Loading Component</h3>
           <pre className="mt-2 whitespace-pre-wrap text-sm">{String(this.state.error)}</pre>
         </div>
       );

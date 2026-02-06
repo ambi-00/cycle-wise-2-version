@@ -140,6 +140,27 @@ export default function Register() {
               <Button
                 variant="outline"
                 className="w-full flex items-center gap-3 py-5"
+                onClick={async () => {
+                  setLoading(true);
+                  try {
+                    const { error } = await supabase.auth.signInWithOAuth({
+                      provider: 'google',
+                      options: { redirectTo: `${window.location.origin}/dashboard` },
+                    });
+                    if (error) throw error;
+                  } catch (err: any) {
+                    const isProviderDisabled = err.message?.includes('provider is not enabled');
+                    toast({ 
+                      title: 'Google sign-up failed', 
+                      description: isProviderDisabled 
+                        ? 'Google login is not enabled. Please enable it in Supabase Dashboard → Authentication → Providers'
+                        : err.message || String(err),
+                      variant: 'destructive'
+                    });
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
               >
                 <FcGoogle className="text-xl" />
                 Sign up with Google
@@ -148,6 +169,27 @@ export default function Register() {
               <Button
                 variant="outline"
                 className="w-full flex items-center gap-3 py-5"
+                onClick={async () => {
+                  setLoading(true);
+                  try {
+                    const { error } = await supabase.auth.signInWithOAuth({
+                      provider: 'apple',
+                      options: { redirectTo: `${window.location.origin}/dashboard` },
+                    });
+                    if (error) throw error;
+                  } catch (err: any) {
+                    const isProviderDisabled = err.message?.includes('provider is not enabled');
+                    toast({ 
+                      title: 'Apple sign-up failed', 
+                      description: isProviderDisabled 
+                        ? 'Apple login is not enabled. Please enable it in Supabase Dashboard → Authentication → Providers'
+                        : err.message || String(err),
+                      variant: 'destructive'
+                    });
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
               >
                 <FaApple className="text-xl" />
                 Sign up with Apple

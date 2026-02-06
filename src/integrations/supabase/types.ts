@@ -14,13 +14,695 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      ai_insights: {
+        Row: {
+          actionable: string | null
+          category: string
+          created_at: string | null
+          data: Json | null
+          icon: string | null
+          id: string
+          impact: string
+          insight: string
+          is_dismissed: boolean | null
+          is_new: boolean | null
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          actionable?: string | null
+          category: string
+          created_at?: string | null
+          data?: Json | null
+          icon?: string | null
+          id?: string
+          impact: string
+          insight: string
+          is_dismissed?: boolean | null
+          is_new?: boolean | null
+          title: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          actionable?: string | null
+          category?: string
+          created_at?: string | null
+          data?: Json | null
+          icon?: string | null
+          id?: string
+          impact?: string
+          insight?: string
+          is_dismissed?: boolean | null
+          is_new?: boolean | null
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      cycle_logs: {
+        Row: {
+          avg_cycle_length: number | null
+          confidence: number | null
+          created_at: string | null
+          date: string
+          energy: number | null
+          has_period: boolean | null
+          id: string
+          last_period_start: string | null
+          mood: number | null
+          notes: string | null
+          period_length: number | null
+          safety_mode_enabled: boolean | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          avg_cycle_length?: number | null
+          confidence?: number | null
+          created_at?: string | null
+          date: string
+          energy?: number | null
+          has_period?: boolean | null
+          id?: string
+          last_period_start?: string | null
+          mood?: number | null
+          notes?: string | null
+          period_length?: number | null
+          safety_mode_enabled?: boolean | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          avg_cycle_length?: number | null
+          confidence?: number | null
+          created_at?: string | null
+          date?: string
+          energy?: number | null
+          has_period?: boolean | null
+          id?: string
+          last_period_start?: string | null
+          mood?: number | null
+          notes?: string | null
+          period_length?: number | null
+          safety_mode_enabled?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      follows: {
+        Row: {
+          created_at: string | null
+          follower_id: string
+          following_id: string
+          id: string
+        }
+        Insert: {
+          created_at?: string | null
+          follower_id: string
+          following_id: string
+          id?: string
+        }
+        Update: {
+          created_at?: string | null
+          follower_id?: string
+          following_id?: string
+          id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          allow_follow: boolean | null
+          anonymous_mode: boolean | null
+          avatar_url: string | null
+          avg_cycle_length: number | null
+          bio: string | null
+          created_at: string | null
+          current_rank: string | null
+          display_name: string | null
+          email: string
+          id: string
+          last_login: string | null
+          last_monthly_reset: string | null
+          last_period_start: string | null
+          last_xp_decay: string | null
+          login_streak: number | null
+          monthly_xp: number | null
+          name: string | null
+          period_days: Json | null
+          period_length: number | null
+          pms_days: number | null
+          privacy_level: string | null
+          share_stats: boolean | null
+          share_strategies: boolean | null
+          total_xp: number | null
+          trading_streak: number | null
+          updated_at: string | null
+          username: string | null
+          variation_days: number | null
+        }
+        Insert: {
+          allow_follow?: boolean | null
+          anonymous_mode?: boolean | null
+          avatar_url?: string | null
+          avg_cycle_length?: number | null
+          bio?: string | null
+          created_at?: string | null
+          current_rank?: string | null
+          display_name?: string | null
+          email: string
+          id: string
+          last_login?: string | null
+          last_monthly_reset?: string | null
+          last_period_start?: string | null
+          last_xp_decay?: string | null
+          login_streak?: number | null
+          monthly_xp?: number | null
+          name?: string | null
+          period_days?: Json | null
+          period_length?: number | null
+          pms_days?: number | null
+          privacy_level?: string | null
+          share_stats?: boolean | null
+          share_strategies?: boolean | null
+          total_xp?: number | null
+          trading_streak?: number | null
+          updated_at?: string | null
+          username?: string | null
+          variation_days?: number | null
+        }
+        Update: {
+          allow_follow?: boolean | null
+          anonymous_mode?: boolean | null
+          avatar_url?: string | null
+          avg_cycle_length?: number | null
+          bio?: string | null
+          created_at?: string | null
+          current_rank?: string | null
+          display_name?: string | null
+          email?: string
+          id?: string
+          last_login?: string | null
+          last_monthly_reset?: string | null
+          last_period_start?: string | null
+          last_xp_decay?: string | null
+          login_streak?: number | null
+          monthly_xp?: number | null
+          name?: string | null
+          period_days?: Json | null
+          period_length?: number | null
+          pms_days?: number | null
+          privacy_level?: string | null
+          share_stats?: boolean | null
+          share_strategies?: boolean | null
+          total_xp?: number | null
+          trading_streak?: number | null
+          updated_at?: string | null
+          username?: string | null
+          variation_days?: number | null
+        }
+        Relationships: []
+      }
+      prop_firm_accounts: {
+        Row: {
+          account_number: string
+          auto_sync: boolean | null
+          balance: number | null
+          created_at: string | null
+          equity: number | null
+          firm_name: string
+          id: string
+          investor_password_encrypted: string | null
+          last_sync: string | null
+          profit: number | null
+          server: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          account_number: string
+          auto_sync?: boolean | null
+          balance?: number | null
+          created_at?: string | null
+          equity?: number | null
+          firm_name: string
+          id?: string
+          investor_password_encrypted?: string | null
+          last_sync?: string | null
+          profit?: number | null
+          server?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          account_number?: string
+          auto_sync?: boolean | null
+          balance?: number | null
+          created_at?: string | null
+          equity?: number | null
+          firm_name?: string
+          id?: string
+          investor_password_encrypted?: string | null
+          last_sync?: string | null
+          profit?: number | null
+          server?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      public_stats: {
+        Row: {
+          avg_risk_percent: number | null
+          avg_rrr: number | null
+          best_rrr: number | null
+          breakeven_trades: number | null
+          consistency_score: number | null
+          created_at: string | null
+          id: string
+          losing_trades: number | null
+          period_end: string | null
+          period_start: string
+          period_type: string
+          top_strategy: string | null
+          top_strategy_win_rate: number | null
+          total_trades: number | null
+          updated_at: string | null
+          user_id: string
+          win_rate: number | null
+          winning_trades: number | null
+          worst_rrr: number | null
+        }
+        Insert: {
+          avg_risk_percent?: number | null
+          avg_rrr?: number | null
+          best_rrr?: number | null
+          breakeven_trades?: number | null
+          consistency_score?: number | null
+          created_at?: string | null
+          id?: string
+          losing_trades?: number | null
+          period_end?: string | null
+          period_start: string
+          period_type: string
+          top_strategy?: string | null
+          top_strategy_win_rate?: number | null
+          total_trades?: number | null
+          updated_at?: string | null
+          user_id: string
+          win_rate?: number | null
+          winning_trades?: number | null
+          worst_rrr?: number | null
+        }
+        Update: {
+          avg_risk_percent?: number | null
+          avg_rrr?: number | null
+          best_rrr?: number | null
+          breakeven_trades?: number | null
+          consistency_score?: number | null
+          created_at?: string | null
+          id?: string
+          losing_trades?: number | null
+          period_end?: string | null
+          period_start?: string
+          period_type?: string
+          top_strategy?: string | null
+          top_strategy_win_rate?: number | null
+          total_trades?: number | null
+          updated_at?: string | null
+          user_id?: string
+          win_rate?: number | null
+          winning_trades?: number | null
+          worst_rrr?: number | null
+        }
+        Relationships: []
+      }
+      strategies: {
+        Row: {
+          avg_rrr: number | null
+          confirmations: string[] | null
+          created_at: string | null
+          description: string | null
+          entry_triggers: string[] | null
+          exit_rules: string[] | null
+          general_rules: string[] | null
+          id: string
+          markets: string[] | null
+          name: string
+          risk_per_trade: number | null
+          score: number | null
+          stop_loss_type: string | null
+          take_profit_type: string | null
+          target_rrr: number | null
+          timeframes: string[] | null
+          total_trades: number | null
+          updated_at: string | null
+          user_id: string
+          win_rate: number | null
+        }
+        Insert: {
+          avg_rrr?: number | null
+          confirmations?: string[] | null
+          created_at?: string | null
+          description?: string | null
+          entry_triggers?: string[] | null
+          exit_rules?: string[] | null
+          general_rules?: string[] | null
+          id?: string
+          markets?: string[] | null
+          name: string
+          risk_per_trade?: number | null
+          score?: number | null
+          stop_loss_type?: string | null
+          take_profit_type?: string | null
+          target_rrr?: number | null
+          timeframes?: string[] | null
+          total_trades?: number | null
+          updated_at?: string | null
+          user_id: string
+          win_rate?: number | null
+        }
+        Update: {
+          avg_rrr?: number | null
+          confirmations?: string[] | null
+          created_at?: string | null
+          description?: string | null
+          entry_triggers?: string[] | null
+          exit_rules?: string[] | null
+          general_rules?: string[] | null
+          id?: string
+          markets?: string[] | null
+          name?: string
+          risk_per_trade?: number | null
+          score?: number | null
+          stop_loss_type?: string | null
+          take_profit_type?: string | null
+          target_rrr?: number | null
+          timeframes?: string[] | null
+          total_trades?: number | null
+          updated_at?: string | null
+          user_id?: string
+          win_rate?: number | null
+        }
+        Relationships: []
+      }
+      subscriptions: {
+        Row: {
+          cancel_at_period_end: boolean | null
+          created_at: string | null
+          current_period_end: string | null
+          current_period_start: string | null
+          id: string
+          status: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          tier: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          cancel_at_period_end?: boolean | null
+          created_at?: string | null
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          status: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          tier: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          cancel_at_period_end?: boolean | null
+          created_at?: string | null
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          tier?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      trades: {
+        Row: {
+          closed_rrr: number | null
+          confirmations: Json | null
+          created_at: string | null
+          custom_exit_reason: string | null
+          cycle_day: number | null
+          cycle_phase: string | null
+          date: string
+          direction: string
+          emotion_after: number | null
+          emotion_before: number | null
+          entry_price: number | null
+          exit_price: number | null
+          exit_reason: string | null
+          id: string
+          ideal_sl_size: number | null
+          image_after_large: string | null
+          image_after_small: string | null
+          image_before_large: string | null
+          image_before_small: string | null
+          instrument: string
+          learnings: string | null
+          loss_reason: string | null
+          max_r_reached: number | null
+          planned_rrr: number | null
+          planned_sl_size: number | null
+          pnl: number | null
+          post_trade_note: string | null
+          pre_trade_note: string | null
+          rating: number | null
+          result: string | null
+          risk_percent: number | null
+          sl_price: number | null
+          status: string | null
+          strategy: string | null
+          time: string | null
+          timeframe_large: string | null
+          timeframe_small: string | null
+          tp_price: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          closed_rrr?: number | null
+          confirmations?: Json | null
+          created_at?: string | null
+          custom_exit_reason?: string | null
+          cycle_day?: number | null
+          cycle_phase?: string | null
+          date: string
+          direction: string
+          emotion_after?: number | null
+          emotion_before?: number | null
+          entry_price?: number | null
+          exit_price?: number | null
+          exit_reason?: string | null
+          id?: string
+          ideal_sl_size?: number | null
+          image_after_large?: string | null
+          image_after_small?: string | null
+          image_before_large?: string | null
+          image_before_small?: string | null
+          instrument: string
+          learnings?: string | null
+          loss_reason?: string | null
+          max_r_reached?: number | null
+          planned_rrr?: number | null
+          planned_sl_size?: number | null
+          pnl?: number | null
+          post_trade_note?: string | null
+          pre_trade_note?: string | null
+          rating?: number | null
+          result?: string | null
+          risk_percent?: number | null
+          sl_price?: number | null
+          status?: string | null
+          strategy?: string | null
+          time?: string | null
+          timeframe_large?: string | null
+          timeframe_small?: string | null
+          tp_price?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          closed_rrr?: number | null
+          confirmations?: Json | null
+          created_at?: string | null
+          custom_exit_reason?: string | null
+          cycle_day?: number | null
+          cycle_phase?: string | null
+          date?: string
+          direction?: string
+          emotion_after?: number | null
+          emotion_before?: number | null
+          entry_price?: number | null
+          exit_price?: number | null
+          exit_reason?: string | null
+          id?: string
+          ideal_sl_size?: number | null
+          image_after_large?: string | null
+          image_after_small?: string | null
+          image_before_large?: string | null
+          image_before_small?: string | null
+          instrument?: string
+          learnings?: string | null
+          loss_reason?: string | null
+          max_r_reached?: number | null
+          planned_rrr?: number | null
+          planned_sl_size?: number | null
+          pnl?: number | null
+          post_trade_note?: string | null
+          pre_trade_note?: string | null
+          rating?: number | null
+          result?: string | null
+          risk_percent?: number | null
+          sl_price?: number | null
+          status?: string | null
+          strategy?: string | null
+          time?: string | null
+          timeframe_large?: string | null
+          timeframe_small?: string | null
+          tp_price?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_settings: {
+        Row: {
+          created_at: string | null
+          custom_loss_reasons: string[] | null
+          custom_win_reasons: string[] | null
+          default_loss_reasons: string[] | null
+          default_win_reasons: string[] | null
+          id: string
+          settings: Json | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          custom_loss_reasons?: string[] | null
+          custom_win_reasons?: string[] | null
+          default_loss_reasons?: string[] | null
+          default_win_reasons?: string[] | null
+          id?: string
+          settings?: Json | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          custom_loss_reasons?: string[] | null
+          custom_win_reasons?: string[] | null
+          default_loss_reasons?: string[] | null
+          default_win_reasons?: string[] | null
+          id?: string
+          settings?: Json | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      weekly_challenges: {
+        Row: {
+          avg_rrr: number | null
+          challenge_type: string
+          consistency_score: number | null
+          created_at: string | null
+          id: string
+          rank: number | null
+          score: number
+          total_r: number | null
+          total_trades: number | null
+          updated_at: string | null
+          user_id: string
+          week_end: string
+          week_start: string
+          win_rate: number | null
+        }
+        Insert: {
+          avg_rrr?: number | null
+          challenge_type: string
+          consistency_score?: number | null
+          created_at?: string | null
+          id?: string
+          rank?: number | null
+          score: number
+          total_r?: number | null
+          total_trades?: number | null
+          updated_at?: string | null
+          user_id: string
+          week_end: string
+          week_start: string
+          win_rate?: number | null
+        }
+        Update: {
+          avg_rrr?: number | null
+          challenge_type?: string
+          consistency_score?: number | null
+          created_at?: string | null
+          id?: string
+          rank?: number | null
+          score?: number
+          total_r?: number | null
+          total_trades?: number | null
+          updated_at?: string | null
+          user_id?: string
+          week_end?: string
+          week_start?: string
+          win_rate?: number | null
+        }
+        Relationships: []
+      }
+      xp_logs: {
+        Row: {
+          amount: number
+          created_at: string | null
+          details: Json | null
+          id: string
+          reason: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          reason: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          reason?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      calculate_rank: { Args: { xp: number }; Returns: string }
+      get_rank_monthly_requirement: { Args: { rank: string }; Returns: number }
+      process_monthly_maintenance: { Args: never; Returns: undefined }
     }
     Enums: {
       [_ in never]: never

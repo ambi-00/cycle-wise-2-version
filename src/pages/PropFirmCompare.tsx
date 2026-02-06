@@ -138,24 +138,24 @@ export default function PropFirmCompare() {
                   }));
                 }}
               >
-                <SelectTrigger className="focus:ring-2 focus:ring-pink-400 border-pink-300 data-[state=open]:ring-pink-400 data-[state=open]:border-pink-400">
+                <SelectTrigger className="focus:ring-2 focus:ring-primary border-border data-[state=open]:ring-primary data-[state=open]:border-primary">
                   <SelectValue placeholder="Select size" />
                 </SelectTrigger>
-                <SelectContent className="bg-white border-pink-200">
-                  <SelectItem value="25000" className="data-[state=checked]:bg-pink-100 data-[state=checked]:text-pink-600 data-[highlighted]:bg-[#fdf2f8] data-[highlighted]:text-pink-600">25k Account</SelectItem>
-                  <SelectItem value="50000" className="data-[state=checked]:bg-pink-100 data-[state=checked]:text-pink-600 data-[highlighted]:bg-[#fdf2f8] data-[highlighted]:text-pink-600">50k Account</SelectItem>
-                  <SelectItem value="100000" className="data-[state=checked]:bg-pink-100 data-[state=checked]:text-pink-600 data-[highlighted]:bg-[#fdf2f8] data-[highlighted]:text-pink-600">100k Account</SelectItem>
-                  <SelectItem value="200000" className="data-[state=checked]:bg-pink-100 data-[state=checked]:text-pink-600 data-[highlighted]:bg-[#fdf2f8] data-[highlighted]:text-pink-600">200k Account</SelectItem>
-                  <SelectItem value="400000" className="data-[state=checked]:bg-pink-100 data-[state=checked]:text-pink-600 data-[highlighted]:bg-[#fdf2f8] data-[highlighted]:text-pink-600">400k Account</SelectItem>
-                  <SelectItem value="500000" className="data-[state=checked]:bg-pink-100 data-[state=checked]:text-pink-600 data-[highlighted]:bg-[#fdf2f8] data-[highlighted]:text-pink-600">500k Account</SelectItem>
-                  <SelectItem value="1000000" className="data-[state=checked]:bg-pink-100 data-[state=checked]:text-pink-600 data-[highlighted]:bg-[#fdf2f8] data-[highlighted]:text-pink-600">1M Account</SelectItem>
-                  <SelectItem value="other" className="data-[state=checked]:bg-pink-100 data-[state=checked]:text-pink-600 data-[highlighted]:bg-[#fdf2f8] data-[highlighted]:text-pink-600">Other...</SelectItem>
+                <SelectContent>
+                  <SelectItem value="25000">25k Account</SelectItem>
+                  <SelectItem value="50000">50k Account</SelectItem>
+                  <SelectItem value="100000">100k Account</SelectItem>
+                  <SelectItem value="200000">200k Account</SelectItem>
+                  <SelectItem value="400000">400k Account</SelectItem>
+                  <SelectItem value="500000">500k Account</SelectItem>
+                  <SelectItem value="1000000">1M Account</SelectItem>
+                  <SelectItem value="other">Other...</SelectItem>
                 </SelectContent>
               </Select>
               {filter.accountSizes[0] === "other" && (
                 <input
                   type="text"
-                  className="mt-2 border-pink-300 focus:ring-pink-400 focus:border-pink-400 rounded px-2 py-1 text-sm"
+                  className="mt-2 border-border focus:ring-primary focus:border-primary rounded px-2 py-1 text-sm"
                   placeholder="Enter custom size (e.g. 75000)"
                   value={filter.accountSizes[1] || ""}
                   onChange={e => {
@@ -180,13 +180,13 @@ export default function PropFirmCompare() {
                   }))
                 }
               >
-                <SelectTrigger className="focus:ring-2 focus:ring-pink-400 border-pink-300 data-[state=open]:ring-pink-400 data-[state=open]:border-pink-400">
+                <SelectTrigger className="focus:ring-2 focus:ring-primary border-border data-[state=open]:ring-primary data-[state=open]:border-primary">
                   <SelectValue placeholder="Select steps" />
                 </SelectTrigger>
-                <SelectContent className="bg-white border-pink-200">
-                  <SelectItem value="1" className="data-[state=checked]:bg-pink-100 data-[state=checked]:text-pink-600 data-[highlighted]:bg-[#fdf2f8] data-[highlighted]:text-pink-600">1 Step</SelectItem>
-                  <SelectItem value="2" className="data-[state=checked]:bg-pink-100 data-[state=checked]:text-pink-600 data-[highlighted]:bg-[#fdf2f8] data-[highlighted]:text-pink-600">2 Steps</SelectItem>
-                  <SelectItem value="3" className="data-[state=checked]:bg-pink-100 data-[state=checked]:text-pink-600 data-[highlighted]:bg-[#fdf2f8] data-[highlighted]:text-pink-600">3 Steps</SelectItem>
+                <SelectContent>
+                  <SelectItem value="1">1 Step</SelectItem>
+                  <SelectItem value="2">2 Steps</SelectItem>
+                  <SelectItem value="3">3 Steps</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -205,11 +205,11 @@ export default function PropFirmCompare() {
               {/* Heart Icon Button to show bookmarks */}
               <button
                 type="button"
-                className={`ml-2 mb-1 p-2 rounded-full border border-transparent transition-colors ${showBookmarks ? 'bg-pink-100 text-pink-600' : 'bg-muted text-muted-foreground hover:bg-pink-50 hover:text-pink-500'}`}
+                className={`ml-2 mb-1 p-2 rounded-full border border-transparent transition-colors ${showBookmarks ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground hover:bg-primary/5 hover:text-primary'}`}
                 aria-label="Show saved prop firms"
                 onClick={() => setShowBookmarks(v => !v)}
               >
-                <Heart className={`w-6 h-6 ${bookmarks.length > 0 ? 'fill-pink-500' : 'fill-none'}`} />
+                <Heart className={`w-6 h-6 ${bookmarks.length > 0 ? 'fill-primary' : 'fill-none'}`} />
               </button>
             </div>
                   {/* Bookmarked Prop Firms Modal/Dropdown */}
@@ -224,7 +224,7 @@ export default function PropFirmCompare() {
                           <X className="w-5 h-5" />
                         </button>
                         <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
-                          <Heart className="w-5 h-5 text-pink-500" /> Saved Prop Firms
+                          <Heart className="w-5 h-5 text-primary" /> Saved Prop Firms
                         </h2>
                         {bookmarks.length === 0 ? (
                           <div className="text-muted-foreground text-sm">No prop firms saved yet.</div>
@@ -234,7 +234,7 @@ export default function PropFirmCompare() {
                               <li key={name} className="py-2 flex items-center justify-between">
                                 <span>{name}</span>
                                 <button
-                                  className="text-xs text-pink-600 hover:underline"
+                                  className="text-xs text-primary hover:underline"
                                   onClick={() => toggleBookmark(name)}
                                 >Remove</button>
                               </li>
@@ -429,17 +429,17 @@ export default function PropFirmCompare() {
                             onClick={() => toggleBookmark(firm.name)}
                             className={
                               bookmarks.includes(firm.name)
-                                ? "text-pink-500"
-                                : "text-muted-foreground hover:text-pink-500"
+                                ? "text-primary"
+                                : "text-muted-foreground hover:text-primary"
                             }
                           >
-                            <Heart fill={bookmarks.includes(firm.name) ? "#ec4899" : "none"} className="w-5 h-5 transition-colors" />
+                            <Heart fill={bookmarks.includes(firm.name) ? "currentColor" : "none"} className="w-5 h-5 transition-colors text-primary" />
                           </button>
                           {firm.discountCode && (
-                            <span className="bg-pink-100 text-pink-700 font-semibold rounded px-2 py-1 text-xs flex items-center gap-1 mr-2 border border-pink-200">
+                            <span className="bg-primary/10 text-primary font-semibold rounded px-2 py-1 text-xs flex items-center gap-1 mr-2 border border-primary/20">
                               Code: {firm.discountCode}
                               <button
-                                className="ml-1 text-pink-500 hover:text-pink-700"
+                                className="ml-1 text-primary hover:text-primary/80"
                                 onClick={() => {
                                   navigator.clipboard.writeText(firm.discountCode!);
                                 }}
@@ -523,7 +523,7 @@ export default function PropFirmCompare() {
                 </tbody>
               </table>
             )}
-            {/* Weitere Tabs wie Best Sellers, Reviews können hier ergänzt werden */}
+            {/* Additional tabs like Best Sellers, Reviews can be added here */}
           </div>
           {/* Filter Popover/Drawer */}
           {showFilter && (

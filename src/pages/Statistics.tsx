@@ -5,6 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Legend, ResponsiveContainer, Tooltip } from 'recharts';
+import RRROptimizationAnalysis from '@/components/RRROptimizationAnalysis';
+import { Lightbulb, Plus, TrendingUp, Lock } from 'lucide-react';
+import { useSubscription } from '@/hooks/use-subscription';
 
 interface Trade {
   id: string;
@@ -37,6 +40,7 @@ interface NewsItem {
 
 export default function Statistics() {
   const navigate = useNavigate();
+  const { hasFeature } = useSubscription();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [allTrades, setAllTrades] = useState<Trade[]>([]);
@@ -54,20 +58,25 @@ export default function Statistics() {
 
   const loadAllTrades = () => {
     const trades: Trade[] = [];
-    const keys = Object.keys(localStorage);
     
-    for (const key of keys) {
-      if (key.startsWith('cw_journal_')) {
+    // Use the same method as TradeJournal to iterate localStorage
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i) || "";
+      if (key.startsWith("cw_journal_")) {
         try {
-          const data = JSON.parse(localStorage.getItem(key) || '{}');
+          const raw = localStorage.getItem(key);
+          if (!raw) continue;
+          const data = JSON.parse(raw);
           if (data.trades && Array.isArray(data.trades)) {
-            trades.push(...data.trades.map((t: any) => ({
-              ...t,
-              status: t.status || 'open'
-            })));
+            data.trades.forEach((t: any) => {
+              trades.push({
+                ...t,
+                status: t.status || (t.result && t.result !== '' ? 'closed' : 'open')
+              });
+            });
           }
         } catch (e) {
-          // ignore
+          // ignore parse errors
         }
       }
     }
@@ -186,7 +195,7 @@ export default function Statistics() {
   };
 
   const yearlyPerformance = useMemo(() => {
-    const months = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const monthlyData = months.map((monthName, monthIndex) => {
       const monthTrades = allTrades.filter((t) => {
         if (!t.date || t.status !== 'closed') return false;
@@ -314,6 +323,34 @@ export default function Statistics() {
   const weeks = [];
   for (let i = 0; i < days.length; i += 7) {
     weeks.push(days.slice(i, i + 7));
+  }
+
+  // Empty state when no trades at all
+  if (allTrades.length === 0) {
+    return (
+      <main className="pb-24 pt-20 lg:pl-64 lg:pt-8">
+        <div className="mx-auto max-w-7xl p-4 lg:p-8">
+          <div className="mb-8">
+            <h1 className="text-3xl font-serif font-bold tracking-tight text-foreground mb-2">Trade Statistics</h1>
+            <p className="text-sm text-muted-foreground">Analyze your trading performance and upcoming market events</p>
+          </div>
+          
+          <div className="rounded-2xl bg-card p-12 shadow-card text-center">
+            <div className="mx-auto w-fit rounded-full bg-primary/10 p-6">
+              <TrendingUp className="h-16 w-16 text-primary" />
+            </div>
+            <h2 className="mt-6 font-serif text-2xl font-bold text-foreground">No Statistics Yet</h2>
+            <p className="mt-2 text-muted-foreground max-w-md mx-auto">
+              Start logging your trades to see detailed performance statistics, win rate analysis, and comprehensive trading insights.
+            </p>
+            <Button onClick={() => navigate('/new-trade')} className="mt-6 gap-2">
+              <Plus className="h-4 w-4" />
+              Log Your First Trade
+            </Button>
+          </div>
+        </div>
+      </main>
+    );
   }
 
   return (
@@ -619,12 +656,29 @@ export default function Statistics() {
             </Card>
 
             {/* Cycle Phase Analysis */}
-            <Card className="rounded-2xl shadow-soft border bg-gradient-to-br from-primary/5 to-primary/10">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg font-serif font-semibold flex items-center gap-2">
-                  Cycle Phase Analysis
-                </CardTitle>
-              </CardHeader>
+            <div className="relative">
+              {!hasFeature('full_statistics') && (
+                <div className="fixed inset-y-0 right-0 left-0 lg:left-64 z-50 flex items-center justify-center p-6 bg-black/20 backdrop-blur-sm">
+                  <Card className="max-w-md w-full">
+                    <CardContent className="p-8 text-center">
+                      <Lock className="h-12 w-12 text-primary mx-auto mb-4" />
+                      <h3 className="font-semibold text-xl mb-2">Premium Feature</h3>
+                      <p className="text-sm text-muted-foreground mb-6">
+                        Upgrade to Premium for cycle phase analysis.
+                      </p>
+                      <Button onClick={() => navigate('/#pricing')} size="lg" className="w-full">
+                        Upgrade to Premium - €9.99/mo
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+              <Card className={`rounded-2xl shadow-soft border bg-gradient-to-br from-primary/5 to-primary/10 ${!hasFeature('full_statistics') ? 'blur-sm pointer-events-none' : ''}`}>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg font-serif font-semibold flex items-center gap-2">
+                    Cycle Phase Analysis
+                  </CardTitle>
+                </CardHeader>
               <CardContent className="space-y-3">
                 {(() => {
                   const monthTrades = allTrades.filter(t => {
@@ -688,6 +742,7 @@ export default function Statistics() {
                 })()}
               </CardContent>
             </Card>
+            </div>
 
             {/* Trading Patterns */}
             <Card className="rounded-2xl shadow-soft border">
@@ -1190,13 +1245,312 @@ export default function Statistics() {
 
           {/* Analysis Tab */}
           <TabsContent value="analysis" className="space-y-6">
-            <Card className="rounded-2xl shadow-soft border">
+            {/* RRR Optimization Analysis */}
+            <div className="relative">
+              {!hasFeature('full_statistics') && (
+                <div className="fixed inset-y-0 right-0 left-0 lg:left-64 z-50 flex items-center justify-center p-6 bg-black/20 backdrop-blur-sm">
+                  <Card className="max-w-md w-full">
+                    <CardContent className="p-8 text-center">
+                      <Lock className="h-12 w-12 text-primary mx-auto mb-4" />
+                      <h3 className="font-semibold text-xl mb-2">Premium Feature</h3>
+                      <p className="text-sm text-muted-foreground mb-6">
+                        Upgrade to Premium for detailed RRR optimization analysis and performance insights.
+                      </p>
+                      <Button onClick={() => navigate('/#pricing')} size="lg" className="w-full">
+                        Upgrade to Premium - €9.99/mo
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+              <div className={!hasFeature('full_statistics') ? 'blur-sm pointer-events-none' : ''}>
+                <RRROptimizationAnalysis trades={allTrades} />
+              </div>
+            </div>
+
+            {/* Cycle Phase Performance */}
+            <div className="relative">
+              {!hasFeature('full_statistics') && (
+                <div className="fixed inset-y-0 right-0 left-0 lg:left-64 z-50 flex items-center justify-center p-6 bg-black/20 backdrop-blur-sm">
+                  <Card className="max-w-md w-full">
+                    <CardContent className="p-8 text-center">
+                      <Lock className="h-12 w-12 text-primary mx-auto mb-4" />
+                      <h3 className="font-semibold text-xl mb-2">Premium Feature</h3>
+                      <p className="text-sm text-muted-foreground mb-6">
+                        Upgrade to Premium for cycle phase performance analysis.
+                      </p>
+                      <Button onClick={() => navigate('/#pricing')} size="lg" className="w-full">
+                        Upgrade to Premium - €9.99/mo
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+              <Card className={`rounded-2xl shadow-soft border ${!hasFeature('full_statistics') ? 'blur-sm pointer-events-none' : ''}`}>
+                <CardHeader className="border-b pb-4">
+                  <CardTitle className="text-xl font-serif font-semibold">Cycle Phase Performance</CardTitle>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Analyze how your trading performance varies across different cycle phases
+                  </p>
+                </CardHeader>
+              <CardContent className="p-6">
+                <div className="grid gap-6 md:grid-cols-2">
+                  {[
+                    { phase: 'Menstrual', emoji: '🌑', color: 'from-gray-500/20 to-gray-600/20', borderColor: 'border-gray-500' },
+                    { phase: 'Follicular', emoji: '🌱', color: 'from-green-500/20 to-emerald-500/20', borderColor: 'border-green-500' },
+                    { phase: 'Ovulatory', emoji: '⚡', color: 'from-yellow-500/20 to-orange-500/20', borderColor: 'border-yellow-500' },
+                    { phase: 'Luteal', emoji: '🌙', color: 'from-purple-500/20 to-indigo-500/20', borderColor: 'border-purple-500' }
+                  ].map(({ phase, emoji, color, borderColor }) => {
+                    const phaseTrades = allTrades.filter(t => t.cyclePhase === phase && t.status === 'closed');
+                    const wins = phaseTrades.filter(t => t.result === 'win').length;
+                    const losses = phaseTrades.filter(t => t.result === 'loss').length;
+                    const winRate = phaseTrades.length > 0 ? ((wins / phaseTrades.length) * 100).toFixed(1) : '0';
+                    const avgPnl = phaseTrades.length > 0 
+                      ? (phaseTrades.reduce((sum, t) => sum + (t.pnl || 0), 0) / phaseTrades.length).toFixed(2)
+                      : '0';
+                    
+                    return (
+                      <div key={phase} className={`p-4 rounded-xl bg-gradient-to-br ${color} border-2 ${borderColor}`}>
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-2">
+                            <span className="text-2xl">{emoji}</span>
+                            <h3 className="font-semibold text-lg">{phase}</h3>
+                          </div>
+                          <Badge variant="outline">{phaseTrades.length} trades</Badge>
+                        </div>
+                        <div className="grid grid-cols-3 gap-3 text-center">
+                          <div>
+                            <p className="text-xs text-muted-foreground">Win Rate</p>
+                            <p className="text-lg font-bold text-accent-foreground">{winRate}%</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground">Avg P&L</p>
+                            <p className={`text-lg font-bold ${parseFloat(avgPnl) >= 0 ? 'text-accent-foreground' : 'text-destructive'}`}>
+                              {parseFloat(avgPnl) >= 0 ? '+' : ''}{avgPnl}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground">W/L</p>
+                            <p className="text-lg font-bold">{wins}/{losses}</p>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+            </div>
+
+            {/* Trading Patterns by Cycle */}
+            <div className="relative">
+              {!hasFeature('full_statistics') && (
+                <div className="fixed inset-y-0 right-0 left-0 lg:left-64 z-50 flex items-center justify-center p-6 bg-black/20 backdrop-blur-sm">
+                  <Card className="max-w-md w-full">
+                    <CardContent className="p-8 text-center">
+                      <Lock className="h-12 w-12 text-primary mx-auto mb-4" />
+                      <h3 className="font-semibold text-xl mb-2">Premium Feature</h3>
+                      <p className="text-sm text-muted-foreground mb-6">
+                        Upgrade to Premium for detailed trading patterns analysis.
+                      </p>
+                      <Button onClick={() => navigate('/#pricing')} size="lg" className="w-full">
+                        Upgrade to Premium - €9.99/mo
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+              <div className={`grid gap-6 md:grid-cols-2 ${!hasFeature('full_statistics') ? 'blur-sm pointer-events-none' : ''}`}>
+              <Card className="rounded-2xl shadow-soft border">
+                <CardHeader className="border-b pb-4">
+                  <CardTitle className="text-lg font-serif font-semibold">Best Trading Days by Phase</CardTitle>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="space-y-4">
+                    {['Menstrual', 'Follicular', 'Ovulatory', 'Luteal'].map(phase => {
+                      const phaseTrades = allTrades.filter(t => t.cyclePhase === phase && t.status === 'closed');
+                      const tradesByDay = phaseTrades.reduce((acc, t) => {
+                        const day = new Date(t.date).toLocaleDateString('en-US', { weekday: 'long' });
+                        acc[day] = (acc[day] || 0) + 1;
+                        return acc;
+                      }, {} as Record<string, number>);
+                      
+                      const bestDay = Object.entries(tradesByDay).sort((a, b) => b[1] - a[1])[0];
+                      
+                      return (
+                        <div key={phase} className="flex items-center justify-between">
+                          <span className="text-sm font-medium">{phase}</span>
+                          <span className="text-sm text-muted-foreground">
+                            {bestDay ? `${bestDay[0]} (${bestDay[1]} trades)` : 'No data'}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="rounded-2xl shadow-soft border">
+                <CardHeader className="border-b pb-4">
+                  <CardTitle className="text-lg font-serif font-semibold">Risk-Taking Behavior</CardTitle>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="space-y-4">
+                    {['Menstrual', 'Follicular', 'Ovulatory', 'Luteal'].map(phase => {
+                      const phaseTrades = allTrades.filter(t => t.cyclePhase === phase && t.status === 'closed');
+                      const avgRisk = phaseTrades.length > 0
+                        ? (phaseTrades.reduce((sum, t) => sum + Math.abs(t.rMultiple || 0), 0) / phaseTrades.length).toFixed(2)
+                        : '0';
+                      
+                      return (
+                        <div key={phase} className="flex items-center justify-between">
+                          <span className="text-sm font-medium">{phase}</span>
+                          <div className="flex items-center gap-2">
+                            <div className="w-32 h-2 bg-muted rounded-full overflow-hidden">
+                              <div 
+                                className="h-full bg-primary" 
+                                style={{ width: `${Math.min(parseFloat(avgRisk) * 20, 100)}%` }}
+                              />
+                            </div>
+                            <span className="text-sm text-muted-foreground w-12 text-right">{avgRisk}R</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+            </div>
+
+            {/* Strategy Performance by Cycle */}
+            <div className="relative">
+              {!hasFeature('full_statistics') && (
+                <div className="fixed inset-y-0 right-0 left-0 lg:left-64 z-50 flex items-center justify-center p-6 bg-black/20 backdrop-blur-sm">
+                  <Card className="max-w-md w-full">
+                    <CardContent className="p-8 text-center">
+                      <Lock className="h-12 w-12 text-primary mx-auto mb-4" />
+                      <h3 className="font-semibold text-xl mb-2">Premium Feature</h3>
+                      <p className="text-sm text-muted-foreground mb-6">
+                        Upgrade to Premium for strategy performance by cycle phase analysis.
+                      </p>
+                      <Button onClick={() => navigate('/#pricing')} size="lg" className="w-full">
+                        Upgrade to Premium - €9.99/mo
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+              <Card className={`rounded-2xl shadow-soft border ${!hasFeature('full_statistics') ? 'blur-sm pointer-events-none' : ''}`}>
+                <CardHeader className="border-b pb-4">
+                  <CardTitle className="text-xl font-serif font-semibold">Strategy Performance by Cycle Phase</CardTitle>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Which strategies work best during each phase?
+                  </p>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="grid gap-4">
+                    {['Menstrual', 'Follicular', 'Ovulatory', 'Luteal'].map(phase => {
+                      const phaseTrades = allTrades.filter(t => t.cyclePhase === phase && t.status === 'closed' && t.strategy);
+                      const strategyStats = phaseTrades.reduce((acc, t) => {
+                        const strategy = t.strategy || 'Unknown';
+                        if (!acc[strategy]) {
+                          acc[strategy] = { wins: 0, total: 0 };
+                        }
+                        acc[strategy].total++;
+                        if (t.result === 'win') acc[strategy].wins++;
+                        return acc;
+                      }, {} as Record<string, { wins: number; total: number }>);
+
+                      const bestStrategy = Object.entries(strategyStats)
+                        .map(([name, stats]) => ({
+                          name,
+                          winRate: ((stats.wins / stats.total) * 100).toFixed(0),
+                          trades: stats.total
+                        }))
+                        .sort((a, b) => parseFloat(b.winRate) - parseFloat(a.winRate))[0];
+
+                      return (
+                        <div key={phase} className="p-4 rounded-xl bg-muted/30">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <h4 className="font-semibold">{phase}</h4>
+                              <p className="text-sm text-muted-foreground mt-1">
+                                {bestStrategy 
+                                  ? `${bestStrategy.name} performs best (${bestStrategy.winRate}% WR, ${bestStrategy.trades} trades)`
+                                  : 'No strategy data available'}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Recommendations */}
+            <Card className="rounded-2xl shadow-soft border bg-gradient-to-br from-primary/10 to-secondary/10">
               <CardHeader className="border-b pb-4">
-                <CardTitle className="text-xl font-serif font-semibold">Advanced Analysis</CardTitle>
+                <CardTitle className="text-xl font-serif font-semibold flex items-center gap-2">
+                  <span>📊</span>
+                  Personalized Recommendations
+                </CardTitle>
               </CardHeader>
               <CardContent className="p-6">
-                <div className="text-center text-muted-foreground py-12">
-                  Advanced analysis tools coming soon
+                <div className="space-y-4">
+                  {(() => {
+                    const phaseStats = ['Menstrual', 'Follicular', 'Ovulatory', 'Luteal'].map(phase => {
+                      const trades = allTrades.filter(t => t.cyclePhase === phase && t.status === 'closed');
+                      const wins = trades.filter(t => t.result === 'win').length;
+                      const winRate = trades.length > 0 ? (wins / trades.length) * 100 : 0;
+                      return { phase, winRate, trades: trades.length };
+                    }).sort((a, b) => b.winRate - a.winRate);
+
+                    const bestPhase = phaseStats[0];
+                    const worstPhase = phaseStats[phaseStats.length - 1];
+
+                    return (
+                      <>
+                        {bestPhase && bestPhase.trades > 5 && (
+                          <div className="flex items-start gap-3 p-4 rounded-lg bg-accent/20 border border-accent/40">
+                            <span className="text-2xl">✨</span>
+                            <div>
+                              <p className="font-semibold">Optimize Your Peak Phase</p>
+                              <p className="text-sm text-muted-foreground mt-1">
+                                Your {bestPhase.phase} phase shows the highest win rate ({bestPhase.winRate.toFixed(1)}%). 
+                                Consider taking larger positions or more setups during this phase.
+                              </p>
+                            </div>
+                          </div>
+                        )}
+
+                        {worstPhase && worstPhase.trades > 5 && worstPhase.winRate < 50 && (
+                          <div className="flex items-start gap-3 p-4 rounded-lg bg-destructive/20 border border-destructive/40">
+                            <span className="text-2xl">⚠️</span>
+                            <div>
+                              <p className="font-semibold">Protect During Low Phase</p>
+                              <p className="text-sm text-muted-foreground mt-1">
+                                Your {worstPhase.phase} phase shows lower performance ({worstPhase.winRate.toFixed(1)}% WR). 
+                                Consider reducing position sizes or taking a break during this time.
+                              </p>
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="flex items-start gap-3 p-4 rounded-lg bg-card border">
+                          <span className="text-2xl">💡</span>
+                          <div>
+                            <p className="font-semibold">Track & Adapt</p>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              Continue logging your cycle phase with each trade to build more personalized insights over time.
+                            </p>
+                          </div>
+                        </div>
+                      </>
+                    );
+                  })()}
                 </div>
               </CardContent>
             </Card>

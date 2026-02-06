@@ -1,5 +1,5 @@
 // src/data/propfirms-data.ts
-// Datenstruktur für Prop Firm Vergleichstabelle
+// Data structure for Prop Firm comparison table
 
 export interface PropFirm {
   name: string;
@@ -23,7 +23,7 @@ export interface PropFirm {
   price?: number;
 }
 
-// Beispiel-Einträge (einfach kopieren und anpassen)
+// Example entries (just copy and adjust)
 export const propFirms: PropFirm[] = [
   {
     name: "FTMO",
@@ -67,7 +67,7 @@ export const propFirms: PropFirm[] = [
     payoutFreq: "14 days",
     price: 499,
   },
-  // --- Platzhalter für weitere Prop Firms ---
+  // --- Placeholder for additional Prop Firms ---
   ...Array.from({ length: 98 }).map((_, i) => ({
     name: `PropFirm ${i + 3}`,
     logo: "https://via.placeholder.com/40x40?text=Logo",

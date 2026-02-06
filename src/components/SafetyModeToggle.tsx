@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { Shield, ShieldOff, AlertTriangle } from "lucide-react";
+import { Shield, ShieldOff, AlertTriangle, Globe } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface SafetyModeToggleProps {
   enabled: boolean;
@@ -11,6 +11,12 @@ interface SafetyModeToggleProps {
 
 export function SafetyModeToggle({ enabled, onToggle, suggested }: SafetyModeToggleProps) {
   const [showConfirm, setShowConfirm] = useState(false);
+  const [tradingPlatformUrl, setTradingPlatformUrl] = useState('');
+
+  useEffect(() => {
+    const url = localStorage.getItem('cw_trading_platform_url') || '';
+    setTradingPlatformUrl(url);
+  }, []);
 
   const handleToggle = (checked: boolean) => {
     if (enabled && !checked) {
@@ -64,6 +70,23 @@ export function SafetyModeToggle({ enabled, onToggle, suggested }: SafetyModeTog
               exit={{ opacity: 0, height: 0 }}
               className="mt-4 flex items-center gap-2 rounded-xl bg-secondary/70 p-3 text-secondary-foreground"
             >
+          
+          {enabled && tradingPlatformUrl && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="mt-4 flex items-start gap-2 rounded-xl bg-destructive/10 border border-destructive/20 p-3"
+            >
+              <Globe className="h-4 w-4 shrink-0 text-destructive mt-0.5" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-destructive">Trading Platform Blocked</p>
+                <p className="text-xs text-destructive/80 mt-1">
+                  {tradingPlatformUrl} should be avoided while Safety Mode is active.
+                </p>
+              </div>
+            </motion.div>
+          )}
               <AlertTriangle className="h-4 w-4 shrink-0" />
               <p className="text-sm">
                 Based on your cycle phase, we recommend activating Safety Mode

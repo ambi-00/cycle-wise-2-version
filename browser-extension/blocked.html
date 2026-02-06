@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CycleWise Safety Mode - Trading Blocked</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    
+    .container {
+      background: white;
+      border-radius: 20px;
+      padding: 60px 40px;
+      max-width: 600px;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    
+    .shield-icon {
+      width: 100px;
+      height: 100px;
+      margin: 0 auto 30px;
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: pulse 2s infinite;
+    }
+    
+    .shield-icon svg {
+      width: 50px;
+      height: 50px;
+      color: white;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+    
+    h1 {
+      font-size: 32px;
+      color: #1a202c;
+      margin-bottom: 20px;
+      font-weight: 700;
+    }
+    
+    p {
+      font-size: 18px;
+      color: #4a5568;
+      line-height: 1.6;
+      margin-bottom: 30px;
+    }
+    
+    .blocked-url {
+      background: #f7fafc;
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 15px;
+      margin: 20px 0;
+      font-family: monospace;
+      font-size: 14px;
+      color: #2d3748;
+      word-break: break-all;
+    }
+    
+    .info-box {
+      background: #fef5e7;
+      border-left: 4px solid #f39c12;
+      padding: 20px;
+      margin: 30px 0;
+      text-align: left;
+      border-radius: 8px;
+    }
+    
+    .info-box h3 {
+      color: #d68910;
+      margin-bottom: 10px;
+      font-size: 16px;
+    }
+    
+    .info-box p {
+      color: #7d6608;
+      font-size: 14px;
+      margin-bottom: 0;
+    }
+    
+    .actions {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      margin-top: 30px;
+    }
+    
+    .btn {
+      padding: 14px 28px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.3s;
+      text-decoration: none;
+      display: inline-block;
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+    }
+    
+    .btn-secondary {
+      background: #e2e8f0;
+      color: #2d3748;
+    }
+    
+    .btn-secondary:hover {
+      background: #cbd5e0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="shield-icon">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.618 5.984A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016zM12 9v2m0 4h.01" />
+      </svg>
+    </div>
+    
+    <h1>🛡️ Safety Mode Active</h1>
+    
+    <p>
+      CycleWise Trades has blocked this trading platform to protect you during your sensitive cycle phase.
+    </p>
+    
+    <div class="blocked-url" id="blockedUrl">
+      Loading...
+    </div>
+    
+    <div class="info-box">
+      <h3>💡 Why am I seeing this?</h3>
+      <p>
+        You've enabled Safety Mode in CycleWise Trades to prevent impulsive trading during PMS or other high-risk phases. 
+        This is protecting your account and trading discipline.
+      </p>
+    </div>
+    
+    <div class="actions">
+      <a href="http://localhost:8081" class="btn btn-primary" target="_blank">
+        Open CycleWise Dashboard
+      </a>
+      <button onclick="goBack()" class="btn btn-secondary">
+        Go Back
+      </button>
+    </div>
+  </div>
+  
+  <script>
+    // Get blocked URL from query parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    const blockedUrl = urlParams.get('blocked');
+    
+    if (blockedUrl) {
+      document.getElementById('blockedUrl').textContent = blockedUrl;
+    }
+    
+    function goBack() {
+      window.history.back();
+    }
+  </script>
+</body>
+</html>

@@ -1,9 +1,14 @@
 import { motion } from "framer-motion";
-import { Plus, Filter, Download, Upload, TrendingUp, TrendingDown, Search, CheckCircle, AlertCircle } from "lucide-react";
+import { Plus, Filter, Download, Upload, TrendingUp, TrendingDown, Search, CheckCircle, AlertCircle, Lightbulb, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useEffect, useState, lazy, Suspense, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { useSubscription } from "@/hooks/use-subscription";
 const QuickTradeEntry = lazy(() => import("@/components/QuickTradeEntry").then((m) => ({ default: m.QuickTradeEntry })));
 import { useLocation, Link, useNavigate } from "react-router-dom";
 
@@ -192,6 +197,8 @@ const saveImportedTrades = (newTrades: any[]) => {
 
 export default function TradeJournal() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { hasFeature } = useSubscription();
   const params = new URLSearchParams(location.search);
   const dateFilter = params.get("date") || "";
   const newOpen = params.get("new") === "1";
@@ -202,9 +209,25 @@ export default function TradeJournal() {
   const [searchQuery, setSearchQuery] = useState("");
   const [trades, setTrades] = useState<any[]>([]);
   const [importing, setImporting] = useState(false);
-  const navigate = useNavigate();
+  const [filterOpen, setFilterOpen] = useState(false);
+  
+  // Filter states
+  const [resultFilter, setResultFilter] = useState<string>("");
+  const [directionFilter, setDirectionFilter] = useState<string>("");
+  const [cyclePhaseFilter, setCyclePhaseFilter] = useState<string>("");
+  const [minR, setMinR] = useState<string>("");
+  const [maxR, setMaxR] = useState<string>("");
+  const [dateFrom, setDateFrom] = useState<string>("");
+  const [dateTo, setDateTo] = useState<string>("");
+  
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+
+  // Get today's date for display
+  const today = new Date();
+  const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  const weekDayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const currentDayLabel = `${weekDayNames[today.getDay()]}, ${monthNames[today.getMonth()]} ${today.getDate()}`;
 
   // Export trades as CSV
   const handleExport = () => {
@@ -264,7 +287,28 @@ export default function TradeJournal() {
       (trade.strategy || '').toLowerCase().includes(searchQuery.toLowerCase())
     )
     .filter((trade: any) => (strategyFilter ? trade.strategy === strategyFilter : true))
-    .filter((trade: any) => (dateFilter ? trade.date === dateFilter : true));
+    .filter((trade: any) => (dateFilter ? trade.date === dateFilter : true))
+    .filter((trade: any) => (resultFilter ? trade.result === resultFilter : true))
+    .filter((trade: any) => (directionFilter ? trade.direction === directionFilter : true))
+    .filter((trade: any) => (cyclePhaseFilter ? trade.cyclePhase === cyclePhaseFilter : true))
+    .filter((trade: any) => {
+      if (minR && trade.rMultiple != null) return trade.rMultiple >= parseFloat(minR);
+      return true;
+    })
+    .filter((trade: any) => {
+      if (maxR && trade.rMultiple != null) return trade.rMultiple <= parseFloat(maxR);
+      return true;
+    })
+    .filter((trade: any) => {
+      if (dateFrom && trade.date) return trade.date >= dateFrom;
+      return true;
+    })
+    .filter((trade: any) => {
+      if (dateTo && trade.date) return trade.date <= dateTo;
+      return true;
+    });
+  
+  const activeFiltersCount = [resultFilter, directionFilter, cyclePhaseFilter, minR, maxR, dateFrom, dateTo].filter(Boolean).length;
 
   const getResultBadge = (result: string, pnl: number) => {
     const styles = {
@@ -296,6 +340,7 @@ export default function TradeJournal() {
           <div>
             <h1 className="font-serif text-2xl font-bold text-foreground lg:text-3xl">Trade Journal</h1>
             <p className="mt-1 text-muted-foreground">Track and analyze your trading performance</p>
+            <p className="mt-2 text-sm font-medium text-primary">{currentDayLabel}</p>
           </div>
           <div className="flex gap-3">
             <input
@@ -361,24 +406,36 @@ export default function TradeJournal() {
 
         {/* Stats Row */}
         <div className="mb-6 grid gap-4 sm:grid-cols-4">
-          {[
-            { label: "Total Trades", value: "147", trend: "+12 this month" },
-            { label: "Win Rate", value: "68%", trend: "+5% vs last month" },
-            { label: "Total P&L", value: "$12,450", trend: "+$2,847 this month" },
-            { label: "Best R-Multiple", value: "3.2R", trend: "ICT Strategy" },
-          ].map((stat, i) => (
-            <motion.div
-              key={stat.label}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.1 }}
-              className="rounded-2xl bg-card p-5 shadow-card"
-            >
-              <p className="text-sm text-muted-foreground">{stat.label}</p>
-              <p className="mt-1 text-2xl font-bold text-foreground">{stat.value}</p>
-              <p className="mt-1 text-xs text-muted-foreground">{stat.trend}</p>
-            </motion.div>
-          ))}
+          {(() => {
+            const totalTrades = trades.length;
+            const wins = trades.filter(t => t.result === 'win').length;
+            const losses = trades.filter(t => t.result === 'loss').length;
+            const winRate = totalTrades > 0 ? ((wins / totalTrades) * 100).toFixed(0) : 0;
+            const totalPnL = trades.reduce((sum, t) => sum + (t.pnl || 0), 0);
+            const bestR = trades.reduce((max, t) => Math.max(max, t.rMultiple || 0), 0);
+            const bestRStrategy = trades.find(t => t.rMultiple === bestR)?.strategy || '—';
+            
+            const stats = [
+              { label: "Total Trades", value: totalTrades.toString(), trend: `${wins}W / ${losses}L` },
+              { label: "Win Rate", value: `${winRate}%`, trend: totalTrades > 0 ? `${wins} wins of ${totalTrades} trades` : 'No trades yet' },
+              { label: "Total P&L", value: `$${totalPnL.toLocaleString()}`, trend: totalPnL >= 0 ? '↑ Profit' : '↓ Loss' },
+              { label: "Best R-Multiple", value: bestR > 0 ? `${bestR.toFixed(1)}R` : '—', trend: bestR > 0 ? bestRStrategy : 'No R data' },
+            ];
+            
+            return stats.map((stat, i) => (
+              <motion.div
+                key={stat.label}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.1 }}
+                className="rounded-2xl bg-card p-5 shadow-card"
+              >
+                <p className="text-sm text-muted-foreground">{stat.label}</p>
+                <p className="mt-1 text-2xl font-bold text-foreground">{stat.value}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{stat.trend}</p>
+              </motion.div>
+            ));
+          })()}
         </div>
 
         {newOpen && (
@@ -471,10 +528,136 @@ export default function TradeJournal() {
               </Link>
             </div>
           )}
-          <Button variant="outline" size="sm">
-            <Filter className="h-4 w-4" />
-            Filters
-          </Button>
+          <Popover open={filterOpen} onOpenChange={setFilterOpen}>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className="relative">
+                <Filter className="h-4 w-4" />
+                Filters
+                {activeFiltersCount > 0 && (
+                  <Badge variant="destructive" className="ml-2 px-1.5 py-0 text-xs">
+                    {activeFiltersCount}
+                  </Badge>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-80" align="end">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-semibold">Filter Trades</h4>
+                  {activeFiltersCount > 0 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setResultFilter("");
+                        setDirectionFilter("");
+                        setCyclePhaseFilter("");
+                        setMinR("");
+                        setMaxR("");
+                        setDateFrom("");
+                        setDateTo("");
+                      }}
+                    >
+                      Clear all
+                    </Button>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Result</Label>
+                  <Select value={resultFilter} onValueChange={setResultFilter}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="All results" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All results</SelectItem>
+                      <SelectItem value="win">Win</SelectItem>
+                      <SelectItem value="loss">Loss</SelectItem>
+                      <SelectItem value="breakeven">Breakeven</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Direction</Label>
+                  <Select value={directionFilter} onValueChange={setDirectionFilter}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="All directions" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All directions</SelectItem>
+                      <SelectItem value="long">Long</SelectItem>
+                      <SelectItem value="short">Short</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {hasFeature('advanced_filters') && (
+                  <>
+                <div className="space-y-2">
+                  <Label>Cycle Phase</Label>
+                  <Select value={cyclePhaseFilter} onValueChange={setCyclePhaseFilter}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="All phases" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All phases</SelectItem>
+                      <SelectItem value="menstruation">Menstruation</SelectItem>
+                      <SelectItem value="follicular">Follicular</SelectItem>
+                      <SelectItem value="ovulation">Ovulation</SelectItem>
+                      <SelectItem value="luteal">Luteal</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>R-Multiple Range</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      type="number"
+                      placeholder="Min R"
+                      value={minR}
+                      onChange={(e) => setMinR(e.target.value)}
+                      step="0.1"
+                    />
+                    <Input
+                      type="number"
+                      placeholder="Max R"
+                      value={maxR}
+                      onChange={(e) => setMaxR(e.target.value)}
+                      step="0.1"
+                    />
+                  </div>
+                </div>
+                  </>
+                )}
+
+                {!hasFeature('advanced_filters') && (
+                  <div className="col-span-2 p-3 rounded-lg bg-muted/50 text-center">
+                    <p className="text-xs text-muted-foreground">
+                      Unlock Cycle Phase and R-Multiple filters with <button type="button" className="underline font-medium" onClick={() => navigate('/#pricing')}>Premium</button>
+                    </p>
+                  </div>
+                )}
+
+                <div className="space-y-2">
+                  <Label>Date Range</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      type="date"
+                      value={dateFrom}
+                      onChange={(e) => setDateFrom(e.target.value)}
+                    />
+                    <Input
+                      type="date"
+                      value={dateTo}
+                      onChange={(e) => setDateTo(e.target.value)}
+                    />
+                  </div>
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
         </div>
 
         {/* Trades Table */}
@@ -483,6 +666,23 @@ export default function TradeJournal() {
           animate={{ opacity: 1, y: 0 }}
           className="rounded-2xl bg-card shadow-card overflow-hidden"
         >
+          {filteredTrades.length === 0 ? (
+            <div className="text-center p-12">
+              <div className="mx-auto w-fit rounded-full bg-primary/10 p-6">
+                <Lightbulb className="h-12 w-12 text-primary" />
+              </div>
+              <h3 className="mt-4 font-serif text-xl font-semibold text-foreground">No Trades Yet</h3>
+              <p className="mt-2 text-sm text-muted-foreground max-w-md mx-auto">
+                {searchQuery ? "No trades match your search criteria. Try a different search term." : "Start building your trading journal by logging your first trade."}
+              </p>
+              {!searchQuery && (
+                <Button onClick={() => navigate('/new-trade')} className="mt-4 gap-2">
+                  <Plus className="h-4 w-4" />
+                  Log Your First Trade
+                </Button>
+              )}
+            </div>
+          ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
@@ -574,6 +774,7 @@ export default function TradeJournal() {
               </tbody>
             </table>
           </div>
+          )}
         </motion.div>
       </motion.div>
     </main>

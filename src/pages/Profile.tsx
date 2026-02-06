@@ -1,5 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+import Cropper from "react-easy-crop";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
@@ -8,8 +10,66 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Slider } from "@/components/ui/slider";
+import { RankBadge } from "@/components/RankBadge";
+import { getGamificationStats } from "@/lib/supabaseHelpers";
+
+// Helper function to create cropped image
+const createImage = (url: string): Promise<HTMLImageElement> =>
+  new Promise((resolve, reject) => {
+    const image = new Image();
+    image.addEventListener("load", () => resolve(image));
+    image.addEventListener("error", (error) => reject(error));
+    image.src = url;
+  });
+
+const getCroppedImg = async (imageSrc: string, pixelCrop: any): Promise<Blob> => {
+  const image = await createImage(imageSrc);
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+
+  if (!ctx) throw new Error("No 2d context");
+
+  // Limit max size to 1024px for better performance and smaller file size
+  const maxSize = 1024;
+  let width = pixelCrop.width;
+  let height = pixelCrop.height;
+
+  if (width > maxSize || height > maxSize) {
+    if (width > height) {
+      height = (height / width) * maxSize;
+      width = maxSize;
+    } else {
+      width = (width / height) * maxSize;
+      height = maxSize;
+    }
+  }
+
+  canvas.width = width;
+  canvas.height = height;
+
+  ctx.drawImage(
+    image,
+    pixelCrop.x,
+    pixelCrop.y,
+    pixelCrop.width,
+    pixelCrop.height,
+    0,
+    0,
+    width,
+    height
+  );
+
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (blob) resolve(blob);
+      else reject(new Error("Canvas is empty"));
+    }, "image/jpeg", 0.85); // 85% quality for good compression
+  });
+};
 
 export default function Profile() {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -27,25 +87,63 @@ export default function Profile() {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
+  // Cropper states
+  const [showCropper, setShowCropper] = useState(false);
+  const [imageToCrop, setImageToCrop] = useState<string | null>(null);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+
+  // Preview states
+  const [showPreview, setShowPreview] = useState(false);
+
+  // Gamification stats
+  const [gamificationStats, setGamificationStats] = useState<any>(null);
+
+  const onCropComplete = useCallback((croppedArea: any, croppedAreaPixels: any) => {
+    setCroppedAreaPixels(croppedAreaPixels);
+  }, []);
+
+  // Helper to ensure valid session before API calls
+  const ensureValidSession = async () => {
+    const { data: { session }, error } = await supabase.auth.refreshSession();
+    if (error || !session) {
+      await supabase.auth.signOut();
+      window.location.href = '/login';
+      throw new Error('Session expired');
+    }
+    return session;
+  };
+
   useEffect(() => {
     let mounted = true;
     (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      
       if (!mounted) return;
+      
+      if (!session) {
+        window.location.href = '/login';
+        return;
+      }
+
+      const user = session.user;
       if (user) {
-        const metadata = user.user_metadata as {
-          name?: string;
-          phone?: string;
-          avatar_url?: string;
-          timezone?: string;
-          experienceLevel?: string;
-        } | undefined;
+        const metadata = user.user_metadata as any;
+        setEmail(user.email || "");
         setName(metadata?.name || "");
         setPhone(metadata?.phone || "");
         setAvatarUrl(metadata?.avatar_url || null);
-        setEmail(user.email || "");
         setTimezone(metadata?.timezone || "");
         setExperienceLevel(metadata?.experienceLevel || "");
+
+        // Load gamification stats
+        try {
+          const stats = await getGamificationStats(user.id);
+          setGamificationStats(stats);
+        } catch (error) {
+          console.error('Failed to load gamification stats:', error);
+        }
       }
     })();
     return () => { mounted = false; };
@@ -62,41 +160,65 @@ export default function Profile() {
     }
   }, [timezone]);
 
-  const uploadAvatar = async (file: File) => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      reader.addEventListener("load", () => {
+        setImageToCrop(reader.result as string);
+        setShowCropper(true);
+      });
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleCropSave = async () => {
+    if (!imageToCrop || !croppedAreaPixels) return;
+    
     setLoading(true);
+    toast({ title: "Processing...", description: "Compressing and uploading image" });
+    
     try {
-      const userId = (await supabase.auth.getUser()).data.user?.id;
+      const session = await ensureValidSession();
+      const croppedBlob = await getCroppedImg(imageToCrop, croppedAreaPixels);
+      const file = new File([croppedBlob], "avatar.jpg", { type: "image/jpeg" });
+      
+      const userId = session.user.id;
       if (!userId) throw new Error("Not authenticated");
 
-      // Try to upload to 'avatars' bucket
-      const filePath = `${userId}/avatar-${Date.now()}.png`;
-      const { error: uploadError, data: uploadData } = await supabase.storage
+      // Convert to data URL for immediate display
+      const reader = new FileReader();
+      const dataUrlPromise = new Promise<string>((resolve) => {
+        reader.onload = () => resolve(String(reader.result));
+        reader.readAsDataURL(file);
+      });
+      const dataUrl = await dataUrlPromise;
+      
+      // Update UI immediately
+      setAvatarUrl(dataUrl);
+      setShowCropper(false);
+      setImageToCrop(null);
+      
+      // Try to upload to bucket
+      const filePath = `${userId}/avatar-${Date.now()}.jpg`;
+      const { data: uploadData } = await supabase.storage
         .from("avatars")
         .upload(filePath, file, { upsert: true });
 
-      if (uploadError) {
-        // Fallback: read as data URL and save in metadata
-        const reader = new FileReader();
-        reader.onload = async () => {
-          const dataUrl = String(reader.result);
-          await supabase.auth.updateUser({ data: { avatar_url: dataUrl } });
-          setAvatarUrl(dataUrl);
-          toast({ title: "Avatar saved", description: "Profile picture updated." });
-          setLoading(false);
-        };
-        reader.readAsDataURL(file);
-        return;
+      let finalUrl = dataUrl;
+      if (uploadData) {
+        const { data: publicData } = supabase.storage.from("avatars").getPublicUrl(uploadData.path);
+        finalUrl = (publicData as any)?.publicUrl || dataUrl;
       }
-
-      // Get public URL
-      const { data: publicData } = supabase.storage.from("avatars").getPublicUrl(uploadData.path);
-      const publicUrl = (publicData as any)?.publicUrl;
-      await supabase.auth.updateUser({ data: { avatar_url: publicUrl } });
-      setAvatarUrl(publicUrl);
-      toast({ title: "Avatar uploaded", description: "Profile picture updated." });
+      
+      // Update with final URL
+      await supabase.auth.updateUser({ data: { avatar_url: finalUrl } });
+      if (finalUrl !== dataUrl) setAvatarUrl(finalUrl);
+      
+      toast({ title: "Avatar saved", description: "Profile picture updated." });
     } catch (err) {
       console.error(err);
-      toast({ title: "Upload failed", description: String(err) });
+      toast({ title: "Upload failed", description: String(err), variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -104,32 +226,28 @@ export default function Profile() {
 
   const saveProfile = async () => {
     setLoading(true);
+    toast({ title: "Saving...", description: "Updating your profile" });
+    
     try {
-      // Prüfe, ob Session/Token noch gültig ist
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        toast({ title: "Session expired", description: "Please log in again to update your profile." });
-        setLoading(false);
-        return;
-      }
-      // Nur user_metadata aktualisieren, außer Passwort explizit gesetzt
-      const update: Record<string, unknown> = {
-        data: { name, phone, timezone, experienceLevel },
+      await ensureValidSession();
+      
+      const updateData: any = {
+        data: { name, phone, timezone, experienceLevel }
       };
-      if (password) (update as any).password = password;
+      if (password) updateData.password = password;
 
-      const { error } = await supabase.auth.updateUser(update as any);
+      const { error } = await supabase.auth.updateUser(updateData);
       if (error) throw error;
-      toast({ title: "Profile saved", description: "Your profile was updated." });
+
+      toast({ title: "Profile saved", description: "Your profile was updated successfully." });
       setPassword("");
-    } catch (err: unknown) {
-      console.error(err);
-      const msg = err instanceof Error ? err.message : String(err);
-      if (msg.includes('Bearer token')) {
-        toast({ title: "Session expired", description: "Please log in again to update your profile." });
-      } else {
-        toast({ title: "Save failed", description: msg });
-      }
+      
+      setTimeout(() => {
+        navigate("/dashboard");
+      }, 500);
+    } catch (err: any) {
+      console.error('saveProfile error:', err);
+      toast({ title: "Save failed", description: err.message || String(err), variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -138,9 +256,14 @@ export default function Profile() {
   return (
     <main className="pb-24 pt-20 lg:pl-64 lg:pt-8">
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mx-auto max-w-3xl p-4 lg:p-8">
-        <div className="mb-6">
-          <h1 className="font-serif text-2xl font-bold text-foreground lg:text-3xl">Your Profile</h1>
-          <p className="mt-1 text-muted-foreground">Manage your account details</p>
+        <div className="mb-6 flex items-center justify-between">
+          <div>
+            <h1 className="font-serif text-2xl font-bold text-foreground lg:text-3xl">Your Profile</h1>
+            <p className="mt-1 text-muted-foreground">Manage your account details</p>
+          </div>
+          {gamificationStats && (
+            <RankBadge rank={gamificationStats.current_rank} size="lg" />
+          )}
         </div>
 
         <Card className="rounded-2xl bg-card p-6 shadow-card">
@@ -149,7 +272,10 @@ export default function Profile() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center gap-6">
-              <Avatar className="h-24 w-24">
+              <Avatar 
+                className="h-24 w-24 cursor-pointer transition-transform hover:scale-105" 
+                onClick={() => avatarUrl && setShowPreview(true)}
+              >
                 {avatarUrl ? (
                   <AvatarImage src={avatarUrl} alt="avatar" />
                 ) : (
@@ -166,17 +292,105 @@ export default function Profile() {
                     type="file"
                     accept="image/*"
                     className="hidden"
-                    onChange={(e) => e.target.files && uploadAvatar(e.target.files[0])}
+                    onChange={handleFileSelect}
                   />
 
                   <Button variant="outline" onClick={() => fileInputRef.current?.click()} className="px-4 py-2">
                     Choose file
                   </Button>
 
-                  <span className="text-sm text-muted-foreground">PNG, JPG — max 2MB</span>
+                  <span className="text-sm text-muted-foreground">PNG, JPG — wird automatisch komprimiert</span>
                 </div>
+                {avatarUrl && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => setShowPreview(true)}
+                    className="mt-2 w-fit text-xs"
+                  >
+                    Click avatar to view full size
+                  </Button>
+                )}
               </div>
             </div>
+
+            {/* Image Cropper Dialog */}
+            <Dialog open={showCropper} onOpenChange={(open) => {
+              setShowCropper(open);
+              if (!open) {
+                setImageToCrop(null);
+                setCrop({ x: 0, y: 0 });
+                setZoom(1);
+              }
+            }}>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle>Crop your photo</DialogTitle>
+                  <DialogDescription>
+                    Adjust the position and zoom to crop your photo
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="relative h-96 w-full">
+                  {imageToCrop && (
+                    <Cropper
+                      image={imageToCrop}
+                      crop={crop}
+                      zoom={zoom}
+                      aspect={1}
+                      cropShape="round"
+                      showGrid={false}
+                      onCropChange={setCrop}
+                      onCropComplete={onCropComplete}
+                      onZoomChange={setZoom}
+                    />
+                  )}
+                </div>
+                <div className="mt-4 space-y-2">
+                  <label className="text-sm font-medium">Zoom</label>
+                  <Slider
+                    value={[zoom]}
+                    onValueChange={(value) => setZoom(value[0])}
+                    min={1}
+                    max={3}
+                    step={0.1}
+                    className="w-full"
+                  />
+                </div>
+                <DialogFooter className="mt-4">
+                  <Button 
+                    variant="ghost" 
+                    onClick={() => {
+                      setShowCropper(false);
+                      setImageToCrop(null);
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button onClick={handleCropSave} disabled={loading}>
+                    {loading ? "Saving..." : "Save Photo"}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
+            {/* Image Preview Dialog */}
+            <Dialog open={showPreview} onOpenChange={setShowPreview}>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle>Profile Photo</DialogTitle>
+                </DialogHeader>
+                <div className="flex items-center justify-center p-4">
+                  <img 
+                    src={avatarUrl || ""} 
+                    alt="Profile preview" 
+                    className="max-h-[70vh] w-auto rounded-lg object-contain"
+                  />
+                </div>
+                <DialogFooter>
+                  <Button onClick={() => setShowPreview(false)}>Close</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
 
             <div>
               <label className="text-sm font-medium text-foreground">Display Name</label>

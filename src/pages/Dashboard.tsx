@@ -3,8 +3,14 @@ import { motion } from "framer-motion";
 import { CyclePhaseIndicator } from "@/components/CyclePhaseIndicator";
 import { SafetyModeToggle } from "@/components/SafetyModeToggle";
 import { PerformanceCard } from "@/components/PerformanceCard";
+import { useWeeklyInsightGeneration } from "@/hooks/use-weekly-insights";
+import { useXPNotifications } from "@/hooks/use-xp-notifications";
+import MigrationDialog from "@/components/MigrationDialog";
+import DashboardTour from "@/components/DashboardTour";
+import QuickStartChecklist from "@/components/QuickStartChecklist";
+import { XPBar } from "@/components/XPBar";
+import { StreakDisplay } from "@/components/StreakDisplay";
 const AIInsightCard = lazy(() => import("@/components/AIInsightCard").then((m) => ({ default: m.AIInsightCard })));
-const QuickTradeEntry = lazy(() => import("@/components/QuickTradeEntry").then((m) => ({ default: m.QuickTradeEntry })));
 const RecentTradesTable = lazy(() => import("@/components/RecentTradesTable").then((m) => ({ default: m.RecentTradesTable })));
 const LeaderboardPreview = lazy(() => import("@/components/LeaderboardPreview").then((m) => ({ default: m.LeaderboardPreview })));
 const PropFirmSummary = lazy(() => import("@/components/PropFirmSummary").then((m) => ({ default: m.PropFirmSummary })));
@@ -12,6 +18,7 @@ import { Bell, User } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { updateLoginStreak } from "@/lib/supabaseHelpers";
 
 // Mock data for demonstration
 const rawMockTrades = [
@@ -59,8 +66,18 @@ const loadAllStoredTrades = () => {
 };
 
 export default function Dashboard() {
-  const [safetyModeEnabled, setSafetyModeEnabled] = useState(false);
+  const [safetyModeEnabled, setSafetyModeEnabled] = useState(() => {
+    return localStorage.getItem('cw_safety_mode_enabled') === 'true';
+  });
   const [userName, setUserName] = useState<string>("");
+
+  // Save Safety Mode to localStorage for browser extension
+  useEffect(() => {
+    localStorage.setItem('cw_safety_mode_enabled', safetyModeEnabled.toString());
+  }, [safetyModeEnabled]);
+
+  // Enable automatic weekly AI insights generation
+  useWeeklyInsightGeneration();
 
   const [avgCycleLength, setAvgCycleLength] = useState<number>(28);
   const [lastPeriodStart, setLastPeriodStart] = useState<string | null>(null);
@@ -71,16 +88,28 @@ export default function Dashboard() {
   const [storedTrades, setStoredTrades] = useState<any[]>([]);
   const navigate = useNavigate();
 
+  // Enable XP notifications
+  useXPNotifications();
+
   useEffect(() => {
     // Load user name from Supabase
     const loadUserName = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        // Hole den Namen, wie er bei der Registrierung gesetzt wurde
+        // Get the name as set during registration
         if (user?.user_metadata?.name) {
           setUserName(user.user_metadata.name);
         } else {
           setUserName("");
+        }
+
+        // Update login streak on dashboard load
+        if (user) {
+          try {
+            await updateLoginStreak(user.id);
+          } catch (error) {
+            console.error('Failed to update login streak:', error);
+          }
         }
       } catch (e) {
         setUserName("");
@@ -141,7 +170,8 @@ export default function Dashboard() {
       const diff = Math.floor((today.getTime() - last.getTime()) / msPerDay);
       const cycleDay = (((diff % avg) + avg) % avg) + 1;
       setCurrentCycleDay(cycleDay);
-      // Berechne die Phase für den aktuellen Zyklustag
+      
+      // Calculate the phase for the current cycle day
       const follicularEnd = Math.min(per + 7, avg);
       const ovulationEnd = Math.min(per + 11, avg);
       let phase: "menstruation" | "follicular" | "ovulation" | "luteal" = "menstruation";
@@ -174,7 +204,7 @@ export default function Dashboard() {
       const p = Number(t.pnl) || 0;
       rSum += r;
       pnl += p;
-      const name = t.strategy || 'Quick';
+      const name = t.strategy || 'Unknown';
       if (!map[name]) map[name] = { count: 0, wins: 0, totalR: 0, pnl: 0 };
       map[name].count += 1;
       if (t.result === 'win') map[name].wins += 1;
@@ -205,9 +235,11 @@ export default function Dashboard() {
   };
 
   return (
-    <main className="pb-24 pt-20 lg:pl-64 lg:pt-8">
+    <main className="min-h-screen bg-background pb-24 pt-20 lg:pl-64 lg:pt-8">
+      <MigrationDialog />
+      <DashboardTour />
       <motion.div variants={containerVariants} initial="hidden" animate="visible" className="mx-auto max-w-7xl p-4 lg:p-8">
-        <motion.header variants={itemVariants} className="mb-8 flex items-center justify-between">
+        <motion.header variants={itemVariants} className="dashboard-header mb-8 flex items-center justify-between">
           <div>
             <h1 className="font-serif text-2xl font-bold text-foreground lg:text-3xl">Welcome back, {userName ? userName : "Trader"}</h1>
             <p className="mt-1 text-muted-foreground">Let's make today profitable and aligned with your body.</p>
@@ -222,6 +254,15 @@ export default function Dashboard() {
             </Link>
           </div>
         </motion.header>
+
+        {/* Quick Start Checklist */}
+        <QuickStartChecklist />
+
+        {/* XP & Streak Section */}
+        <motion.div variants={itemVariants} className="mb-6 grid gap-4 lg:grid-cols-2 xp-bar">
+          <XPBar />
+          <StreakDisplay />
+        </motion.div>
 
         <div className="grid gap-6 lg:grid-cols-3">
           <motion.div variants={itemVariants} className="space-y-6 lg:col-span-2">
@@ -261,8 +302,8 @@ export default function Dashboard() {
               if (!todayObj) {
                 return (
                   <div className="rounded-2xl bg-card p-6 shadow-card text-center">
-                    <div className="text-lg font-semibold mb-2">Keine Periodendaten gefunden</div>
-                    <div className="text-muted-foreground mb-2">Bitte logge mindestens einen Periodentag im Kalender oder Journal, damit die Zyklusphase berechnet werden kann.</div>
+                    <div className="text-lg font-semibold mb-2">No Period Data Found</div>
+                    <div className="text-muted-foreground mb-2">Please log at least one period day in the calendar or journal so the cycle phase can be calculated.</div>
                   </div>
                 );
               }
@@ -353,7 +394,8 @@ export default function Dashboard() {
           </motion.div>
 
           <motion.div variants={itemVariants} className="space-y-6">
-            <SafetyModeToggle enabled={safetyModeEnabled} onToggle={setSafetyModeEnabled} suggested={false} />
+            {/* Safety Mode Toggle - Hidden for initial launch, uncomment to re-enable */}
+            {/* <SafetyModeToggle enabled={safetyModeEnabled} onToggle={setSafetyModeEnabled} suggested={false} /> */}
 
             <motion.div
               initial={{ opacity: 0, y: 20 }}

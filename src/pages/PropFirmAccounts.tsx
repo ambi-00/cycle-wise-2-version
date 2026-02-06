@@ -3,6 +3,7 @@ import { Building2, Plus, TrendingUp, TrendingDown, DollarSign, Activity, Refres
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import PropFirmConnect from "@/components/PropFirmConnect";
+import { FeatureGuard } from "@/components/FeatureGuard";
 
 type PropFirmAccount = {
   id: string;
@@ -88,6 +89,7 @@ export default function PropFirmAccounts() {
   });
 
   return (
+    <FeatureGuard feature="propfirm_integration" requiredTier="pro">
     <main className="pb-24 pt-20 lg:pl-64 lg:pt-8">
       <motion.div
         initial={{ opacity: 0 }}
@@ -98,11 +100,11 @@ export default function PropFirmAccounts() {
         <div className="mb-8 flex items-center justify-between">
           <div>
             <h1 className="font-serif text-2xl font-bold text-foreground lg:text-3xl flex items-center gap-3">
-              <Building2 className="h-8 w-8 text-blue-500" />
+              <Building2 className="h-8 w-8 text-primary" />
               Prop Firm Accounts
             </h1>
             <p className="mt-1 text-muted-foreground">
-              Verbinde und verwalte alle deine Prop Firm Trading-Accounts
+              Connect and manage all your Prop Firm trading accounts
             </p>
           </div>
         </div>
@@ -117,8 +119,8 @@ export default function PropFirmAccounts() {
             {/* Total Balance */}
             <div className="rounded-2xl bg-card p-5 shadow-card">
               <div className="flex items-center gap-3 mb-3">
-                <div className="rounded-xl bg-blue-500/20 p-2.5">
-                  <DollarSign className="h-5 w-5 text-blue-500" />
+                <div className="rounded-xl bg-primary/20 p-2.5">
+                  <DollarSign className="h-5 w-5 text-primary" />
                 </div>
                 <span className="text-sm text-muted-foreground">Gesamt Balance</span>
               </div>
@@ -133,15 +135,15 @@ export default function PropFirmAccounts() {
             {/* Total Equity */}
             <div className="rounded-2xl bg-card p-5 shadow-card">
               <div className="flex items-center gap-3 mb-3">
-                <div className="rounded-xl bg-purple-500/20 p-2.5">
-                  <Activity className="h-5 w-5 text-purple-500" />
+                <div className="rounded-xl bg-secondary/20 p-2.5">
+                  <Activity className="h-5 w-5 text-secondary-foreground" />
                 </div>
                 <span className="text-sm text-muted-foreground">Gesamt Equity</span>
               </div>
               <p className="text-2xl font-bold text-foreground">
                 ${totals.totalEquity.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
               </p>
-              <p className={`text-xs mt-1 ${totals.totalEquity >= totals.totalBalance ? 'text-green-600' : 'text-red-600'}`}>
+              <p className={`text-xs mt-1 ${totals.totalEquity >= totals.totalBalance ? 'text-accent-foreground' : 'text-destructive'}`}>
                 {totals.totalEquity >= totals.totalBalance ? '📈' : '📉'} {((totals.totalEquity / totals.totalBalance - 1) * 100).toFixed(2)}% vom Start
               </p>
             </div>
@@ -149,16 +151,16 @@ export default function PropFirmAccounts() {
             {/* Daily P&L */}
             <div className="rounded-2xl bg-card p-5 shadow-card">
               <div className="flex items-center gap-3 mb-3">
-                <div className={`rounded-xl p-2.5 ${totals.totalDailyPnl >= 0 ? 'bg-green-500/20' : 'bg-red-500/20'}`}>
+                <div className={`rounded-xl p-2.5 ${totals.totalDailyPnl >= 0 ? 'bg-accent/20' : 'bg-destructive/20'}`}>
                   {totals.totalDailyPnl >= 0 ? (
-                    <TrendingUp className="h-5 w-5 text-green-500" />
+                    <TrendingUp className="h-5 w-5 text-accent-foreground" />
                   ) : (
-                    <TrendingDown className="h-5 w-5 text-red-500" />
+                    <TrendingDown className="h-5 w-5 text-destructive" />
                   )}
                 </div>
                 <span className="text-sm text-muted-foreground">Heute</span>
               </div>
-              <p className={`text-2xl font-bold ${totals.totalDailyPnl >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              <p className={`text-2xl font-bold ${totals.totalDailyPnl >= 0 ? 'text-accent-foreground' : 'text-destructive'}`}>
                 {totals.totalDailyPnl >= 0 ? '+' : ''}${totals.totalDailyPnl.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
               </p>
               <p className="text-xs text-muted-foreground mt-1">
@@ -169,8 +171,8 @@ export default function PropFirmAccounts() {
             {/* Total Trades */}
             <div className="rounded-2xl bg-card p-5 shadow-card">
               <div className="flex items-center gap-3 mb-3">
-                <div className="rounded-xl bg-orange-500/20 p-2.5">
-                  <RefreshCw className="h-5 w-5 text-orange-500" />
+                <div className="rounded-xl bg-muted/40 p-2.5">
+                  <RefreshCw className="h-5 w-5 text-muted-foreground" />
                 </div>
                 <span className="text-sm text-muted-foreground">Trades heute</span>
               </div>
@@ -178,7 +180,7 @@ export default function PropFirmAccounts() {
                 {totals.totalTrades}
               </p>
               <p className="text-xs text-muted-foreground mt-1">
-                über alle Accounts
+                across all accounts
               </p>
             </div>
           </motion.div>
@@ -200,29 +202,30 @@ export default function PropFirmAccounts() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="mt-8 rounded-2xl bg-gradient-to-br from-blue-500/10 to-purple-500/10 border border-blue-500/20 p-6"
+            className="mt-8 rounded-2xl bg-gradient-to-br from-primary/10 to-secondary/10 border border-primary/20 p-6"
           >
             <h3 className="font-semibold text-foreground mb-2">💡 So funktioniert's</h3>
             <div className="space-y-3 text-sm text-muted-foreground">
               <p>
-                <strong className="text-foreground">1. Prop Firm wählen</strong> - Suche deine Prop Firm in der Liste (FTMO, The5ers, E8, etc.)
+                <strong className="text-foreground">1. Choose Prop Firm</strong> - Find your prop firm in the list (FTMO, The5ers, E8, etc.)
               </p>
               <p>
-                <strong className="text-foreground">2. MT4/MT5 Daten eingeben</strong> - Kontonummer, Investor-Passwort und Server aus deiner Prop Firm E-Mail
+                <strong className="text-foreground">2. Enter MT4/MT5 Data</strong> - Account number, investor password, and server from your prop firm email
               </p>
               <p>
-                <strong className="text-foreground">3. Automatische Synchronisierung</strong> - Deine Trades werden automatisch importiert und analysiert
+                <strong className="text-foreground">3. Automatic Synchronization</strong> - Your trades will be automatically imported and analyzed
               </p>
             </div>
             
-            <div className="mt-4 p-3 rounded-lg bg-green-500/10 border border-green-500/20">
-              <p className="text-sm text-green-700 dark:text-green-400">
-                🔒 <strong>100% Sicher:</strong> Mit dem Investor-Passwort können wir nur lesen - niemals traden oder Geld abheben.
+            <div className="mt-4 p-3 rounded-lg bg-accent/10 border border-accent/20">
+              <p className="text-sm text-accent-foreground">
+                🔒 <strong>100% Secure:</strong> With the investor password we can only read - never trade or withdraw money.
               </p>
             </div>
           </motion.div>
         )}
       </motion.div>
     </main>
+    </FeatureGuard>
   );
 }

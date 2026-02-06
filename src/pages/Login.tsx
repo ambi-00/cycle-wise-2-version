@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,7 +18,7 @@ export default function Login() {
   const { toast } = useToast();
 
   // If already signed in, redirect to /dashboard
-  React.useEffect(() => {
+  useEffect(() => {
     let mounted = true;
     (async () => {
       const { data } = await supabase.auth.getSession();
@@ -73,14 +73,28 @@ export default function Login() {
                     e.preventDefault();
                     setLoading(true);
                     try {
+                      console.debug('Login: attempting signInWithPassword', { email });
                       const { data, error } = await supabase.auth.signInWithPassword({
                         email,
                         password,
                       });
+                      console.debug('Login: signInWithPassword result', { data, error });
+                      
                       if (error) throw error;
+                      
+                      // Verify session was stored
+                      const { data: { session: storedSession } } = await supabase.auth.getSession();
+                      console.debug('Login: session after login', { storedSession });
+                      
+                      if (!storedSession) {
+                        console.error('Login: session not stored after successful login!');
+                        throw new Error('Session not stored - please try again');
+                      }
+                      
                       toast({ title: "Logged in", description: "Welcome back!" });
                       navigate("/dashboard");
                     } catch (err: any) {
+                      console.error('Login failed:', err);
                       toast({ title: "Login failed", description: err.message || String(err) });
                     } finally {
                       setLoading(false);
@@ -109,6 +123,27 @@ export default function Login() {
                 <Button
                   variant="outline"
                   className="w-full flex items-center gap-3 py-5"
+                  onClick={async () => {
+                    setLoading(true);
+                    try {
+                      const { error } = await supabase.auth.signInWithOAuth({
+                        provider: 'google',
+                        options: { redirectTo: `${window.location.origin}/dashboard` },
+                      });
+                      if (error) throw error;
+                    } catch (err: any) {
+                      const isProviderDisabled = err.message?.includes('provider is not enabled');
+                      toast({ 
+                        title: 'Google sign-in failed', 
+                        description: isProviderDisabled 
+                          ? 'Google login is not enabled. Please enable it in Supabase Dashboard → Authentication → Providers'
+                          : err.message || String(err),
+                        variant: 'destructive'
+                      });
+                    } finally {
+                      setLoading(false);
+                    }
+                  }}
                 >
                   <FcGoogle className="text-xl" />
                   Continue with Google
@@ -117,6 +152,27 @@ export default function Login() {
                 <Button
                   variant="outline"
                   className="w-full flex items-center gap-3 py-5"
+                  onClick={async () => {
+                    setLoading(true);
+                    try {
+                      const { error } = await supabase.auth.signInWithOAuth({
+                        provider: 'apple',
+                        options: { redirectTo: `${window.location.origin}/dashboard` },
+                      });
+                      if (error) throw error;
+                    } catch (err: any) {
+                      const isProviderDisabled = err.message?.includes('provider is not enabled');
+                      toast({ 
+                        title: 'Apple sign-in failed', 
+                        description: isProviderDisabled 
+                          ? 'Apple login is not enabled. Please enable it in Supabase Dashboard → Authentication → Providers'
+                          : err.message || String(err),
+                        variant: 'destructive'
+                      });
+                    } finally {
+                      setLoading(false);
+                    }
+                  }}
                 >
                   <FaApple className="text-xl" />
                   Continue with Apple

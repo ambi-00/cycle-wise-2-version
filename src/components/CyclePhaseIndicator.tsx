@@ -22,14 +22,14 @@ const phaseConfig = {
     icon: Sun,
     label: "Follicular",
     color: "bg-cycle-follicular",
-    gradient: "from-emerald-400/20 to-teal-400/20",
+    gradient: "from-yellow-300/15 to-amber-200/15",
     description: "Energy rising phase",
   },
   ovulation: {
     icon: Sparkles,
     label: "Ovulation",
     color: "bg-cycle-ovulation",
-    gradient: "from-amber-400/20 to-yellow-400/20",
+    gradient: "from-emerald-300/15 to-teal-300/15",
     description: "Peak clarity phase",
   },
   luteal: {

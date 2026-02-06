@@ -46,8 +46,8 @@
 
     /* Cycle phase colors */
     --phase-menstruation: 0 70% 70%;
-    --phase-follicular: 160 50% 60%;
-    --phase-ovulation: 45 80% 65%;
+    --phase-follicular: 45 80% 65%;
+    --phase-ovulation: 160 50% 60%;
     --phase-luteal: 270 50% 70%;
 
     /* Gradients */
@@ -78,50 +78,50 @@
   }
 
   .dark {
-    --background: 340 20% 8%;
-    --foreground: 30 20% 95%;
+    --background: 340 20% 6%;
+    --foreground: 30 20% 98%;
 
-    --card: 340 18% 12%;
-    --card-foreground: 30 20% 95%;
+    --card: 340 18% 10%;
+    --card-foreground: 30 20% 98%;
 
-    --popover: 340 18% 12%;
-    --popover-foreground: 30 20% 95%;
+    --popover: 340 18% 10%;
+    --popover-foreground: 30 20% 98%;
 
-    --primary: 345 55% 65%;
-    --primary-foreground: 340 20% 10%;
+    --primary: 345 60% 70%;
+    --primary-foreground: 340 20% 8%;
 
-    --secondary: 270 25% 20%;
-    --secondary-foreground: 270 30% 85%;
+    --secondary: 270 30% 25%;
+    --secondary-foreground: 270 30% 95%;
 
-    --muted: 340 15% 18%;
-    --muted-foreground: 340 15% 65%;
+    --muted: 340 15% 16%;
+    --muted-foreground: 340 10% 75%;
 
-    --accent: 160 35% 25%;
-    --accent-foreground: 160 40% 90%;
+    --accent: 160 35% 30%;
+    --accent-foreground: 160 40% 95%;
 
-    --destructive: 0 55% 50%;
+    --destructive: 0 60% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 340 15% 20%;
-    --input: 340 15% 20%;
-    --ring: 345 55% 65%;
+    --border: 340 15% 18%;
+    --input: 340 15% 18%;
+    --ring: 345 60% 70%;
     
     /* Dark mode gradients */
-    --gradient-hero: linear-gradient(145deg, hsl(340 20% 10%) 0%, hsl(270 20% 12%) 50%, hsl(160 15% 10%) 100%);
+    --gradient-hero: linear-gradient(145deg, hsl(340 20% 8%) 0%, hsl(270 20% 10%) 50%, hsl(160 15% 8%) 100%);
     
-    /* Chart Colors */
-    --chart-1: 160 45% 50%;
-    --chart-2: 0 65% 55%;
-    --chart-3: 340 15% 50%;
+    /* Chart Colors - brighter for dark mode */
+    --chart-1: 160 50% 55%;
+    --chart-2: 0 70% 60%;
+    --chart-3: 340 20% 60%;
 
-    --sidebar-background: 340 18% 10%;
-    --sidebar-foreground: 30 20% 90%;
-    --sidebar-primary: 345 55% 65%;
-    --sidebar-primary-foreground: 340 20% 10%;
-    --sidebar-accent: 270 25% 18%;
-    --sidebar-accent-foreground: 270 30% 85%;
-    --sidebar-border: 340 15% 18%;
-    --sidebar-ring: 345 55% 65%;
+    --sidebar-background: 340 18% 8%;
+    --sidebar-foreground: 30 20% 95%;
+    --sidebar-primary: 345 60% 70%;
+    --sidebar-primary-foreground: 340 20% 8%;
+    --sidebar-accent: 270 30% 20%;
+    --sidebar-accent-foreground: 270 30% 95%;
+    --sidebar-border: 340 15% 16%;
+    --sidebar-ring: 345 60% 70%;
   }
 
   * {

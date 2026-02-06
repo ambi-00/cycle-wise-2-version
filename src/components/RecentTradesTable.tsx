@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
-import { TrendingUp, TrendingDown, MoreHorizontal } from "lucide-react";
-import { Link } from "react-router-dom";
+import { TrendingUp, TrendingDown, MoreHorizontal, Lightbulb, Plus } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 
 interface Trade {
   id: string;
@@ -18,6 +19,7 @@ interface RecentTradesTableProps {
 }
 
 export function RecentTradesTable({ trades }: RecentTradesTableProps) {
+  const navigate = useNavigate();
   const getResultStyles = (result: Trade["result"]) => {
     switch (result) {
       case "win":
@@ -28,6 +30,29 @@ export function RecentTradesTable({ trades }: RecentTradesTableProps) {
         return "bg-muted text-muted-foreground";
     }
   };
+
+  // Empty state when no trades
+  if (trades.length === 0) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="rounded-2xl bg-card p-8 shadow-card text-center"
+      >
+        <div className="mx-auto w-fit rounded-full bg-primary/10 p-4">
+          <Lightbulb className="h-10 w-10 text-primary" />
+        </div>
+        <h3 className="mt-4 font-serif text-lg font-semibold text-foreground">No Trades Yet</h3>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Start logging your trades to build your trading journal and unlock AI insights.
+        </p>
+        <Button onClick={() => navigate('/new-trade')} className="mt-4 gap-2">
+          <Plus className="h-4 w-4" />
+          Log Your First Trade
+        </Button>
+      </motion.div>
+    );
+  }
 
   return (
     <motion.div

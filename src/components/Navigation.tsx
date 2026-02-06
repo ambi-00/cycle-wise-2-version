@@ -10,12 +10,14 @@ import {
   Menu,
   X,
   BarChart3,
-  Building2
+  Building2,
+  CreditCard
 } from "lucide-react";
 import { NavLink, useLocation, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { useState } from "react";
+import SyncStatusIndicator from "@/components/SyncStatusIndicator";
 
 const navItems = [
   { path: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
@@ -129,14 +131,24 @@ export function Navigation() {
           )}
         </div>
 
-        {/* Settings */}
-        <NavLink
-          to="/settings"
-          className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-muted-foreground transition-all hover:bg-muted hover:text-foreground"
-        >
-          <Settings className="h-5 w-5" />
-          Settings
-        </NavLink>
+        {/* Sync Status & Settings */}
+        <div className="space-y-2">
+          <SyncStatusIndicator />
+          <NavLink
+            to="/pricing"
+            className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-muted-foreground transition-all hover:bg-muted hover:text-foreground"
+          >
+            <CreditCard className="h-5 w-5" />
+            Pricing
+          </NavLink>
+          <NavLink
+            to="/settings"
+            className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-muted-foreground transition-all hover:bg-muted hover:text-foreground"
+          >
+            <Settings className="h-5 w-5" />
+            Settings
+          </NavLink>
+        </div>
       </motion.nav>
 
       {/* Mobile Header */}
@@ -148,17 +160,19 @@ export function Navigation() {
           <span className="font-serif text-base font-bold text-foreground">SheTrades</span>
         </div>
 
-        <button
-          onClick={() => setMobileOpen(!mobileOpen)}
-          className="rounded-lg p-2 text-foreground hover:bg-muted"
-        >
-          {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </button>
+        <div className="flex items-center gap-2">
+          <SyncStatusIndicator />
+          <button
+            onClick={() => setMobileOpen(!mobileOpen)}
+            className="rounded-lg p-2 text-foreground hover:bg-muted"
+          >
+            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+        </div>
       </div>
 
       {/* Mobile Navigation Bottom Bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-sidebar p-2 lg:hidden">
-        <div className="flex items-center justify-around">
+      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-sidebar p-2 lg:hidden">\n        <div className="flex items-center justify-around">
           {navItems.slice(0, 4).map((item) => {
             const isActive = location.pathname === item.path;
             return (
@@ -276,7 +290,7 @@ export function Navigation() {
                   }`}
                   onClick={() => setMobileOpen(false)}
                 >
-                  Übersicht
+                  Overview
                 </NavLink>
                 <NavLink
                   to="/propfirm-compare"

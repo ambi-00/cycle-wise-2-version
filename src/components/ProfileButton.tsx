@@ -1,37 +1,18 @@
 import React from "react";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { supabase } from "@/integrations/supabase/client";
+import { User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 export default function ProfileButton() {
-  const [avatarUrl, setAvatarUrl] = React.useState<string | null>(null);
   const navigate = useNavigate();
-
-  React.useEffect(() => {
-    let mounted = true;
-    (async () => {
-      const { data } = await supabase.auth.getUser();
-      const user = data.user;
-      if (!mounted) return;
-      setAvatarUrl((user?.user_metadata as any)?.avatar_url || null);
-    })();
-    return () => { mounted = false; };
-  }, []);
-
-  const logout = async () => {
-    await supabase.auth.signOut();
-    navigate('/login');
-  };
 
   return (
     <div className="relative">
-      <div className="flex items-center gap-2">
-        <a href="/profile" className="rounded-full bg-pink-600 p-1.5 shadow-md">
-          <Avatar>
-            {avatarUrl ? <AvatarImage src={avatarUrl} alt="avatar" /> : <AvatarFallback>U</AvatarFallback>}
-          </Avatar>
-        </a>
-      </div>
+      <button 
+        onClick={() => navigate('/profile')}
+        className="flex h-10 w-10 items-center justify-center rounded-xl bg-card text-primary shadow-soft hover:shadow-md transition-shadow"
+      >
+        <User className="h-5 w-5" />
+      </button>
     </div>
   );
 }

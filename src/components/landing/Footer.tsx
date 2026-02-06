@@ -21,9 +21,9 @@ const footerLinks = {
     { label: "Trading Tips", href: "#" },
   ],
   Legal: [
-    { label: "Privacy", href: "#" },
-    { label: "Terms", href: "#" },
-    { label: "Cookies", href: "#" },
+    { label: "Impressum", href: "/impressum" },
+    { label: "Datenschutz", href: "/privacy" },
+    { label: "AGB", href: "/terms" },
   ],
 };
 

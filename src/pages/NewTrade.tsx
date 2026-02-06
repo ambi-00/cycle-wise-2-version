@@ -6,6 +6,11 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Badge } from '@/components/ui/badge';
+import { Info } from 'lucide-react';
+import { saveTrade, updateTrade, uploadTradeImage, type TradeInsert } from '@/lib/supabaseHelpers';
+import { useToast } from '@/hooks/use-toast';
+import { useSubscription } from '@/hooks/use-subscription';
 
 const DEFAULT_STRATEGIES = [
   { name: 'ICT Silver Bullet', minConfirmations: 3 },
@@ -45,6 +50,7 @@ function compressImage(dataUrl: string, maxWidth = 800, quality = 0.7): Promise<
 }
 
 export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
+  const { getTradeLimit, subscription, hasFeature, getScreenshotLimit } = useSubscription();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const dateParam = searchParams.get('date');
@@ -83,6 +89,9 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
   const [riskPct, setRiskPct] = useState<number | ''>('');
   const [closedPnl, setClosedPnl] = useState<number | ''>('');
   const [closedRrr, setClosedRrr] = useState<number | ''>('');
+  const [maxRReached, setMaxRReached] = useState<number | ''>(''); // Maximum R achieved before reversal
+  const [idealSlSize, setIdealSlSize] = useState<number | ''>(''); // Ideal SL size that would have worked
+  const [plannedSlSize, setPlannedSlSize] = useState<number | ''>(''); // Planned SL size before trade
   const [learnings, setLearnings] = useState('');
   const [tradeRating, setTradeRating] = useState<number>(0);
 
@@ -278,6 +287,9 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
       setRiskPct(found.riskPct ?? '');
       setClosedPnl(found.pnl ?? '');
       setClosedRrr(found.closedRrr ?? '');
+      setMaxRReached(found.maxRReached ?? '');
+      setIdealSlSize(found.idealSlSize ?? '');
+      setPlannedSlSize(found.plannedSlSize ?? '');
       setLearnings(found.learnings || '');
     } catch (e) {
       console.error('Error loading trade:', e);
@@ -356,15 +368,40 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
     }
   };
 
-  const save = (close = false) => {
+  const save = async (close = false) => {
     try {
-      const key = `cw_journal_${isoDate}`;
-      const raw = localStorage.getItem(key);
-      const curr = raw
-        ? (JSON.parse(raw) as any)
-        : { quickNote: "", trades: [], mood: 5, confidence: 5, lessons: "", attachments: [] };
-      if (!Array.isArray(curr.trades)) curr.trades = [];
-
+      // Check trade limit for new trades (not edits)
+      if (!editingId) {
+        const tradeLimit = getTradeLimit();
+        if (tradeLimit !== Infinity) {
+          // Count trades this month
+          const now = new Date();
+          const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+          const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+          
+          let monthTradeCount = 0;
+          for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i) || '';
+            if (key.startsWith('cw_journal_')) {
+              const dateStr = key.replace('cw_journal_', '');
+              const tradeDate = new Date(dateStr);
+              if (tradeDate >= monthStart && tradeDate <= monthEnd) {
+                const raw = localStorage.getItem(key);
+                if (raw) {
+                  const data = JSON.parse(raw);
+                  monthTradeCount += (data.trades || []).length;
+                }
+              }
+            }
+          }
+          
+          if (monthTradeCount >= tradeLimit) {
+            alert(`You've reached your monthly limit of ${tradeLimit} trades. Upgrade to Premium for unlimited trades!`);
+            return;
+          }
+        }
+      }
+      
       const confirmations = checklist.filter((c) => c.done).length;
       if (minRequired > 0 && confirmations < minRequired) {
         alert(`Please confirm at least ${minRequired} items for strategy "${strategy}" before saving.`);
@@ -397,6 +434,109 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
         // ignore
       }
 
+      // Upload images to Supabase Storage if they exist
+      let imageBeforeSmallUrl = imageBeforeSmall;
+      let imageBeforeLargeUrl = imageBeforeLarge;
+      let imageAfterSmallUrl = imageAfterSmall;
+      let imageAfterLargeUrl = imageAfterLarge;
+
+      // Helper to convert dataURL to File
+      const dataUrlToFile = async (dataUrl: string, filename: string): Promise<File | null> => {
+        if (!dataUrl || !dataUrl.startsWith('data:')) return null;
+        try {
+          const res = await fetch(dataUrl);
+          const blob = await res.blob();
+          return new File([blob], filename, { type: blob.type });
+        } catch {
+          return null;
+        }
+      };
+
+      // Upload each image if it's a data URL (not already uploaded)
+      if (imageBeforeSmall && imageBeforeSmall.startsWith('data:')) {
+        const file = await dataUrlToFile(imageBeforeSmall, `before-small-${Date.now()}.jpg`);
+        if (file) {
+          const url = await uploadTradeImage(file, 'before' as const);
+          if (url) imageBeforeSmallUrl = url;
+        }
+      }
+      if (imageBeforeLarge && imageBeforeLarge.startsWith('data:')) {
+        const file = await dataUrlToFile(imageBeforeLarge, `before-large-${Date.now()}.jpg`);
+        if (file) {
+          const url = await uploadTradeImage(file, 'before' as const);
+          if (url) imageBeforeLargeUrl = url;
+        }
+      }
+      if (imageAfterSmall && imageAfterSmall.startsWith('data:')) {
+        const file = await dataUrlToFile(imageAfterSmall, `after-small-${Date.now()}.jpg`);
+        if (file) {
+          const url = await uploadTradeImage(file, 'after' as const);
+          if (url) imageAfterSmallUrl = url;
+        }
+      }
+      if (imageAfterLarge && imageAfterLarge.startsWith('data:')) {
+        const file = await dataUrlToFile(imageAfterLarge, `after-large-${Date.now()}.jpg`);
+        if (file) {
+          const url = await uploadTradeImage(file, 'after' as const);
+          if (url) imageAfterLargeUrl = url;
+        }
+      }
+
+      const tradeData: TradeInsert = {
+        date: isoDate,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        instrument: instrument || 'Unknown',
+        direction,
+        entry_price: entryPrice === '' ? null : Number(entryPrice),
+        sl_price: slPrice === '' ? null : Number(slPrice),
+        tp_price: tpPrice === '' ? null : Number(tpPrice),
+        strategy: quick ? null : strategy || null,
+        checklist: checklist.map((c) => ({ text: c.text, done: c.done })),
+        pre_trade_note: preNote,
+        post_trade_note: postNote,
+        image_before_small_tf: imageBeforeSmallUrl || null,
+        image_before_large_tf: imageBeforeLargeUrl || null,
+        image_after_small_tf: imageAfterSmallUrl || null,
+        image_after_large_tf: imageAfterLargeUrl || null,
+        emotion_before: emotionBefore,
+        emotion_after: emotionAfter,
+        timeframe_small: tfSmall,
+        timeframe_large: tfLarge,
+        result: result || null,
+        loss_reason: result === 'loss' ? lossReason : null,
+        exit_reason: exitReason || null,
+        custom_exit_reason: exitReason === 'other' ? customExitReason : null,
+        pnl: closedPnl === '' ? null : Number(closedPnl),
+        planned_rrr: rrr === '' ? null : Number(rrr),
+        risk_percent: riskPct === '' ? null : Number(riskPct),
+        closed_rrr: closedRrr === '' ? null : Number(closedRrr),
+        max_r_reached: maxRReached === '' ? null : Number(maxRReached),
+        ideal_sl_size: idealSlSize === '' ? null : Number(idealSlSize),
+        planned_sl_size: plannedSlSize === '' ? null : Number(plannedSlSize),
+        r_multiple: (close ? (closedRrr === '' ? (rrr === '' ? null : Number(rrr)) : Number(closedRrr)) : (rrr === '' ? null : Number(rrr))),
+        learnings: learnings || null,
+        rating: tradeRating || null,
+        status: (close ? 'closed' : result ? 'closed' : 'open') as 'open' | 'closed',
+        cycle_day: cycleDay,
+        cycle_phase: cyclePhase,
+      };
+
+      if (editingId) {
+        // Update existing trade
+        await updateTrade(editingId, tradeData);
+      } else {
+        // Create new trade
+        await saveTrade(tradeData);
+      }
+
+      // Also save to localStorage as backup (optional)
+      const key = `cw_journal_${isoDate}`;
+      const raw = localStorage.getItem(key);
+      const curr = raw
+        ? (JSON.parse(raw) as any)
+        : { quickNote: "", trades: [], mood: 5, confidence: 5, lessons: "", attachments: [] };
+      if (!Array.isArray(curr.trades)) curr.trades = [];
+
       const newTrade: any = {
         id: editingId || Date.now().toString(),
         date: isoDate,
@@ -410,10 +550,10 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
         checklist: checklist.map((c) => ({ text: c.text, done: c.done })),
         preNote,
         postNote,
-        image_before_small_tf: imageBeforeSmall || null,
-        image_before_large_tf: imageBeforeLarge || null,
-        image_after_small_tf: imageAfterSmall || null,
-        image_after_large_tf: imageAfterLarge || null,
+        image_before_small_tf: imageBeforeSmallUrl || null,
+        image_before_large_tf: imageBeforeLargeUrl || null,
+        image_after_small_tf: imageAfterSmallUrl || null,
+        image_after_large_tf: imageAfterLargeUrl || null,
         emotion_before: emotionBefore,
         emotion_after: emotionAfter,
         timeframe: tfSmall,
@@ -428,6 +568,9 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
         rrr: rrr === '' ? null : Number(rrr),
         riskPct: riskPct === '' ? null : Number(riskPct),
         closedRrr: closedRrr === '' ? null : Number(closedRrr),
+        maxRReached: maxRReached === '' ? null : Number(maxRReached),
+        idealSlSize: idealSlSize === '' ? null : Number(idealSlSize),
+        plannedSlSize: plannedSlSize === '' ? null : Number(plannedSlSize),
         rMultiple: (close ? (closedRrr === '' ? (rrr === '' ? null : Number(rrr)) : Number(closedRrr)) : (rrr === '' ? null : Number(rrr))),
         learnings: learnings || null,
         rating: tradeRating || null,
@@ -447,24 +590,19 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
           return t;
         });
         if (!replaced) {
-          // fallback: if the id wasn't found, append to avoid data loss
           curr.trades = [...curr.trades, { ...newTrade, id: editingId }];
         }
       } else {
-        // ensure id uniqueness
         const id = Date.now().toString();
         curr.trades = [...curr.trades, { ...newTrade, id }];
       }
       localStorage.setItem(key, JSON.stringify(curr));
-      // Trigger storage event for same-tab listeners
       window.dispatchEvent(new Event('storage'));
+      
       navigate('/journal');
     } catch (e: any) {
-      if (e?.name === 'QuotaExceededError' || e?.code === 22) {
-        alert('Storage full! Try removing some old trades or using smaller images.');
-      } else {
-        console.error(e);
-      }
+      console.error('Save error:', e);
+      alert(`Failed to save trade: ${e.message || 'Unknown error'}`);
     }
   };
 
@@ -497,13 +635,7 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
                 {viewMode === 'before' ? (
                   <>
                     <section className="rounded-2xl border p-4 bg-card shadow-soft">
-                      <div className="flex items-center justify-between">
-                        <h4 className="font-serif text-xl font-semibold text-foreground">Strategy</h4>
-                        <label className="text-sm flex items-center gap-2">
-                          <input type="checkbox" checked={quick} onChange={(e) => setQuick(e.target.checked)} />
-                          <span className="text-xs text-muted-foreground">Quick</span>
-                        </label>
-                      </div>
+                      <h4 className="font-serif text-xl font-semibold text-foreground">Strategy</h4>
 
                       <div className="mt-3 grid gap-3">
                         <div className="grid grid-cols-2 gap-3">
@@ -518,9 +650,10 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
                           <Input value={instrument} onChange={(e) => setInstrument(e.target.value)} placeholder="Instrument (e.g. EUR/USD)" />
                         </div>
 
-                        <Select onValueChange={(v) => setStrategy(v === '__none' ? '' : v)}>
+                        <Select onValueChange={(v) => setStrategy(v === '__none' ? '' : v)} disabled={!hasFeature('unlimited_strategies')}>
                           <SelectTrigger>
                             <SelectValue placeholder={strategy || 'Choose strategy'} />
+                            {!hasFeature('unlimited_strategies') && <Badge className="ml-2" variant="secondary">Premium</Badge>}
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="__none">Quick Trade (no strategy)</SelectItem>
@@ -529,6 +662,11 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
                             ))}
                           </SelectContent>
                         </Select>
+                        {!hasFeature('unlimited_strategies') && (
+                          <p className="text-xs text-muted-foreground">
+                            Upgrade to Premium to use strategy tracking. <button type="button" className="underline" onClick={() => navigate('/#pricing')}>Learn more</button>
+                          </p>
+                        )}
 
                         {strategy && <div className="text-sm text-muted-foreground">Min confirmations required: <strong>{minRequired}</strong></div>}
                       </div>
@@ -555,8 +693,17 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
                       <h4 className="font-serif text-xl font-semibold text-foreground">Risk</h4>
                       <div className="mt-3 grid grid-cols-3 gap-3">
                         <div>
-                          <label className="text-xs text-muted-foreground mb-1.5 block">RRR</label>
-                          <Input type="number" value={rrr as any} onChange={(e) => setRrr(e.target.value === '' ? '' : Number(e.target.value))} placeholder="Enter RRR" />
+                          <label className="text-xs text-muted-foreground mb-1.5 flex items-center gap-1.5">
+                            Plan SL
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/20 text-primary font-semibold">PLAN</span>
+                          </label>
+                          <Input 
+                            type="number" 
+                            step="0.1"
+                            value={plannedSlSize as any} 
+                            onChange={(e) => setPlannedSlSize(e.target.value === '' ? '' : Number(e.target.value))} 
+                            placeholder="e.g., 15" 
+                          />
                         </div>
                         <div>
                           <label className="text-xs text-muted-foreground mb-1.5 block">Risk %</label>
@@ -565,7 +712,19 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
                             {riskPct !== '' && <span className="absolute right-12 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">%</span>}
                           </div>
                         </div>
-                        <div />
+                        <div>
+                          <label className="text-xs text-muted-foreground mb-1.5 flex items-center gap-1.5">
+                            Target RRR 
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/20 text-primary font-semibold">PLAN</span>
+                          </label>
+                          <Input 
+                            type="number" 
+                            step="0.1"
+                            value={rrr as any} 
+                            onChange={(e) => setRrr(e.target.value === '' ? '' : Number(e.target.value))} 
+                            placeholder="2.0" 
+                          />
+                        </div>
                       </div>
                       <div className="mt-4">
                         <label className="text-sm">Notes</label>
@@ -735,6 +894,37 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
                                 />
                               </div>
                             )}
+
+                            {/* Ideal SL Size input when SL was too tight */}
+                            {(exitReason === 'SL Too Tight' || exitReason?.toLowerCase().includes('sl') && exitReason?.toLowerCase().includes('klein')) && (
+                              <div className="mt-3">
+                                <label className="text-xs text-muted-foreground mb-1.5 block flex items-center gap-2">
+                                  Ideal SL Size (pips/points)
+                                  <div className="group relative">
+                                    <Info className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground cursor-help transition-colors" />
+                                    <div className="invisible group-hover:visible absolute left-0 top-5 z-50 w-72 rounded-lg bg-popover p-3 text-xs text-popover-foreground shadow-lg border border-border">
+                                      <p className="font-semibold mb-1">Find Your Perfect SL Size</p>
+                                      <p className="text-muted-foreground leading-relaxed">
+                                        What SL size would have worked for this trade? This data helps you discover your optimal stop loss distance over time.
+                                      </p>
+                                      <p className="text-muted-foreground mt-2">
+                                        <span className="font-medium">Example:</span> Your SL was 10 pips but needed 15 pips → enter 15
+                                      </p>
+                                    </div>
+                                  </div>
+                                </label>
+                                <Input 
+                                  type="number"
+                                  step="0.1"
+                                  value={idealSlSize as any} 
+                                  onChange={(e) => setIdealSlSize(e.target.value === '' ? '' : Number(e.target.value))} 
+                                  placeholder="e.g., 15 - Enter the SL size that would have worked" 
+                                />
+                                <p className="text-[10px] text-muted-foreground mt-1.5">
+                                  💡 Track this to find your personal optimal SL size in Statistics → SL Analysis
+                                </p>
+                              </div>
+                            )}
                           </>
                         )}
 
@@ -749,44 +939,40 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
                           </div>
                         </div>
 
+                        {/* Max Possible RRR - for RRR Optimization */}
+                        <div className="mt-3">
+                          <label className="text-xs text-muted-foreground mb-1.5 block flex items-center gap-2">
+                            Max Possible RRR
+                            <span className="text-[10px] bg-accent/20 text-accent-foreground px-2 py-0.5 rounded-full font-semibold">ACTUAL MAX</span>
+                            <div className="group relative">
+                              <Info className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground cursor-help transition-colors" />
+                              <div className="invisible group-hover:visible absolute left-0 top-5 z-50 w-72 rounded-lg bg-popover p-3 text-xs text-popover-foreground shadow-lg border border-border">
+                                <p className="font-semibold mb-1">Track Maximum Profit Potential</p>
+                                <p className="text-muted-foreground leading-relaxed">
+                                  How far could this trade have gone? Enter the highest RRR this trade reached before reversing or closing. 
+                                  This helps you understand if you're exiting too early (conservative) or setting targets too high (aggressive).
+                                </p>
+                                <p className="text-muted-foreground mt-2">
+                                  <span className="font-medium">Example:</span> Target was 2R, but price went to 3.5R before reversing → enter 3.5
+                                </p>
+                              </div>
+                            </div>
+                          </label>
+                          <Input 
+                            type="number" 
+                            step="0.1"
+                            value={maxRReached as any} 
+                            onChange={(e) => setMaxRReached(e.target.value === '' ? '' : Number(e.target.value))} 
+                            placeholder="e.g., 3.5 - Track the maximum RRR this trade could've reached" 
+                          />
+                          <p className="text-[10px] text-muted-foreground mt-1.5">
+                            💡 Compare this to your <span className="font-semibold">Target RRR</span> above to optimize your exits in Statistics → RRR Analysis
+                          </p>
+                        </div>
+
                         <div className="mt-4">
                           <label className="text-sm">Learnings / Improvements</label>
                           <Textarea value={learnings} onChange={(e) => setLearnings(e.target.value)} className="min-h-[120px]" placeholder="What would you do differently next time?" />
-                        </div>
-
-                        <div className="mt-3 grid grid-cols-2 gap-3">
-                          <div>
-                            <label className="text-xs text-muted-foreground">Small TF</label>
-                            <Select onValueChange={(v) => setTfSmall(v)}>
-                              <SelectTrigger>
-                                <SelectValue placeholder={tfSmall} />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="1m">1m</SelectItem>
-                                <SelectItem value="5m">5m</SelectItem>
-                                <SelectItem value="15m">15m</SelectItem>
-                                <SelectItem value="1h">1h</SelectItem>
-                                <SelectItem value="4h">4h</SelectItem>
-                                <SelectItem value="1D">1D</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div>
-                            <label className="text-xs text-muted-foreground">Context TF</label>
-                            <Select onValueChange={(v) => setTfLarge(v)}>
-                              <SelectTrigger>
-                                <SelectValue placeholder={tfLarge} />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="1m">1m</SelectItem>
-                                <SelectItem value="5m">5m</SelectItem>
-                                <SelectItem value="15m">15m</SelectItem>
-                                <SelectItem value="1h">1h</SelectItem>
-                                <SelectItem value="4h">4h</SelectItem>
-                                <SelectItem value="1D">1D</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
                         </div>
                       </div>
                     </section>
@@ -822,7 +1008,7 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
                   <>
                       <div className="rounded-2xl border p-6 bg-card shadow-soft flex flex-col gap-4">
                         <div className="flex items-start justify-between">
-                          <label className="text-sm font-medium text-foreground">Before Screenshot — Small TF (Entry)</label>
+                          <label className="text-sm font-medium text-foreground">{getScreenshotLimit() > 2 ? 'Before Screenshot — Small TF (Entry)' : 'Before Screenshot'}</label>
                           <div className="w-32">
                             <Select onValueChange={(v) => setTfSmall(v)}>
                               <SelectTrigger>
@@ -868,6 +1054,7 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
                         )}
                       </div>
 
+                      {getScreenshotLimit() > 2 && (
                       <div className="rounded-2xl border p-6 bg-card shadow-soft flex flex-col gap-4">
                       <div className="flex items-start justify-between">
                         <label className="text-sm font-medium text-foreground">Before Screenshot — Large TF (Context)</label>
@@ -915,12 +1102,13 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
                         </div>
                       )}
                       </div>
+                      )}
                   </>
                 ) : (
                   <>
                     <div className="rounded-2xl border p-6 bg-card shadow-soft flex flex-col gap-4">
                       <div className="flex items-start justify-between">
-                        <label className="text-sm font-medium text-foreground">After Screenshot — Small TF (Result)</label>
+                        <label className="text-sm font-medium text-foreground">{getScreenshotLimit() > 2 ? 'After Screenshot — Small TF (Result)' : 'After Screenshot'}</label>
                         <div className="w-32">
                           <Select onValueChange={(v) => setTfSmall(v)}>
                             <SelectTrigger>
@@ -966,6 +1154,7 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
                       )}
                     </div>
 
+                    {getScreenshotLimit() > 2 && (
                     <div className="rounded-2xl border p-6 bg-card shadow-soft flex flex-col gap-4">
                       <div className="flex items-start justify-between">
                         <label className="text-sm font-medium text-foreground">After Screenshot — Large TF (Context)</label>
@@ -1013,6 +1202,7 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
                         </div>
                       )}
                     </div>
+                    )}
                   </>
                 )}
               </div>

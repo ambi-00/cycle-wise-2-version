@@ -1,6 +1,11 @@
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Plus, CheckCircle, Settings, TrendingUp, BarChart3 } from "lucide-react";
+import { Plus, CheckCircle, Trash2, TrendingUp, BarChart3, Lock } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { useSubscription } from "@/hooks/use-subscription";
 
 const mockStrategies = [
   {
@@ -39,6 +44,19 @@ const mockStrategies = [
 ];
 
 export default function Strategies() {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const { hasFeature } = useSubscription();
+  const [strategies, setStrategies] = useState(mockStrategies);
+  const hasPremium = hasFeature('unlimited_strategies');
+
+  useEffect(() => {
+    // Load user-created strategies from localStorage
+    const userStrategies = JSON.parse(localStorage.getItem('cw_strategies') || '[]');
+    // Combine mock strategies with user strategies
+    setStrategies([...mockStrategies, ...userStrategies]);
+  }, []);
+  
   return (
     <main className="pb-24 pt-20 lg:pl-64 lg:pt-8">
       <motion.div
@@ -53,30 +71,48 @@ export default function Strategies() {
             <p className="mt-1 text-muted-foreground">Define, track, and optimize your trading strategies</p>
           </div>
           <div className="flex gap-2">
-            <Button variant="hero" onClick={() => window.location.href = '/strategies/list'}>
-              <Plus className="h-4 w-4" />
-              Manage strategies
-            </Button>
-            <Button variant="outline">
+            <Button 
+              variant="outline" 
+              onClick={() => hasPremium ? navigate('/strategies/new') : navigate('/#pricing')}
+              disabled={!hasPremium}
+            >
               <Plus className="h-4 w-4" />
               New Strategy
             </Button>
           </div>
         </div>
 
-        {/* Strategy Cards */}
-        <div className="grid gap-6 lg:grid-cols-2 xl:grid-cols-3">
-          {mockStrategies.map((strategy, index) => (
+        {/* Strategy Cards with Premium Lock */}
+        <div className="relative">
+          {!hasPremium && (
+            <div className="fixed inset-y-0 right-0 left-0 lg:left-64 z-50 flex items-center justify-center p-6 bg-black/20 backdrop-blur-sm">
+              <Card className="max-w-md w-full">
+                <CardContent className="p-8 text-center">
+                  <Lock className="h-12 w-12 text-primary mx-auto mb-4" />
+                  <h3 className="font-semibold text-xl mb-2">Premium Feature</h3>
+                  <p className="text-sm text-muted-foreground mb-6">
+                    Upgrade to Premium to create and track unlimited strategies with detailed confirmations and performance metrics.
+                  </p>
+                  <Button onClick={() => navigate('/#pricing')} size="lg" className="w-full">
+                    Upgrade to Premium - €9.99/mo
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+          <div className={`grid gap-6 lg:grid-cols-2 xl:grid-cols-3 ${!hasPremium ? 'blur-sm pointer-events-none' : ''}`}>
+          {strategies.map((strategy, index) => (
             <motion.div
               key={strategy.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              className="group rounded-2xl bg-card p-6 shadow-card transition-all hover:shadow-glow"
+              onClick={() => navigate(`/strategies/${strategy.id}`)}
+              className="group cursor-pointer rounded-2xl bg-card p-6 shadow-card transition-all hover:shadow-glow hover:scale-[1.02]"
             >
               <div className="flex items-start justify-between">
                 <div>
-                  <h3 className="font-serif text-lg font-semibold text-foreground">{strategy.name}</h3>
+                  <h3 className="text-xl font-semibold text-foreground">{strategy.name}</h3>
                   <div className="mt-2 flex flex-wrap gap-1.5">
                     {strategy.markets.map(market => (
                       <span key={market} className="rounded-lg bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground">
@@ -129,38 +165,54 @@ export default function Strategies() {
 
               {/* Actions */}
               <div className="mt-6 flex gap-2">
-                <Button variant="outline" size="sm" className="flex-1">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex-1"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/strategies/${strategy.id}`);
+                  }}
+                >
                   <BarChart3 className="h-4 w-4" />
-                  Analytics
+                  View Details
                 </Button>
-                <Button variant="ghost" size="sm">
-                  <Settings className="h-4 w-4" />
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (confirm(`Are you sure you want to delete "${strategy.name}"?`)) {
+                      setStrategies(strategies.filter(s => s.id !== strategy.id));
+                      toast({
+                        title: "Strategy deleted",
+                        description: `"${strategy.name}" has been removed.`,
+                      });
+                    }
+                  }}
+                >
+                  <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
             </motion.div>
           ))}
+          </div>
         </div>
 
-        {/* AI Recommendation */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="mt-8 rounded-2xl bg-gradient-to-br from-secondary/50 to-accent/30 p-6"
-        >
-          <div className="flex items-start gap-4">
-            <div className="rounded-xl bg-card p-3">
-              <TrendingUp className="h-6 w-6 text-primary" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-foreground">AI Strategy Insight</h3>
-              <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-                Your "ICT Silver Bullet" strategy performs 34% better during your Follicular phase compared to other phases. 
-                Consider prioritizing this strategy during days 6-12 of your cycle for optimal results.
-              </p>
-            </div>
+        {/* Empty State */}
+        {strategies.length === 0 && hasPremium && (
+          <div className="flex min-h-[400px] flex-col items-center justify-center rounded-2xl border-2 border-dashed border-muted p-12 text-center">
+            <TrendingUp className="mb-4 h-12 w-12 text-muted-foreground" />
+            <h3 className="mb-2 text-xl font-semibold text-foreground">No strategies yet</h3>
+            <p className="mb-6 max-w-md text-muted-foreground">
+              Start building your first trading strategy to track performance and stay disciplined
+            </p>
+            <Button onClick={() => navigate('/strategies/new')}>
+              <Plus className="h-4 w-4" />
+              Create Your First Strategy
+            </Button>
           </div>
-        </motion.div>
+        )}
       </motion.div>
     </main>
   );

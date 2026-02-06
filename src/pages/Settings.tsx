@@ -6,14 +6,26 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
+import ThemeCustomizer from "@/components/ThemeCustomizer";
 
 export default function Settings() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const [tradingPlatformUrl, setTradingPlatformUrl] = useState(() => {
+    return localStorage.getItem('cw_trading_platform_url') || '';
+  });
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (tradingPlatformUrl) {
+      localStorage.setItem('cw_trading_platform_url', tradingPlatformUrl);
+    } else {
+      localStorage.removeItem('cw_trading_platform_url');
+    }
+  }, [tradingPlatformUrl]);
 
   const isDark = mounted ? theme === "dark" : false;
 
@@ -81,6 +93,11 @@ export default function Settings() {
               <Sun className="h-4 w-4 text-muted-foreground" />
             </div>
           </div>
+
+          {/* Accent Color Selection */}
+          <div className="mt-6 pt-6 border-t border-border">
+            <ThemeCustomizer />
+          </div>
         </motion.section>
 
         {/* Prop Firm Integrations - Link to dedicated page */}
@@ -96,12 +113,60 @@ export default function Settings() {
             </div>
             <h2 className="font-semibold text-foreground">Prop Firm Accounts</h2>
           </div>
-          <p className="text-sm text-muted-foreground">Verbinde deine MT4/MT5 Prop Firm Accounts für automatische Trade-Synchronisierung.</p>
+          <p className="text-sm text-muted-foreground mb-4">
+            Connect and sync your prop firm trading accounts.
+          </p>
+        </motion.section>
+
+        {/* Safety Mode - Trading Platform Blocker */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
+          className="mb-8 rounded-2xl bg-card p-6 shadow-card"
+        >
+          <div className="flex items-center gap-3 mb-4">
+            <div className="rounded-xl bg-destructive/20 p-2.5">
+              <Shield className="h-5 w-5 text-destructive" />
+            </div>
+            <h2 className="font-semibold text-foreground">Safety Mode - Website Blocker</h2>
+          </div>
+          
+          <p className="text-sm text-muted-foreground mb-4">
+            Add your trading platform URL to receive warnings when Safety Mode is active.
+          </p>
+
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium text-foreground mb-2 block">Trading Platform URL</label>
+              <Input
+                type="url"
+                placeholder="https://trading.com or https://metatrader.com"
+                value={tradingPlatformUrl}
+                onChange={(e) => setTradingPlatformUrl(e.target.value)}
+                className="bg-background"
+              />
+              <p className="text-xs text-muted-foreground mt-2">
+                Example: https://www.tradingview.com, https://trader.ftmo.com, etc.
+              </p>
+            </div>
+
+            {tradingPlatformUrl && (
+              <div className="rounded-xl bg-accent/10 border border-accent/20 p-3">
+                <p className="text-sm text-accent-foreground">
+                  ✓ Wenn Safety Mode aktiv ist, wirst du gewarnt, bevor du tradest.
+                </p>
+              </div>
+            )}
+          </div>
+        </motion.section>
+
+        {/*  className="text-sm text-muted-foreground">Connect your MT4/MT5 Prop Firm accounts for automatic trade synchronization.</p>
           <div className="mt-4">
             <Link to="/prop-firms">
               <Button variant="outline">
                 <Building2 className="h-4 w-4 mr-2" />
-                Prop Firms verwalten
+                Manage Prop Firms
               </Button>
             </Link>
           </div>

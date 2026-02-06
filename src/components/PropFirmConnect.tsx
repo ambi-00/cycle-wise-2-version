@@ -50,7 +50,7 @@ const PROP_FIRMS = [
   { id: 'bulenox', name: 'Bulenox', logo: '🐂', color: 'bg-amber-600', url: 'bulenox.com', implemented: true },
 ];
 
-// Server-Listen für jede Prop Firm
+// Server lists for each Prop Firm
 const PROP_FIRM_SERVERS: Record<string, string[]> = {
   ftmo: [
     'FTMO-Server',
@@ -232,7 +232,7 @@ export function PropFirmConnect() {
 
   const addAccount = () => {
     if (!selectedPropFirm || !accountNumber || !password || !actualServer) {
-      alert('Bitte fülle alle Pflichtfelder aus (Kontonummer, Passwort, Server)');
+      alert('Please fill in all required fields (Account Number, Password, Server)');
       return;
     }
 
@@ -263,7 +263,7 @@ export function PropFirmConnect() {
   };
 
   const removeAccount = (id: string) => {
-    if (confirm('Möchtest du diesen Account wirklich entfernen?')) {
+    if (confirm('Do you really want to remove this account?')) {
       saveAccounts(accounts.filter(a => a.id !== id));
     }
   };
@@ -367,11 +367,11 @@ export function PropFirmConnect() {
   const getStatusBadge = (status: PropFirmAccount['status']) => {
     switch (status) {
       case 'connected':
-        return <span className="flex items-center gap-1 text-xs text-green-600"><Check className="h-3 w-3" /> Verbunden</span>;
+        return <span className="flex items-center gap-1 text-xs text-accent-foreground"><Check className="h-3 w-3" /> Verbunden</span>;
       case 'syncing':
-        return <span className="flex items-center gap-1 text-xs text-blue-600"><RefreshCw className="h-3 w-3 animate-spin" /> Synchronisiere...</span>;
+        return <span className="flex items-center gap-1 text-xs text-primary"><RefreshCw className="h-3 w-3 animate-spin" /> Synchronisiere...</span>;
       case 'error':
-        return <span className="flex items-center gap-1 text-xs text-red-600"><AlertCircle className="h-3 w-3" /> Fehler</span>;
+        return <span className="flex items-center gap-1 text-xs text-destructive"><AlertCircle className="h-3 w-3" /> Fehler</span>;
       default:
         return <span className="flex items-center gap-1 text-xs text-muted-foreground">Nicht verbunden</span>;
     }
@@ -383,7 +383,7 @@ export function PropFirmConnect() {
       <div className="flex items-center justify-between">
         <div>
           <h3 className="font-semibold text-foreground">Prop Firm Accounts</h3>
-          <p className="text-sm text-muted-foreground">Verbinde deine Prop Firm Accounts für automatische Synchronisierung</p>
+          <p className="text-sm text-muted-foreground">Connect your Prop Firm accounts for automatic synchronization</p>
         </div>
         <div className="flex gap-2">
           {accounts.length > 0 && (
@@ -394,7 +394,7 @@ export function PropFirmConnect() {
           )}
           <Button size="sm" onClick={() => setIsAddingAccount(true)}>
             <Plus className="h-4 w-4 mr-2" />
-            Account hinzufügen
+            Add Account
           </Button>
         </div>
       </div>
@@ -403,11 +403,11 @@ export function PropFirmConnect() {
       {accounts.length === 0 ? (
         <div className="rounded-xl border border-dashed border-border p-8 text-center">
           <div className="text-4xl mb-3">🏦</div>
-          <h4 className="font-medium text-foreground mb-1">Keine Prop Firm Accounts verbunden</h4>
-          <p className="text-sm text-muted-foreground mb-4">Füge deinen ersten Prop Firm Account hinzu um deine Trades automatisch zu synchronisieren.</p>
+          <h4 className="font-medium text-foreground mb-1">No Prop Firm Accounts Connected</h4>
+          <p className="text-sm text-muted-foreground mb-4">Add your first Prop Firm account to automatically sync your trades.</p>
           <Button onClick={() => setIsAddingAccount(true)}>
             <Plus className="h-4 w-4 mr-2" />
-            Account hinzufügen
+            Add Account
           </Button>
         </div>
       ) : (
@@ -475,7 +475,7 @@ export function PropFirmConnect() {
                         </div>
                         <div>
                           <p className="text-xs text-muted-foreground">Heute</p>
-                          <p className={`text-sm font-bold ${(account.dailyPnl || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          <p className={`text-sm font-bold ${(account.dailyPnl || 0) >= 0 ? 'text-accent-foreground' : 'text-destructive'}`}>
                             {(account.dailyPnl || 0) >= 0 ? '+' : ''}${account.dailyPnl?.toFixed(2)}
                           </p>
                         </div>
@@ -485,12 +485,12 @@ export function PropFirmConnect() {
                         </div>
                       </div>
                     ) : (
-                      <div className="rounded-lg bg-amber-500/10 border border-amber-500/20 p-3">
-                        <p className="text-sm text-amber-700 dark:text-amber-400">
-                          ⏳ <strong>Account gespeichert</strong> - Die echten Daten werden angezeigt, sobald das Backend verbunden ist.
+                      <div className="rounded-lg bg-muted/50 border border-border p-3">
+                        <p className="text-sm text-foreground">
+                          ⏳ <strong>Account Saved</strong> - Real data will be displayed once the backend is connected.
                         </p>
                         <p className="text-xs text-muted-foreground mt-1">
-                          Für jetzt werden deine Zugangsdaten sicher gespeichert.
+                          For now, your credentials are securely stored.
                         </p>
                       </div>
                     )}
@@ -499,7 +499,7 @@ export function PropFirmConnect() {
 
                 {account.lastSync && (
                   <p className="text-xs text-muted-foreground mt-3">
-                    Zuletzt synchronisiert: {new Date(account.lastSync).toLocaleString('de-DE')}
+                    Last synced: {new Date(account.lastSync).toLocaleString('en-US')}
                   </p>
                 )}
               </motion.div>
@@ -512,9 +512,9 @@ export function PropFirmConnect() {
       <Dialog open={isAddingAccount} onOpenChange={setIsAddingAccount}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Prop Firm Account verbinden</DialogTitle>
+            <DialogTitle>Connect Prop Firm Account</DialogTitle>
             <DialogDescription>
-              Gib deine Login-Daten ein um deinen Prop Firm Account zu verbinden. Deine Daten werden verschlüsselt gespeichert.
+              Enter your login credentials to connect your Prop Firm account. Your data will be encrypted and stored securely.
             </DialogDescription>
           </DialogHeader>
 
@@ -560,7 +560,7 @@ export function PropFirmConnect() {
                     <div className="mt-2 max-h-64 overflow-y-auto rounded-lg border bg-card p-2">
                       {filteredPropFirms.length === 0 ? (
                         <p className="p-3 text-center text-sm text-muted-foreground">
-                          Keine Prop Firm gefunden für "{searchQuery}"
+                          No prop firm found for "{searchQuery}"
                         </p>
                       ) : (
                         <div className="grid grid-cols-2 gap-1.5">
@@ -617,7 +617,7 @@ export function PropFirmConnect() {
                 placeholder="z.B. 12345678"
                 className="mt-1.5"
               />
-              <p className="text-xs text-muted-foreground mt-1">Die Login-ID deines Trading-Accounts</p>
+              <p className="text-xs text-muted-foreground mt-1">The login ID of your trading account</p>
             </div>
 
             {/* Password */}
@@ -648,7 +648,7 @@ export function PropFirmConnect() {
                 <>
                   <Select value={server} onValueChange={(val) => { setServer(val); if (val !== 'custom') setCustomServer(''); }}>
                     <SelectTrigger className="mt-1.5">
-                      <SelectValue placeholder="Wähle deinen Server" />
+                      <SelectValue placeholder="Choose your server" />
                     </SelectTrigger>
                     <SelectContent>
                       {PROP_FIRM_SERVERS[selectedPropFirm].map((srv) => (
@@ -682,14 +682,14 @@ export function PropFirmConnect() {
             </div>
 
             {/* Security Notice */}
-            <div className="rounded-lg bg-green-500/10 border border-green-500/20 p-3 text-xs">
-              <p className="font-medium text-green-700 dark:text-green-400 mb-1">🔒 Read-only access</p>
+            <div className="rounded-lg bg-accent/10 border border-accent/20 p-3 text-xs">
+              <p className="font-medium text-accent-foreground mb-1">🔒 Read-only access</p>
               <p className="text-muted-foreground">With the investor password we can only <strong>read</strong> your trades - never execute, change or withdraw money. This is the secure way, just like at TraderWaves.</p>
             </div>
 
             {/* Where to find credentials */}
-            <div className="rounded-lg bg-blue-500/10 border border-blue-500/20 p-3 text-xs">
-              <p className="font-medium text-blue-700 dark:text-blue-400 mb-1">📧 Where can you find these credentials?</p>
+            <div className="rounded-lg bg-secondary/10 border border-secondary/20 p-3 text-xs">
+              <p className="font-medium text-secondary-foreground mb-1">📧 Where can you find these credentials?</p>
               <p className="text-muted-foreground">The credentials were sent to you by your prop firm via email. Look for "MT4/MT5 Credentials" or "Trading Account Details".</p>
             </div>
           </div>

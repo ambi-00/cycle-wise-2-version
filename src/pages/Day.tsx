@@ -1,4 +1,4 @@
-import { useParams, Link, useLocation } from "react-router-dom";
+import { useParams, Link, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState, lazy, Suspense } from "react";
 import { motion } from "framer-motion";
 const RecentTradesTable = lazy(() => import("@/components/RecentTradesTable").then((m) => ({ default: m.RecentTradesTable })));
@@ -8,10 +8,11 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Plus, Droplets, Brain, Heart, Frown, Smile, Meh, Zap, Moon, Activity, HeartPulse } from "lucide-react";
+import { Plus, Droplets, Brain, Heart, Frown, Smile, Meh, Zap, Moon, Activity, HeartPulse, ChevronLeft, ChevronRight } from "lucide-react";
 
 export default function Day() {
   const { day } = useParams<{ day: string }>();
+  const navigate = useNavigate();
 
   // Support both numeric day (e.g., '24') and ISO date (YYYY-MM-DD)
   const parseDate = (d?: string) => {
@@ -23,6 +24,21 @@ export default function Day() {
 
   const dateObj = parseDate(day);
   const dayNum = dateObj.getDate();
+
+  // Navigation functions
+  const goToPreviousDay = () => {
+    const prevDate = new Date(dateObj);
+    prevDate.setDate(prevDate.getDate() - 1);
+    const prevIso = prevDate.toISOString().slice(0, 10);
+    navigate(`/day/${prevIso}`);
+  };
+
+  const goToNextDay = () => {
+    const nextDate = new Date(dateObj);
+    nextDate.setDate(nextDate.getDate() + 1);
+    const nextIso = nextDate.toISOString().slice(0, 10);
+    navigate(`/day/${nextIso}`);
+  };
 
 
 
@@ -77,13 +93,13 @@ export default function Day() {
     attachments?: string[];
     // Perioden-Tracking
     hasPeriod: boolean;
-    flowIntensity: number; // 0 = keine, 1 = leicht, 2 = mittel, 3 = stark
-    // Trading-relevante Faktoren
+    flowIntensity: number; // 0 = none, 1 = light, 2 = medium, 3 = heavy
+    // Trading-relevant factors
     energy: number;
     focus: number;
     stress: number;
     sleepQuality: number;
-    cramps: number; // kann ablenken beim Traden
+    cramps: number; // can be distracting while trading
   };
 
   const defaultJournal = (): Journal => ({ 
@@ -185,11 +201,32 @@ export default function Day() {
 
   return (
     <main className="pb-24 pt-20 lg:pl-64 lg:pt-8">
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mx-auto max-w-4xl p-4 lg:p-8">
-        <div className="mb-6 flex items-center justify-between">
-          <div>
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mx-auto max-w-7xl p-4 lg:p-8">
+        {/* Header */}
+        <div className="mb-6 flex items-start justify-between gap-4">
+          <div className="flex-1">
+            <div className="flex items-center gap-3 mb-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={goToPreviousDay}
+                className="gap-1"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Previous
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={goToNextDay}
+                className="gap-1"
+              >
+                Next
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
             <h1 className="font-serif text-2xl font-bold text-foreground lg:text-3xl">{dayLabel}</h1>
-            <p className="mt-1 text-muted-foreground">Trades and notes for {dayLabel} — phase: {phase}</p>
+            <p className="mt-1 text-muted-foreground">Trades and notes — phase: {phase}</p>
           </div>
           <div className="flex items-center gap-3">
             <Link to="/cycle" className="text-sm text-primary underline">Back to Cycle Tracker</Link>
@@ -251,7 +288,7 @@ export default function Day() {
 
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="period-toggle" className="text-sm font-medium">Hast du heute deine Periode?</Label>
+                  <Label htmlFor="period-toggle" className="text-sm font-medium">Are you on your period today?</Label>
                   <Switch
                     id="period-toggle"
                     checked={journal.hasPeriod}
@@ -273,12 +310,12 @@ export default function Day() {
                 {journal.hasPeriod && (
                   <>
                     <div className="space-y-2">
-                      <Label className="text-sm font-medium">Stärke der Blutung</Label>
+                      <Label className="text-sm font-medium">Flow Strength</Label>
                       <div className="flex gap-2">
                         {[
-                          { value: 1, label: "Leicht", color: "bg-red-200" },
-                          { value: 2, label: "Mittel", color: "bg-red-400" },
-                          { value: 3, label: "Stark", color: "bg-red-600" },
+                          { value: 1, label: "Light", color: "bg-red-200" },
+                          { value: 2, label: "Medium", color: "bg-red-400" },
+                          { value: 3, label: "Heavy", color: "bg-red-600" },
                         ].map((opt) => (
                           <button
                             key={opt.value}
@@ -299,10 +336,10 @@ export default function Day() {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <span>🔥</span>
-                          <Label className="text-sm font-medium">Krämpfe</Label>
+                          <Label className="text-sm font-medium">Cramps</Label>
                         </div>
                         <span className="text-sm text-muted-foreground">
-                          {journal.cramps === 0 ? "Keine" : journal.cramps <= 3 ? "Leicht" : journal.cramps <= 6 ? "Mittel" : "Stark"}
+                          {journal.cramps === 0 ? "None" : journal.cramps <= 3 ? "Light" : journal.cramps <= 6 ? "Medium" : "Strong"}
                         </span>
                       </div>
                       <input 
@@ -332,67 +369,67 @@ export default function Day() {
               </div>
 
               <div className="space-y-5">
-                {/* Schlafqualität */}
+                {/* Sleep Quality */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Moon className="h-4 w-4 text-indigo-500" />
-                      <Label className="text-sm font-medium">Schlafqualität</Label>
+                      <Moon className="h-4 w-4 text-primary" />
+                      <Label className="text-sm font-medium">Sleep Quality</Label>
                     </div>
                     <span className="text-sm font-medium">{journal.sleepQuality}/10</span>
                   </div>
-                  <input type="range" min={0} max={10} value={journal.sleepQuality} onChange={(e) => saveJournal({ sleepQuality: Number(e.target.value) })} className="w-full accent-indigo-500" />
+                  <input type="range" min={0} max={10} value={journal.sleepQuality} onChange={(e) => saveJournal({ sleepQuality: Number(e.target.value) })} className="w-full accent-primary" />
                 </div>
 
                 {/* Energie */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Zap className="h-4 w-4 text-yellow-500" />
+                      <Zap className="h-4 w-4 text-accent-foreground" />
                       <Label className="text-sm font-medium">Energie</Label>
                     </div>
                     <span className="text-sm font-medium">{journal.energy}/10</span>
                   </div>
-                  <input type="range" min={0} max={10} value={journal.energy} onChange={(e) => saveJournal({ energy: Number(e.target.value) })} className="w-full accent-yellow-500" />
+                  <input type="range" min={0} max={10} value={journal.energy} onChange={(e) => saveJournal({ energy: Number(e.target.value) })} className="w-full accent-accent" />
                 </div>
 
                 {/* Fokus */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Activity className="h-4 w-4 text-blue-500" />
+                      <Activity className="h-4 w-4 text-secondary-foreground" />
                       <Label className="text-sm font-medium">Fokus</Label>
                     </div>
                     <span className="text-sm font-medium">{journal.focus}/10</span>
                   </div>
-                  <input type="range" min={0} max={10} value={journal.focus} onChange={(e) => saveJournal({ focus: Number(e.target.value) })} className="w-full accent-blue-500" />
+                  <input type="range" min={0} max={10} value={journal.focus} onChange={(e) => saveJournal({ focus: Number(e.target.value) })} className="w-full accent-secondary" />
                 </div>
 
                 {/* Stress */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <HeartPulse className="h-4 w-4 text-orange-500" />
+                      <HeartPulse className="h-4 w-4 text-muted-foreground" />
                       <Label className="text-sm font-medium">Stress</Label>
                     </div>
                     <span className="text-sm font-medium">{journal.stress}/10</span>
                   </div>
-                  <input type="range" min={0} max={10} value={journal.stress} onChange={(e) => saveJournal({ stress: Number(e.target.value) })} className="w-full accent-orange-500" />
+                  <input type="range" min={0} max={10} value={journal.stress} onChange={(e) => saveJournal({ stress: Number(e.target.value) })} className="w-full accent-muted" />
                 </div>
 
                 {/* Stimmung */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Heart className="h-4 w-4 text-pink-500" />
+                      <Heart className="h-4 w-4 text-primary" />
                       <Label className="text-sm font-medium">Stimmung</Label>
                     </div>
                     <div className="flex items-center gap-1">
-                      {journal.mood <= 3 ? <Frown className="h-4 w-4 text-red-400" /> : journal.mood <= 6 ? <Meh className="h-4 w-4 text-yellow-500" /> : <Smile className="h-4 w-4 text-green-500" />}
+                      {journal.mood <= 3 ? <Frown className="h-4 w-4 text-destructive" /> : journal.mood <= 6 ? <Meh className="h-4 w-4 text-muted-foreground" /> : <Smile className="h-4 w-4 text-accent-foreground" />}
                       <span className="text-sm font-medium w-8 text-right">{journal.mood}/10</span>
                     </div>
                   </div>
-                  <input type="range" min={0} max={10} value={journal.mood} onChange={(e) => saveJournal({ mood: Number(e.target.value) })} className="w-full accent-pink-500" />
+                  <input type="range" min={0} max={10} value={journal.mood} onChange={(e) => saveJournal({ mood: Number(e.target.value) })} className="w-full accent-primary" />
                 </div>
 
                 {/* Selbstvertrauen */}
@@ -418,11 +455,11 @@ export default function Day() {
 
               <div className="space-y-4">
                 <div>
-                  <label className="text-sm font-medium">Tagesnotiz</label>
+                  <label className="text-sm font-medium">Daily Note</label>
                   <Textarea 
                     value={journal.quickNote} 
                     onChange={(e) => saveJournal({ quickNote: e.target.value })} 
-                    placeholder="Wie hast du dich heute beim Traden gefühlt?"
+                    placeholder="How did you feel while trading today?"
                     className="mt-2 min-h-[80px]" 
                   />
                 </div>
