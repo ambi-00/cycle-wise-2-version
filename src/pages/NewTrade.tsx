@@ -103,16 +103,35 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
   const [emotionalStateTrading, setEmotionalStateTrading] = useState<'anxious' | 'calm' | 'neutral'>('calm'); // Emotional State Impact
   const [sessionStartTime, setSessionStartTime] = useState(new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })); // For winning streak tracking
 
+  // Mid-Trade Tracking (Overtrading & Performance Analysis)
+  const [tradeDurationType, setTradeDurationType] = useState<'scalp' | 'shortterm' | 'swing' | ''>(''); // Scalp (<5min), Short-term (5-30min), Swing (>30min)
+  const [midTradeNotes, setMidTradeNotes] = useState(''); // Thoughts, emotions during trade
+  const [midTradeScreenshot, setMidTradeScreenshot] = useState<string | null>(null); // Screenshot mid-trade
+  
+  // Setup Changes Tracking (Revenge Trading detection)
+  const [setupChangedDurningTrade, setSetupChangedDuringTrade] = useState(false); // Did I change the setup?
+  const [setupChangeDetails, setSetupChangeDetails] = useState(''); // What changed (e.g., "SL moved from 1.0940 to 1.0930", "TP adjusted")
+  const [slChanged, setSlChanged] = useState(false); // Specific tracking: SL modified
+  const [slChangedValue, setSlChangedValue] = useState<number | ''>(''); // New SL value
+  const [tpChanged, setTpChanged] = useState(false); // Specific tracking: TP modified
+  const [tpChangedValue, setTpChangedValue] = useState<number | ''>(''); // New TP value
+  
+  // Performance Tracking (Overtrading & Concentration)
+  const [tradesCount, setTradesCount] = useState<number>(0); // Total trades in current session
+  const [sessionQuality, setSessionQuality] = useState<'sharp' | 'focused' | 'declining' | 'exhausted' | ''>(''); // Mental state during session
+  const [concentrationLevel, setConcentrationLevel] = useState<number>(5); // 1-10 scale
+
   const [imageBeforeSmall, setImageBeforeSmall] = useState<string | null>(null);
   const [imageBeforeLarge, setImageBeforeLarge] = useState<string | null>(null);
   const [imageAfterSmall, setImageAfterSmall] = useState<string | null>(null);
   const [imageAfterLarge, setImageAfterLarge] = useState<string | null>(null);
 
-  const [viewMode, setViewMode] = useState<'before' | 'after'>('before');
+  const [viewMode, setViewMode] = useState<'before' | 'during' | 'after'>('before');
   const [preSmallUrl, setPreSmallUrl] = useState('');
   const [preLargeUrl, setPreLargeUrl] = useState('');
   const [postSmallUrl, setPostSmallUrl] = useState('');
   const [postLargeUrl, setPostLargeUrl] = useState('');
+  const [midTradeUrl, setMidTradeUrl] = useState('');
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [confirmDialog, setConfirmDialog] = useState<{ show: boolean; message: string; onConfirm: () => void } | null>(null);
 
@@ -287,6 +306,7 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
       setImageBeforeLarge(found.image_before_large_tf || null);
       setImageAfterSmall(found.image_after_small_tf || null);
       setImageAfterLarge(found.image_after_large_tf || null);
+      setMidTradeScreenshot(found.mid_trade_screenshot || null);
       setTradeRating(found.rating || 0);
       setRrr(found.rrr ?? found.rMultiple ?? '');
       setRiskPct(found.riskPct ?? '');
@@ -296,6 +316,19 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
       setIdealSlSize(found.idealSlSize ?? '');
       setPlannedSlSize(found.plannedSlSize ?? '');
       setLearnings(found.learnings || '');
+      
+      // Load new Mid-Trade & Advanced fields
+      setTradeDurationType(found.trade_duration_type || '');
+      setMidTradeNotes(found.mid_trade_notes || '');
+      setSetupChangedDuringTrade(found.setup_changed_during_trade || false);
+      setSetupChangeDetails(found.setup_change_details || '');
+      setSlChanged(found.sl_changed || false);
+      setSlChangedValue(found.sl_changed_value ?? '');
+      setTpChanged(found.tp_changed || false);
+      setTpChangedValue(found.tp_changed_value ?? '');
+      setTradesCount(found.trades_count ?? 0);
+      setSessionQuality(found.session_quality || '');
+      setConcentrationLevel(found.concentration_level ?? 5);
     } catch (e) {
       console.error('Error loading trade:', e);
     }
@@ -479,11 +512,13 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
           if (url) imageAfterSmallUrl = url;
         }
       }
-      if (imageAfterLarge && imageAfterLarge.startsWith('data:')) {
-        const file = await dataUrlToFile(imageAfterLarge, `after-large-${Date.now()}.jpg`);
+      // Upload mid-trade image if it exists
+      let midTradeImageUrl = midTradeScreenshot;
+      if (midTradeScreenshot && midTradeScreenshot.startsWith('data:')) {
+        const file = await dataUrlToFile(midTradeScreenshot, `mid-trade-${Date.now()}.jpg`);
         if (file) {
-          const url = await uploadTradeImage(file, 'after' as const);
-          if (url) imageAfterLargeUrl = url;
+          const url = await uploadTradeImage(file, 'before' as const);
+          if (url) midTradeImageUrl = url;
         }
       }
 
@@ -524,9 +559,6 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
         status: (close ? 'closed' : result ? 'closed' : 'open') as 'open' | 'closed',
         cycle_day: cycleDay,
         cycle_phase: cyclePhase,
-        session_time: sessionTime,
-        emotional_state_trading: emotionalStateTrading,
-        session_start_time: sessionStartTime,
       };
 
       if (editingId) {
@@ -589,6 +621,19 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
         sessionTime: sessionTime,
         emotionalStateTrading: emotionalStateTrading,
         sessionStartTime: sessionStartTime,
+        // Mid-Trade & Advanced
+        mid_trade_screenshot: midTradeImageUrl || null,
+        mid_trade_notes: midTradeNotes || null,
+        trade_duration_type: tradeDurationType || null,
+        setup_changed_during_trade: setupChangedDurningTrade,
+        setup_change_details: setupChangeDetails || null,
+        sl_changed: slChanged,
+        sl_changed_value: slChanged && slChangedValue !== '' ? Number(slChangedValue) : null,
+        tp_changed: tpChanged,
+        tp_changed_value: tpChanged && tpChangedValue !== '' ? Number(tpChangedValue) : null,
+        trades_count: tradesCount || null,
+        session_quality: sessionQuality || null,
+        concentration_level: concentrationLevel || null,
       };
 
       if (editingId) {
@@ -636,9 +681,10 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
           </CardHeader>
 
           <CardContent>
-            <div className="my-5 flex gap-3 justify-center">
-              <button type="button" className={`rounded-full px-4 py-2 text-sm font-medium shadow-soft ${viewMode === 'before' ? 'bg-gradient-to-r from-primary to-primary/70 text-primary-foreground' : 'bg-muted/10 text-muted-foreground'}`} onClick={() => setViewMode('before')}>Before Trade</button>
-              <button type="button" className={`rounded-full px-4 py-2 text-sm font-medium shadow-soft ${viewMode === 'after' ? 'bg-gradient-to-r from-primary to-primary/70 text-primary-foreground' : 'bg-muted/10 text-muted-foreground'}`} onClick={() => setViewMode('after')}>After Trade</button>
+            <div className="my-5 flex gap-3 justify-center flex-wrap">
+              <button type="button" className={`rounded-full px-4 py-2 text-sm font-medium shadow-soft ${viewMode === 'before' ? 'bg-gradient-to-r from-primary to-primary/70 text-primary-foreground' : 'bg-muted/10 text-muted-foreground'}`} onClick={() => setViewMode('before')}>📋 Before Trade</button>
+              <button type="button" className={`rounded-full px-4 py-2 text-sm font-medium shadow-soft ${viewMode === 'during' ? 'bg-gradient-to-r from-primary to-primary/70 text-primary-foreground' : 'bg-muted/10 text-muted-foreground'}`} onClick={() => setViewMode('during')}>⚡ During Trade</button>
+              <button type="button" className={`rounded-full px-4 py-2 text-sm font-medium shadow-soft ${viewMode === 'after' ? 'bg-gradient-to-r from-primary to-primary/70 text-primary-foreground' : 'bg-muted/10 text-muted-foreground'}`} onClick={() => setViewMode('after')}>📊 After Trade</button>
             </div>
 
             <div className="grid gap-6 lg:grid-cols-12">
@@ -773,6 +819,169 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
                       <div className="mt-4">
                         <label className="text-sm">Notes</label>
                         <Textarea value={preNote} onChange={(e) => setPreNote(e.target.value)} className="min-h-[100px]" />
+                      </div>
+                    </section>
+                  </>
+                ) : viewMode === 'during' ? (
+                  <>
+                    <section className="rounded-2xl border p-4 bg-card shadow-soft">
+                      <h4 className="font-serif text-xl font-semibold text-foreground">⚡ Mid-Trade Tracking</h4>
+                      <p className="text-sm text-muted-foreground mt-1">Document what happens while the trade is active</p>
+
+                      <div className="mt-4 grid gap-4">
+                        {/* Mental State & Focus */}
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="text-xs text-muted-foreground mb-1.5 block">Session Quality 🧠</label>
+                            <Select onValueChange={(v) => setSessionQuality(v as any)} value={sessionQuality}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="How's your focus?" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="sharp">🔥 Sharp - Best focus</SelectItem>
+                                <SelectItem value="focused">✅ Focused - Good</SelectItem>
+                                <SelectItem value="declining">⚠️ Declining - Getting tired</SelectItem>
+                                <SelectItem value="exhausted">😴 Exhausted - Shutting down</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <div>
+                            <label className="text-xs text-muted-foreground mb-1.5 block">Concentration Level (1-10)</label>
+                            <div className="flex items-center gap-2">
+                              <input 
+                                type="range" 
+                                min="1" 
+                                max="10" 
+                                value={concentrationLevel}
+                                onChange={(e) => setConcentrationLevel(Number(e.target.value))}
+                                className="flex-1"
+                              />
+                              <span className="text-sm font-semibold min-w-[2rem]">{concentrationLevel}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Overtrading Detection */}
+                        <div>
+                          <label className="text-xs text-muted-foreground mb-1.5 block">Total Trades This Session</label>
+                          <Input 
+                            type="number" 
+                            min="0"
+                            value={tradesCount}
+                            onChange={(e) => setTradesCount(Number(e.target.value) || 0)}
+                            placeholder="How many trades have you done today?"
+                          />
+                          <p className="text-xs text-muted-foreground mt-1">⚠️ Alert: 5+ trades/day may indicate overtrading</p>
+                        </div>
+
+                        {/* Trade Duration */}
+                        <div>
+                          <label className="text-xs text-muted-foreground mb-1.5 block">Trade Duration Type ⏱️</label>
+                          <Select onValueChange={(v) => setTradeDurationType(v as any)} value={tradeDurationType}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="How long is this trade?" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="scalp">🏃 Scalp (Less than 5 min)</SelectItem>
+                              <SelectItem value="shortterm">⚡ Short-term (5-30 min)</SelectItem>
+                              <SelectItem value="swing">📊 Swing (More than 30 min)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        {/* Setup Changes - Revenge Trading Detection */}
+                        <div className="border-t pt-3">
+                          <label className="text-xs text-muted-foreground mb-2 block">🔄 Setup Changes During Trade</label>
+                          <div className="flex items-center gap-2 mb-3">
+                            <Checkbox 
+                              checked={setupChangedDurningTrade}
+                              onCheckedChange={(checked) => setSetupChangedDuringTrade(!!checked)}
+                              id="setup-changed"
+                            />
+                            <label htmlFor="setup-changed" className="text-sm">Did you modify your original setup?</label>
+                          </div>
+
+                          {setupChangedDurningTrade && (
+                            <Textarea 
+                              value={setupChangeDetails}
+                              onChange={(e) => setSetupChangeDetails(e.target.value)}
+                              placeholder="E.g., 'Moved SL from 1.0940 to 1.0935', 'Extended TP by 50 pips', 'Exited early due to news'"
+                              className="text-sm mb-3"
+                            />
+                          )}
+
+                          {/* Specific SL/TP Changes */}
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="flex items-center gap-2">
+                              <Checkbox 
+                                checked={slChanged}
+                                onCheckedChange={(checked) => setSlChanged(!!checked)}
+                                id="sl-changed"
+                              />
+                              <label htmlFor="sl-changed" className="text-sm">SL Modified</label>
+                            </div>
+                            {slChanged && (
+                              <Input 
+                                type="number"
+                                step="0.0001"
+                                value={slChangedValue}
+                                onChange={(e) => setSlChangedValue(e.target.value === '' ? '' : Number(e.target.value))}
+                                placeholder="New SL value"
+                              />
+                            )}
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-3 mt-2">
+                            <div className="flex items-center gap-2">
+                              <Checkbox 
+                                checked={tpChanged}
+                                onCheckedChange={(checked) => setTpChanged(!!checked)}
+                                id="tp-changed"
+                              />
+                              <label htmlFor="tp-changed" className="text-sm">TP Modified</label>
+                            </div>
+                            {tpChanged && (
+                              <Input 
+                                type="number"
+                                step="0.0001"
+                                value={tpChangedValue}
+                                onChange={(e) => setTpChangedValue(e.target.value === '' ? '' : Number(e.target.value))}
+                                placeholder="New TP value"
+                              />
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Mid-Trade Notes & Screenshot */}
+                        <div className="border-t pt-3">
+                          <label className="text-xs text-muted-foreground mb-1.5 block">Thoughts & Emotions 💭</label>
+                          <Textarea 
+                            value={midTradeNotes}
+                            onChange={(e) => setMidTradeNotes(e.target.value)}
+                            placeholder="What are you feeling? Anxious? Confident? Any doubts about the trade?"
+                            className="text-sm"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-xs text-muted-foreground mb-1.5 block">Screenshot During Trade 📸</label>
+                          <div className="rounded-lg border-2 border-dashed p-4 text-center bg-muted/20 cursor-pointer hover:bg-muted/30">
+                            <input 
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) handleFile(file, 'postSmall');
+                              }}
+                              className="hidden"
+                              id="mid-file"
+                            />
+                            <label htmlFor="mid-file" className="cursor-pointer block">
+                              {midTradeScreenshot ? '✅ Screenshot added' : '📸 Click or paste screenshot'}
+                            </label>
+                          </div>
+                        </div>
                       </div>
                     </section>
                   </>
