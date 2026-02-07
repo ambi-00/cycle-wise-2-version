@@ -285,9 +285,13 @@ export default function Dashboard() {
         {/* Quick Start Checklist */}
         <QuickStartChecklist />
 
-        {/* XP & Win/Loss Streak Section */}
-        <motion.div variants={itemVariants} className="mb-6 grid gap-4 lg:grid-cols-2 xp-bar">
+        {/* XP Bar */}
+        <motion.div variants={itemVariants} className="mb-6 xp-bar">
           <XPBar />
+        </motion.div>
+
+        {/* Streaks */}
+        <motion.div variants={itemVariants} className="mb-6">
           <StreakDisplay />
         </motion.div>
 
