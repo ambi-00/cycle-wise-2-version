@@ -1620,6 +1620,51 @@ export async function getXPLeaderboard(period: 'weekly' | 'monthly' | 'alltime',
 }
 
 /**
+ * Calculate win/loss streak (consecutive wins or losses)
+ */
+export async function getWinLossStreak(userId: string): Promise<{ winStreak: number; lossStreak: number; currentType: 'win' | 'loss' | 'none' }> {
+  try {
+    const { data: trades, error } = await supabase
+      .from('journal')
+      .select('result, date')
+      .eq('user_id', userId)
+      .order('date', { ascending: false })
+      .limit(100);
+
+    if (error) throw error;
+    if (!trades || trades.length === 0) return { winStreak: 0, lossStreak: 0, currentType: 'none' };
+
+    // Filter out breakeven trades
+    const relevantTrades = trades.filter((t: any) => t.result === 'win' || t.result === 'loss');
+    if (relevantTrades.length === 0) return { winStreak: 0, lossStreak: 0, currentType: 'none' };
+
+    // Count consecutive trades from most recent
+    let currentType: 'win' | 'loss' | 'none' = 'none';
+    let streak = 0;
+
+    for (const trade of relevantTrades) {
+      if (currentType === 'none') {
+        currentType = trade.result as 'win' | 'loss';
+        streak = 1;
+      } else if (trade.result === currentType) {
+        streak++;
+      } else {
+        break;
+      }
+    }
+
+    return {
+      winStreak: currentType === 'win' ? streak : 0,
+      lossStreak: currentType === 'loss' ? streak : 0,
+      currentType
+    };
+  } catch (error) {
+    console.error('Failed to calculate win/loss streak:', error);
+    return { winStreak: 0, lossStreak: 0, currentType: 'none' };
+  }
+}
+
+/**
  * Process monthly XP decay (should be run by cron/scheduled function)
  */
 export async function processMonthlyXPDecay() {

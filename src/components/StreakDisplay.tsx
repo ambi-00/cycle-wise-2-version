@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Flame, Calendar } from "lucide-react";
-import { getGamificationStats } from "@/lib/supabaseHelpers";
+import { Flame, Calendar, TrendingUp, TrendingDown } from "lucide-react";
+import { getGamificationStats, getWinLossStreak } from "@/lib/supabaseHelpers";
 import { supabase } from "@/integrations/supabase/client";
 
 export function StreakDisplay() {
   const [stats, setStats] = useState<any>(null);
+  const [winLossStreak, setWinLossStreak] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -17,8 +18,13 @@ export function StreakDisplay() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const data = await getGamificationStats(user.id);
-      setStats(data);
+      const [statsData, streakData] = await Promise.all([
+        getGamificationStats(user.id),
+        getWinLossStreak(user.id)
+      ]);
+      
+      setStats(statsData);
+      setWinLossStreak(streakData);
     } catch (error) {
       console.error('Failed to load streak data:', error);
     } finally {
@@ -26,13 +32,13 @@ export function StreakDisplay() {
     }
   }
 
-  if (loading || !stats) return null;
+  if (loading || !stats || !winLossStreak) return null;
 
   const loginStreak = stats.login_streak || 0;
   const tradingStreak = stats.trading_streak || 0;
 
   return (
-    <div className="flex gap-3">
+    <div className="flex gap-3 flex-wrap">
       {/* Login Streak */}
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
@@ -59,6 +65,38 @@ export function StreakDisplay() {
           <p className="text-sm font-bold text-foreground">{tradingStreak} days</p>
         </div>
       </motion.div>
+
+      {/* Win Streak */}
+      {winLossStreak.currentType === 'win' && (
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ delay: 0.2 }}
+          className="flex items-center gap-2 bg-card rounded-lg px-3 py-2 shadow-soft border border-border"
+        >
+          <TrendingUp className="h-5 w-5 text-green-500" />
+          <div>
+            <p className="text-xs text-muted-foreground">Win Streak</p>
+            <p className="text-sm font-bold text-foreground">{winLossStreak.winStreak} wins</p>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Loss Streak */}
+      {winLossStreak.currentType === 'loss' && (
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ delay: 0.2 }}
+          className="flex items-center gap-2 bg-card rounded-lg px-3 py-2 shadow-soft border border-border"
+        >
+          <TrendingDown className="h-5 w-5 text-red-500" />
+          <div>
+            <p className="text-xs text-muted-foreground">Loss Streak</p>
+            <p className="text-sm font-bold text-foreground">{winLossStreak.lossStreak} losses</p>
+          </div>
+        </motion.div>
+      )}
     </div>
   );
 }
