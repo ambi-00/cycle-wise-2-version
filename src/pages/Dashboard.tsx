@@ -11,6 +11,7 @@ import DashboardTour from "@/components/DashboardTour";
 import QuickStartChecklist from "@/components/QuickStartChecklist";
 import { XPBar } from "@/components/XPBar";
 import { StreakDisplay } from "@/components/StreakDisplay";
+import { ProfileButton } from "@/components/ProfileButton";
 const AIInsightCard = lazy(() => import("@/components/AIInsightCard").then((m) => ({ default: m.AIInsightCard })));
 const RecentTradesTable = lazy(() => import("@/components/RecentTradesTable").then((m) => ({ default: m.RecentTradesTable })));
 const LeaderboardPreview = lazy(() => import("@/components/LeaderboardPreview").then((m) => ({ default: m.LeaderboardPreview })));
@@ -277,9 +278,7 @@ export default function Dashboard() {
               <Bell className="h-5 w-5" />
               <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-primary" />
             </button>
-            <Link to="/profile" className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/70 text-primary-foreground">
-              <User className="h-5 w-5" />
-            </Link>
+            <ProfileButton />
           </div>
         </motion.header>
 
