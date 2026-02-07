@@ -172,7 +172,7 @@ export function Navigation() {
       </div>
 
       {/* Mobile Navigation Bottom Bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-sidebar p-2 lg:hidden">\n        <div className="flex items-center justify-around">
+      <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-sidebar/95 backdrop-blur-md p-2 lg:hidden">\n        <div className="flex items-center justify-around">
           {navItems.slice(0, 4).map((item) => {
             const isActive = location.pathname === item.path;
             return (

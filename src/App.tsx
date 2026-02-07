@@ -60,7 +60,7 @@ const AppContent = () => {
   const isLandingPage = location.pathname === "/";
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-20 lg:pb-0">
       {!isLandingPage && <Navigation />}
 
       {/* Top-right profile avatar is provided by the Dashboard page; removed global ProfileButton */}
