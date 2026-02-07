@@ -5,7 +5,7 @@ import { getGamificationStats, getWinLossStreak } from "@/lib/supabaseHelpers";
 import { supabase } from "@/integrations/supabase/client";
 
 export function StreakDisplay() {
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<any>({ login_streak: 0, trading_streak: 0 });
   const [winLossStreak, setWinLossStreak] = useState<any>({ winStreak: 0, lossStreak: 0, currentType: 'none' });
   const [loading, setLoading] = useState(true);
 
@@ -16,14 +16,17 @@ export function StreakDisplay() {
   async function loadStats() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        setLoading(false);
+        return;
+      }
 
       const [statsData, streakData] = await Promise.all([
         getGamificationStats(user.id),
         getWinLossStreak(user.id)
       ]);
       
-      setStats(statsData);
+      setStats(statsData || { login_streak: 0, trading_streak: 0 });
       setWinLossStreak(streakData || { winStreak: 0, lossStreak: 0, currentType: 'none' });
     } catch (error) {
       console.error('Failed to load streak data:', error);
@@ -32,10 +35,8 @@ export function StreakDisplay() {
     }
   }
 
-  if (loading || !stats) return null;
-
-  const loginStreak = stats.login_streak || 0;
-  const tradingStreak = stats.trading_streak || 0;
+  const loginStreak = stats?.login_streak || 0;
+  const tradingStreak = stats?.trading_streak || 0;
 
   return (
     <div className="flex gap-3 flex-wrap">
