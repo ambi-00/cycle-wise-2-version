@@ -3,7 +3,7 @@ import { Calendar, ChevronLeft, ChevronRight, Info } from "lucide-react";
 import CyclePhaseCard, { CyclePhase, phaseData } from "./CyclePhaseCard";
 
 const LandingCycleTracker = () => {
-  const [cycleDay, setCycleDay] = useState(12);
+  const [cycleDay, setCycleDay] = useState(20);
   const cycleLength = 28;
 
   const getPhase = (day: number): CyclePhase => {
