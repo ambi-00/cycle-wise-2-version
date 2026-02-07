@@ -12,7 +12,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-export default function ProfileButton() {
+export const ProfileButton = () => {
   const navigate = useNavigate();
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
@@ -55,4 +55,4 @@ export default function ProfileButton() {
       </AlertDialog>
     </div>
   );
-}
+};
