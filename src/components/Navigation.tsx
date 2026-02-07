@@ -217,17 +217,6 @@ export function Navigation() {
             >
               Prop Firm Connector
             </NavLink>
-                            <NavLink
-                              to="/prop-firms"
-                              className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
-                                location.pathname === "/prop-firms"
-                                  ? "bg-primary/10 text-primary"
-                                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                              }`}
-                              onClick={() => setMobileOpen(false)}
-                            >
-                              Prop Firm Connector
-                            </NavLink>
             <NavLink
               to="/propfirm-compare"
               className={`rounded-lg px-3 py-2 text-sm font-medium transition-all ${
