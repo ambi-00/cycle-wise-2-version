@@ -684,7 +684,7 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
             <div className="my-5 flex gap-3 justify-center flex-wrap">
               <button type="button" className={`rounded-full px-4 py-2 text-sm font-medium shadow-soft ${viewMode === 'before' ? 'bg-gradient-to-r from-primary to-primary/70 text-primary-foreground' : 'bg-muted/10 text-muted-foreground'}`} onClick={() => setViewMode('before')}>📋 Before Trade</button>
               <button type="button" className={`rounded-full px-4 py-2 text-sm font-medium shadow-soft ${viewMode === 'during' ? 'bg-gradient-to-r from-primary to-primary/70 text-primary-foreground' : 'bg-muted/10 text-muted-foreground'}`} onClick={() => setViewMode('during')}>⚡ During Trade</button>
-              <button type="button" className={`rounded-full px-4 py-2 text-sm font-medium shadow-soft ${viewMode === 'after' ? 'bg-gradient-to-r from-primary to-primary/70 text-primary-foreground' : 'bg-muted/10 text-muted-foreground'}`} onClick={() => setViewMode('after')}>📊 After Trade</button>
+              <button type="button" className={`rounded-full px-4 py-2 text-sm font-medium shadow-soft ${viewMode === 'after' ? 'bg-gradient-to-r from-primary to-primary/70 text-primary-foreground' : 'bg-muted/10 text-muted-foreground'}`} onClick={() => setViewMode('after')}>After Trade</button>
             </div>
 
             <div className="grid gap-6 lg:grid-cols-12">
@@ -762,22 +762,24 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
                       </div>
                     </section>
 
-                    <section className="rounded-2xl border p-4 bg-card shadow-soft">
-                      <h4 className="font-serif text-xl font-semibold text-foreground">Confirmations</h4>
-                      <div className="mt-3 text-xs text-muted-foreground mb-2">Mark the confirmations you observed before entering.</div>
-                      <div className="space-y-2">
-                        {checklist.map((c, idx) => (
-                          <label key={c.id} className="flex items-start gap-3">
-                            <Checkbox checked={c.done} onCheckedChange={(v) => {
-                              const copy = [...checklist];
-                              copy[idx] = { ...copy[idx], done: Boolean(v) };
-                              setChecklist(copy);
-                            }} />
-                            <span className="text-sm text-muted-foreground">{c.text}</span>
-                          </label>
-                        ))}
-                      </div>
-                    </section>
+                    {strategy && (
+                      <section className="rounded-2xl border p-4 bg-card shadow-soft">
+                        <h4 className="font-serif text-xl font-semibold text-foreground">Confirmations</h4>
+                        <div className="mt-3 text-xs text-muted-foreground mb-2">Mark the confirmations you observed before entering.</div>
+                        <div className="space-y-2">
+                          {checklist.map((c, idx) => (
+                            <label key={c.id} className="flex items-start gap-3">
+                              <Checkbox checked={c.done} onCheckedChange={(v) => {
+                                const copy = [...checklist];
+                                copy[idx] = { ...copy[idx], done: Boolean(v) };
+                                setChecklist(copy);
+                              }} />
+                              <span className="text-sm text-muted-foreground">{c.text}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </section>
+                    )}
 
                     <section className="rounded-2xl border p-4 bg-card shadow-soft flex-1 flex flex-col">
                       <h4 className="font-serif text-xl font-semibold text-foreground">Risk</h4>
@@ -839,7 +841,7 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
                               </SelectTrigger>
                               <SelectContent>
                                 <SelectItem value="sharp">🔥 Sharp - Best focus</SelectItem>
-                                <SelectItem value="focused">✅ Focused - Good</SelectItem>
+                                <SelectItem value="focused">Focused - Good</SelectItem>
                                 <SelectItem value="declining">⚠️ Declining - Getting tired</SelectItem>
                                 <SelectItem value="exhausted">😴 Exhausted - Shutting down</SelectItem>
                               </SelectContent>
@@ -885,7 +887,7 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
                             <SelectContent>
                               <SelectItem value="scalp">🏃 Scalp (Less than 5 min)</SelectItem>
                               <SelectItem value="shortterm">⚡ Short-term (5-30 min)</SelectItem>
-                              <SelectItem value="swing">📊 Swing (More than 30 min)</SelectItem>
+                              <SelectItem value="swing">Swing (More than 30 min)</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
@@ -955,7 +957,7 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
 
                         {/* Mid-Trade Notes & Screenshot */}
                         <div className="border-t pt-3">
-                          <label className="text-xs text-muted-foreground mb-1.5 block">Thoughts & Emotions 💭</label>
+                          <label className="text-xs text-muted-foreground mb-1.5 block">Thoughts & Emotions</label>
                           <Textarea 
                             value={midTradeNotes}
                             onChange={(e) => setMidTradeNotes(e.target.value)}
@@ -978,7 +980,7 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
                               id="mid-file"
                             />
                             <label htmlFor="mid-file" className="cursor-pointer block">
-                              {midTradeScreenshot ? '✅ Screenshot added' : '📸 Click or paste screenshot'}
+                              {midTradeScreenshot ? 'Screenshot added' : 'Click or paste screenshot'}
                             </label>
                           </div>
                         </div>
