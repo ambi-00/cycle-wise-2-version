@@ -124,7 +124,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <XPToastContainer />
-      <ThemeProvider attribute="class" defaultTheme="system">
+      <ThemeProvider attribute="class" defaultTheme="light">
         <BrowserRouter>
           <AppContent />
         </BrowserRouter>
