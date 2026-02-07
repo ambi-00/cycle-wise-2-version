@@ -1,16 +1,18 @@
 import { motion } from "framer-motion";
-import { User, Bell, Shield, Download, Trash2, Calendar, Sun, Moon, Building2 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { User, Bell, Shield, Download, Trash2, Calendar, Sun, Moon, Building2, LogOut } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import ThemeCustomizer from "@/components/ThemeCustomizer";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function Settings() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const navigate = useNavigate();
   const [tradingPlatformUrl, setTradingPlatformUrl] = useState(() => {
     return localStorage.getItem('cw_trading_platform_url') || '';
   });
@@ -31,6 +33,11 @@ export default function Settings() {
 
   const toggleTheme = (val: boolean) => {
     setTheme(val ? "dark" : "light");
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate('/login');
   };
 
   return (
@@ -239,6 +246,29 @@ export default function Settings() {
               Delete Account
             </Button>
           </div>
+        </motion.section>
+
+        {/* Logout */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.45 }}
+          className="mt-8 rounded-2xl bg-card p-6 shadow-card"
+        >
+          <div className="flex items-center gap-3 mb-6">
+            <div className="rounded-xl bg-destructive/10 p-2.5">
+              <LogOut className="h-5 w-5 text-destructive" />
+            </div>
+            <h2 className="font-semibold text-foreground">Account</h2>
+          </div>
+
+          <Button 
+            onClick={handleLogout}
+            className="w-full justify-start bg-destructive hover:bg-destructive/90"
+          >
+            <LogOut className="h-4 w-4 mr-2" />
+            Sign Out
+          </Button>
         </motion.section>
       </motion.div>
     </main>
