@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export function StreakDisplay() {
   const [stats, setStats] = useState<any>(null);
-  const [winLossStreak, setWinLossStreak] = useState<any>(null);
+  const [winLossStreak, setWinLossStreak] = useState<any>({ winStreak: 0, lossStreak: 0, currentType: 'none' });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -24,7 +24,7 @@ export function StreakDisplay() {
       ]);
       
       setStats(statsData);
-      setWinLossStreak(streakData);
+      setWinLossStreak(streakData || { winStreak: 0, lossStreak: 0, currentType: 'none' });
     } catch (error) {
       console.error('Failed to load streak data:', error);
     } finally {
@@ -32,7 +32,7 @@ export function StreakDisplay() {
     }
   }
 
-  if (loading || !stats || !winLossStreak) return null;
+  if (loading || !stats) return null;
 
   const loginStreak = stats.login_streak || 0;
   const tradingStreak = stats.trading_streak || 0;
