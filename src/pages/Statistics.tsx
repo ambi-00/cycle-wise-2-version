@@ -52,17 +52,6 @@ export default function Statistics() {
     { time: '15:30', currency: 'USD', impact: 'high', title: 'Fed Chair Speech' },
   ]);
 
-  useEffect(() => {
-    loadAllTrades();
-  }, []);
-
-  // Show blank while subscription loads (no flicker)
-  if (subLoading) {
-    return <div className="min-h-screen bg-background" />;
-  }
-
-  const hasPremium = subscription.tier === 'premium' || subscription.tier === 'pro';
-
   const loadAllTrades = () => {
     const trades: Trade[] = [];
     
@@ -90,6 +79,39 @@ export default function Statistics() {
     
     setAllTrades(trades);
   };
+
+  useEffect(() => {
+    loadAllTrades();
+  }, []);
+
+  // Show blank while subscription loads (no flicker)
+  if (subLoading) {
+    return <div className="min-h-screen bg-background" />;
+  }
+
+  const hasPremium = subscription.tier === 'premium' || subscription.tier === 'pro';
+
+  // Free tier upsell modal
+  if (!hasPremium) {
+    return (
+      <main className="pb-24 pt-20 lg:pl-64 lg:pt-8">
+        <div className="fixed inset-y-0 right-0 left-0 lg:left-64 z-50 flex items-center justify-center p-6 bg-black/20 backdrop-blur-sm">
+          <Card className="max-w-md w-full">
+            <CardContent className="p-8 text-center">
+              <Lock className="h-12 w-12 text-primary mx-auto mb-4" />
+              <h3 className="font-semibold text-xl mb-2">Premium Feature</h3>
+              <p className="text-sm text-muted-foreground mb-6">
+                Advanced trading analytics, RRR optimization, and full performance insights.
+              </p>
+              <Button onClick={() => navigate('/#pricing')} size="lg" className="w-full">
+                Upgrade to Premium - €9.99/mo
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </main>
+    );
+  }
 
   const calendarData = useMemo(() => {
     const dataByDate: { [key: string]: DayData } = {};
