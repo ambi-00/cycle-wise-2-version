@@ -40,7 +40,7 @@ interface NewsItem {
 
 export default function Statistics() {
   const navigate = useNavigate();
-  const { subscription, loading: subLoading } = useSubscription();
+  const { subscription, hasFeature, loading: subLoading } = useSubscription();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [allTrades, setAllTrades] = useState<Trade[]>([]);
@@ -84,11 +84,7 @@ export default function Statistics() {
     loadAllTrades();
   }, []);
 
-  // Show blank while subscription loads (no flicker)
-  if (subLoading) {
-    return <div className="min-h-screen bg-background" />;
-  }
-
+  // All hooks MUST be called unconditionally, before any JSX rendering or early returns
   const hasPremium = subscription.tier === 'premium' || subscription.tier === 'pro';
 
   const calendarData = useMemo(() => {
@@ -334,14 +330,19 @@ export default function Statistics() {
 
   return (
     <main className="pb-24 pt-20 lg:pl-64 lg:pt-8">
-      {/* Free tier upsell modal */}
-      {!hasPremium && (
-        <div className="fixed inset-y-0 right-0 left-0 lg:left-64 z-50 flex items-center justify-center p-6 bg-black/20 backdrop-blur-sm">
-          <Card className="max-w-md w-full">
-            <CardContent className="p-8 text-center">
-              <Lock className="h-12 w-12 text-primary mx-auto mb-4" />
-              <h3 className="font-semibold text-xl mb-2">Premium Feature</h3>
-              <p className="text-sm text-muted-foreground mb-6">
+      {/* Show blank while loading subscription */}
+      {subLoading && <div className="min-h-screen bg-background" />}
+      
+      {!subLoading && (
+        <>
+          {/* Free tier upsell modal */}
+          {!hasPremium && (
+            <div className="fixed inset-y-0 right-0 left-0 lg:left-64 z-50 flex items-center justify-center p-6 bg-black/20 backdrop-blur-sm">
+              <Card className="max-w-md w-full">
+                <CardContent className="p-8 text-center">
+                  <Lock className="h-12 w-12 text-primary mx-auto mb-4" />
+                  <h3 className="font-semibold text-xl mb-2">Premium Feature</h3>
+                  <p className="text-sm text-muted-foreground mb-6">
                 Advanced trading analytics, RRR optimization, and full performance insights.
               </p>
               <Button onClick={() => navigate('/#pricing')} size="lg" className="w-full">
@@ -1559,6 +1560,8 @@ export default function Statistics() {
           </TabsContent>
         </Tabs>
       </div>
+        </>
+      )}
     </main>
   );
 }
