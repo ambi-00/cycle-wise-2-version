@@ -36,8 +36,8 @@ export default function AIInsights() {
     return <div className="min-h-screen bg-background" />;
   }
 
-  // Empty state when no trades
-  if (!hasData) {
+  // Empty state when no trades (but only after loading completes)
+  if (!hasData && !subLoading) {
     return (
       <main className="pb-24 pt-20 lg:pl-64 lg:pt-8">
         <div className="relative">
