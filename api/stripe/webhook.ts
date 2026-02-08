@@ -3,7 +3,7 @@ import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2025-02-24.acacia',
+  apiVersion: '2024-12-27.acacia',
 });
 
 const supabase = createClient(
@@ -123,7 +123,7 @@ async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
     .from('subscriptions')
     .update({
       status: subscription.status,
-      current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+      current_period_end: new Date(subscription.current_period_end! * 1000).toISOString(),
     })
     .eq('stripe_subscription_id', subscription.id);
 
@@ -147,7 +147,12 @@ async function handleSubscriptionCanceled(subscription: Stripe.Subscription) {
 }
 
 async function handlePaymentFailed(invoice: Stripe.Invoice) {
-  const subscriptionId = invoice.subscription as string;
+  const subscriptionId = invoice.subscription as string | null;
+  
+  if (!subscriptionId) {
+    console.log('No subscription ID in invoice');
+    return;
+  }
 
   const { error } = await supabase
     .from('subscriptions')
