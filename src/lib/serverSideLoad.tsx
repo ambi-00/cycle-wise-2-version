@@ -16,6 +16,8 @@ export function withServerSideLoad<P extends object>(
     const navigate = useNavigate();
 
     useEffect(() => {
+      let isMounted = true;
+
       const loadData = async () => {
         try {
           // Get current user
@@ -25,7 +27,7 @@ export function withServerSideLoad<P extends object>(
           } = await supabase.auth.getUser();
 
           if (userError || !user) {
-            navigate('/login');
+            if (isMounted) navigate('/login');
             return;
           }
 
@@ -38,22 +40,29 @@ export function withServerSideLoad<P extends object>(
 
           if (subError) {
             console.error('Subscription error:', subError);
-            navigate('/login');
+            if (isMounted) navigate('/login');
             return;
           }
 
           // Set tier BEFORE rendering child component
-          setTier(subscription?.tier || 'free');
+          if (isMounted) {
+            setTier(subscription?.tier || 'free');
+          }
         } catch (error) {
           console.error('Load error:', error);
-          navigate('/login');
+          if (isMounted) navigate('/login');
         } finally {
-          setLoading(false);
+          if (isMounted) setLoading(false);
         }
       };
 
       loadData();
-    }, [navigate]);
+
+      // Cleanup
+      return () => {
+        isMounted = false;
+      };
+    }, []); // Empty dependency array - run only once
 
     // While loading, show blank/minimal UI (no flicker)
     if (loading || !tier) {
@@ -77,12 +86,14 @@ export function useServerSideData() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    let isMounted = true;
+
     const load = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
 
         if (!user) {
-          navigate('/login');
+          if (isMounted) navigate('/login');
           return;
         }
 
@@ -92,19 +103,26 @@ export function useServerSideData() {
           .eq('user_id', user.id)
           .single();
 
-        setData({
-          user,
-          tier: subscription?.tier || 'free',
-        });
+        if (isMounted) {
+          setData({
+            user,
+            tier: subscription?.tier || 'free',
+          });
+        }
       } catch (error) {
-        navigate('/login');
+        if (isMounted) navigate('/login');
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
 
     load();
-  }, [navigate]);
+
+    // Cleanup function
+    return () => {
+      isMounted = false;
+    };
+  }, []); // Empty dependency array - run only once on mount
 
   return { data, loading };
 }
