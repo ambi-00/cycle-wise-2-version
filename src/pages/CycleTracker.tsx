@@ -403,7 +403,12 @@ export default function CycleTracker() {
     return colors[phase as keyof typeof colors];
   };
 
-  const { hasFeature } = useSubscription();
+  const { hasFeature, loading: subLoading } = useSubscription();
+
+  // Show blank while subscription loads (no flicker)
+  if (subLoading) {
+    return <div className="min-h-screen bg-background" />;
+  }
 
   return (
     <main className="pb-24 pt-20 lg:pl-64 lg:pt-8">
