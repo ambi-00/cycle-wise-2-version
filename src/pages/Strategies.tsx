@@ -6,7 +6,6 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useSubscription } from "@/hooks/use-subscription";
-import { useServerSideData } from "@/lib/serverSideLoad";
 
 const mockStrategies = [
   {
@@ -47,17 +46,15 @@ const mockStrategies = [
 export default function Strategies() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { hasFeature } = useSubscription();
-  const { data, loading } = useServerSideData();
+  const { subscription, loading: subLoading } = useSubscription();
   const [strategies, setStrategies] = useState(mockStrategies);
-  
-  // Server-side loading: blank screen while data loads (no flicker)
-  if (loading || !data) {
+
+  // Show blank while subscription loads (no flicker)
+  if (subLoading) {
     return <div className="min-h-screen bg-background" />;
   }
 
-  const { tier } = data;
-  const hasPremium = tier === 'premium' || tier === 'pro';
+  const hasPremium = subscription.tier === 'premium' || subscription.tier === 'pro';
 
   useEffect(() => {
     // Load user-created strategies from localStorage
