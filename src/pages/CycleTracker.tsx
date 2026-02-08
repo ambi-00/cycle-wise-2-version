@@ -403,18 +403,20 @@ export default function CycleTracker() {
     return colors[phase as keyof typeof colors];
   };
 
-  const { hasFeature, loading: subLoading } = useSubscription();
+  const { subscription, loading: subLoading } = useSubscription();
 
   // Show blank while subscription loads (no flicker)
   if (subLoading) {
     return <div className="min-h-screen bg-background" />;
   }
 
+  const hasPremium = subscription.tier === 'premium' || subscription.tier === 'pro';
+
   return (
     <main className="pb-24 pt-20 lg:pl-64 lg:pt-8">
       <CycleTrackerTour />
       <div className="relative">
-        {!hasFeature('cycle_tracking') && (
+        {!hasPremium && (
           <div className="fixed inset-y-0 right-0 left-0 lg:left-64 z-50 flex items-center justify-center p-6 bg-black/20 backdrop-blur-sm">
             <Card className="max-w-md w-full">
               <CardContent className="p-8 text-center">
@@ -430,7 +432,7 @@ export default function CycleTracker() {
             </Card>
           </div>
         )}
-        <div className={hasFeature('cycle_tracking') ? '' : 'blur-sm pointer-events-none'}>
+        <div className={`${hasPremium ? '' : 'blur-sm pointer-events-none'}`}>
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
