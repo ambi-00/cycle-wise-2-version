@@ -476,7 +476,7 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
       let imageBeforeSmallUrl = imageBeforeSmall;
       let imageBeforeLargeUrl = imageBeforeLarge;
       let imageAfterSmallUrl = imageAfterSmall;
-      let imageAfterLargeUrl = imageAfterLarge;
+      const imageAfterLargeUrl = imageAfterLarge;
 
       // Helper to convert dataURL to File
       const dataUrlToFile = async (dataUrl: string, filename: string): Promise<File | null> => {

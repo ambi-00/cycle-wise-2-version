@@ -571,7 +571,7 @@ export default function Statistics() {
                   });
                   
                   // Calculate win/loss streaks
-                  let currentStreak = 0;
+                  const currentStreak = 0;
                   let longestWinStreak = 0;
                   let longestLossStreak = 0;
                   let tempWinStreak = 0;

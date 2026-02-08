@@ -149,7 +149,7 @@ const generateCalendarData = (year: number, monthIndex: number, avgCycleLength: 
       if (periodDaysForThisCycle.length > 0) {
         // Find consecutive days from the start
         let consecutiveCount = 0;
-        for (let pd of periodDaysForThisCycle) {
+        for (const pd of periodDaysForThisCycle) {
           const dayNum = Math.floor((new Date(pd).getTime() - relevantPeriodStart.getTime()) / msPerDay);
           if (dayNum === consecutiveCount) {
             consecutiveCount++;

@@ -1562,7 +1562,7 @@ export async function getGamificationStats(userId: string): Promise<Gamification
  */
 export async function getXPLeaderboard(period: 'weekly' | 'monthly' | 'alltime', limit: number = 50) {
   try {
-    let query = supabase
+    const query = supabase
       .from('profiles')
       .select('id, name, avatar_url, total_xp, current_rank, monthly_xp')
       .order(period === 'alltime' ? 'total_xp' : 'monthly_xp', { ascending: false })

@@ -150,7 +150,7 @@ export default function NaturalLanguageInsights() {
   };
 
   const analyzeStreakPattern = (trades: any[]): TradePattern | null => {
-    let currentStreak = 0;
+    const currentStreak = 0;
     let longestWinStreak = 0;
     let longestLossStreak = 0;
     let tempWinStreak = 0;
