@@ -49,6 +49,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       },
     });
 
+    if (!session.url) {
+      return res.status(500).json({ error: 'Failed to generate checkout URL' });
+    }
+
     return res.status(200).json({ url: session.url });
   } catch (error: any) {
     console.error('Stripe checkout error:', error);

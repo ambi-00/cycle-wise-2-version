@@ -89,12 +89,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 async function handleCheckoutComplete(session: Stripe.Checkout.Session) {
   const tier = session.metadata?.tier || 'premium';
   const userId = session.metadata?.user_id;
-  const customerId = session.customer as string;
-  const subscriptionId = session.subscription as string;
+  const customerId = session.customer as string | null;
+  const subscriptionId = session.subscription as string | null;
 
   if (!userId) {
     console.error('No user_id found in session metadata');
     return;
+  }
+
+  if (!customerId || !subscriptionId) {
+    console.error('Missing customer or subscription ID from checkout session', { customerId, subscriptionId });
+    return;
+  }
+
+  // Fetch subscription details from Stripe to get accurate period_end
+  let currentPeriodEnd = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+  try {
+    const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+    currentPeriodEnd = new Date(subscription.current_period_end * 1000).toISOString();
+  } catch (err) {
+    console.warn('Failed to fetch subscription details from Stripe:', err);
   }
 
   // Create or update subscription record
@@ -106,7 +120,7 @@ async function handleCheckoutComplete(session: Stripe.Checkout.Session) {
       status: 'active',
       stripe_customer_id: customerId,
       stripe_subscription_id: subscriptionId,
-      current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // ~30 days
+      current_period_end: currentPeriodEnd,
     }, {
       onConflict: 'user_id'
     });
