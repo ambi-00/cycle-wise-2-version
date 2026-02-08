@@ -49,19 +49,19 @@ export default function Strategies() {
   const { subscription, loading: subLoading } = useSubscription();
   const [strategies, setStrategies] = useState(mockStrategies);
 
-  // Show blank while subscription loads (no flicker)
-  if (subLoading) {
-    return <div className="min-h-screen bg-background" />;
-  }
-
-  const hasPremium = subscription.tier === 'premium' || subscription.tier === 'pro';
-
   useEffect(() => {
     // Load user-created strategies from localStorage
     const userStrategies = JSON.parse(localStorage.getItem('cw_strategies') || '[]');
     // Combine mock strategies with user strategies
     setStrategies([...mockStrategies, ...userStrategies]);
   }, []);
+
+  // Show blank while subscription loads (no flicker)
+  if (subLoading) {
+    return <div className="min-h-screen bg-background" />;
+  }
+
+  const hasPremium = subscription.tier === 'premium' || subscription.tier === 'pro';
   
   return (
     <main className="pb-24 pt-20 lg:pl-64 lg:pt-8">

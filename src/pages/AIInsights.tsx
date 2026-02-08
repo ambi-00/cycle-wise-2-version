@@ -13,11 +13,6 @@ export default function AIInsights() {
   const [trades, setTrades] = useState<any[]>([]);
   const [hasData, setHasData] = useState(false);
 
-  // Show blank while subscription loads (no flicker)
-  if (subLoading) {
-    return <div className="min-h-screen bg-background" />;
-  }
-
   useEffect(() => {
     // Load all trades from localStorage
     const allTrades = [];
@@ -35,6 +30,11 @@ export default function AIInsights() {
     setTrades(allTrades);
     setHasData(allTrades.length > 0);
   }, []);
+
+  // Show blank while subscription loads (no flicker)
+  if (subLoading) {
+    return <div className="min-h-screen bg-background" />;
+  }
 
   // Empty state when no trades
   if (!hasData) {

@@ -45,14 +45,6 @@ export default function Statistics() {
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [allTrades, setAllTrades] = useState<Trade[]>([]);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
-
-  // Show blank while subscription loads (no flicker)
-  if (subLoading) {
-    return <div className="min-h-screen bg-background" />;
-  }
-
-  const hasPremium = subscription.tier === 'premium' || subscription.tier === 'pro';
-
   const [newsEvents, setNewsEvents] = useState<NewsItem[]>([
     { time: '08:30', currency: 'USD', impact: 'high', title: 'Non-Farm Payrolls' },
     { time: '10:00', currency: 'EUR', impact: 'medium', title: 'CPI m/m' },
@@ -63,6 +55,13 @@ export default function Statistics() {
   useEffect(() => {
     loadAllTrades();
   }, []);
+
+  // Show blank while subscription loads (no flicker)
+  if (subLoading) {
+    return <div className="min-h-screen bg-background" />;
+  }
+
+  const hasPremium = subscription.tier === 'premium' || subscription.tier === 'pro';
 
   const loadAllTrades = () => {
     const trades: Trade[] = [];
