@@ -6,12 +6,21 @@ import NaturalLanguageInsights from "@/components/NaturalLanguageInsights";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSubscription } from "@/hooks/use-subscription";
+import { useServerSideData } from "@/lib/serverSideLoad";
 
 export default function AIInsights() {
   const navigate = useNavigate();
   const { hasFeature } = useSubscription();
+  const { data, loading } = useServerSideData();
   const [trades, setTrades] = useState<any[]>([]);
   const [hasData, setHasData] = useState(false);
+
+  // Server-side loading: blank screen while data loads (no flicker)
+  if (loading || !data) {
+    return <div className="min-h-screen bg-background" />;
+  }
+
+  const { tier } = data;
 
   useEffect(() => {
     // Load all trades from localStorage
@@ -36,7 +45,7 @@ export default function AIInsights() {
     return (
       <main className="pb-24 pt-20 lg:pl-64 lg:pt-8">
         <div className="relative">
-          {!hasFeature('ai_insights_weekly') && (
+          {tier !== 'pro' && (
             <div className="fixed inset-y-0 right-0 left-0 lg:left-64 z-50 flex items-center justify-center p-6 bg-black/20 backdrop-blur-sm">
               <Card className="max-w-md w-full">
                 <CardContent className="p-8 text-center">

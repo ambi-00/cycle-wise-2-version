@@ -8,6 +8,7 @@ import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, Cart
 import RRROptimizationAnalysis from '@/components/RRROptimizationAnalysis';
 import { Lightbulb, Plus, TrendingUp, Lock, Moon, Sprout, Zap, AlertTriangle, BarChart3 } from 'lucide-react';
 import { useSubscription } from '@/hooks/use-subscription';
+import { useServerSideData } from '@/lib/serverSideLoad';
 
 interface Trade {
   id: string;
@@ -41,10 +42,20 @@ interface NewsItem {
 export default function Statistics() {
   const navigate = useNavigate();
   const { hasFeature } = useSubscription();
+  const { data, loading } = useServerSideData();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [allTrades, setAllTrades] = useState<Trade[]>([]);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+
+  // Server-side loading: blank screen while data loads (no flicker)
+  if (loading || !data) {
+    return <div className="min-h-screen bg-background" />;
+  }
+
+  const { tier } = data;
+  const hasPremium = tier === 'premium' || tier === 'pro';
+
   const [newsEvents, setNewsEvents] = useState<NewsItem[]>([
     { time: '08:30', currency: 'USD', impact: 'high', title: 'Non-Farm Payrolls' },
     { time: '10:00', currency: 'EUR', impact: 'medium', title: 'CPI m/m' },
