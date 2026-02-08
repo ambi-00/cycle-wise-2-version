@@ -32,6 +32,7 @@ import PropFirmAccounts from "./pages/PropFirmAccounts";
 import PropFirmCompare from "./pages/PropFirmCompare";
 import Pricing from "./pages/Pricing";
 import Checkout from "./pages/Checkout";
+import AdminSubscriptions from "./pages/AdminSubscriptions";
 
 // ⭐ NEU: Login & Register importieren
 import Login from "./pages/Login";
@@ -102,6 +103,7 @@ const AppContent = () => {
         <Route path="/propfirm-compare" element={<ProtectedRoute><PropFirmCompare /></ProtectedRoute>} />
         <Route path="/pricing" element={<ProtectedRoute><Pricing /></ProtectedRoute>} />
         <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
+        <Route path="/admin/subscriptions" element={<ProtectedRoute><AdminSubscriptions /></ProtectedRoute>} />
         <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
 
         <Route path="/welcome" element={<Welcome />} />

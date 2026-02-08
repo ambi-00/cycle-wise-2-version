@@ -38,16 +38,16 @@ export const ProfileButton = () => {
       </button>
 
       <AlertDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
-        <AlertDialogContent>
+        <AlertDialogContent className="w-[90vw] max-w-sm">
           <AlertDialogHeader>
             <AlertDialogTitle>You wanna log out?</AlertDialogTitle>
             <AlertDialogDescription>
               You'll be signed out of your account.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <div className="flex gap-3 justify-end">
-            <AlertDialogCancel>No</AlertDialogCancel>
-            <AlertDialogAction onClick={handleLogout} className="bg-destructive hover:bg-destructive/90">
+          <div className="flex gap-2 justify-end">
+            <AlertDialogCancel className="min-w-[80px]">No</AlertDialogCancel>
+            <AlertDialogAction onClick={handleLogout} className="min-w-[80px] bg-destructive hover:bg-destructive/90 text-white">
               Yes
             </AlertDialogAction>
           </div>

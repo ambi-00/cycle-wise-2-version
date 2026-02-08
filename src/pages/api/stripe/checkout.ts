@@ -13,7 +13,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { tier, paymentMethod } = req.body;
+    const { tier, paymentMethod, userId } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({ error: 'User ID is required' });
+    }
 
     // Define price IDs for each tier
     const priceIds = {
@@ -39,10 +43,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       ],
       success_url: `${process.env.FRONTEND_URL || 'http://localhost:8080'}/dashboard?success=true&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.FRONTEND_URL || 'http://localhost:8080'}/pricing?canceled=true`,
-      // TODO: Add customer email and metadata
-      // customer_email: req.user?.email,
       metadata: {
         tier: tier,
+        user_id: userId,
       },
     });
 

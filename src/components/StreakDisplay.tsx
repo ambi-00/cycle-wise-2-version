@@ -18,18 +18,25 @@ export function StreakDisplay() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         setLoading(false);
+        console.log('No user found');
         return;
       }
 
+      console.log('Loading stats for user:', user.id);
       const [statsData, streakData] = await Promise.all([
         getGamificationStats(user.id),
         getWinLossStreak(user.id)
       ]);
       
+      console.log('Stats data:', statsData);
+      console.log('Streak data:', streakData);
+      
       setStats(statsData || { login_streak: 0, trading_streak: 0 });
       setWinLossStreak(streakData || { winStreak: 0, lossStreak: 0, currentType: 'none' });
     } catch (error) {
       console.error('Failed to load streak data:', error);
+      setStats({ login_streak: 0, trading_streak: 0 });
+      setWinLossStreak({ winStreak: 0, lossStreak: 0, currentType: 'none' });
     } finally {
       setLoading(false);
     }

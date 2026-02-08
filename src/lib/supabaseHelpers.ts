@@ -1620,19 +1620,37 @@ export async function getXPLeaderboard(period: 'weekly' | 'monthly' | 'alltime',
 }
 
 /**
- * Calculate win/loss streak (consecutive wins or losses)
+ * Calculate win/loss streak (consecutive wins or losses) from localStorage
  */
 export async function getWinLossStreak(userId: string): Promise<{ winStreak: number; lossStreak: number; currentType: 'win' | 'loss' | 'none' }> {
   try {
-    const { data: trades, error } = await supabase
-      .from('journal')
-      .select('result, date')
-      .eq('user_id', userId)
-      .order('date', { ascending: false })
-      .limit(100);
+    // Load all trades from localStorage (similar to TradeJournal pattern)
+    const trades: any[] = [];
+    
+    if (typeof window !== 'undefined') {
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i) || "";
+        if (key.startsWith("cw_journal_")) {
+          try {
+            const raw = localStorage.getItem(key);
+            if (!raw) continue;
+            const data = JSON.parse(raw);
+            (data.trades || []).forEach((t: any) => trades.push(t));
+          } catch (e) {
+            // ignore malformed entries
+          }
+        }
+      }
+    }
 
-    if (error) throw error;
     if (!trades || trades.length === 0) return { winStreak: 0, lossStreak: 0, currentType: 'none' };
+
+    // Sort by date descending (most recent first)
+    trades.sort((a: any, b: any) => {
+      const dateA = new Date(a.date || 0).getTime();
+      const dateB = new Date(b.date || 0).getTime();
+      return dateB - dateA;
+    });
 
     // Filter out breakeven trades
     const relevantTrades = trades.filter((t: any) => t.result === 'win' || t.result === 'loss');

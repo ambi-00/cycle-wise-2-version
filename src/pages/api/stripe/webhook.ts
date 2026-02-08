@@ -88,27 +88,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
 async function handleCheckoutComplete(session: Stripe.Checkout.Session) {
   const tier = session.metadata?.tier || 'premium';
+  const userId = session.metadata?.user_id;
   const customerId = session.customer as string;
   const subscriptionId = session.subscription as string;
 
-  // TODO: Get user ID from session or customer email
-  // For now, you'll need to link customer email to user_id
-  const customerEmail = session.customer_email || session.customer_details?.email;
-
-  if (!customerEmail) {
-    console.error('No customer email found in session');
-    return;
-  }
-
-  // Find user by email
-  const { data: user, error: userError } = await supabase
-    .from('profiles')
-    .select('id')
-    .eq('email', customerEmail)
-    .single();
-
-  if (userError || !user) {
-    console.error('User not found:', customerEmail);
+  if (!userId) {
+    console.error('No user_id found in session metadata');
     return;
   }
 
@@ -116,18 +101,20 @@ async function handleCheckoutComplete(session: Stripe.Checkout.Session) {
   const { error } = await supabase
     .from('subscriptions')
     .upsert({
-      user_id: user.id,
+      user_id: userId,
       tier: tier,
       status: 'active',
       stripe_customer_id: customerId,
       stripe_subscription_id: subscriptionId,
       current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // ~30 days
+    }, {
+      onConflict: 'user_id'
     });
 
   if (error) {
     console.error('Failed to create subscription:', error);
   } else {
-    console.log(`Subscription created for user ${user.id}: ${tier}`);
+    console.log(`Subscription created for user ${userId}: ${tier}`);
   }
 }
 

@@ -755,6 +755,10 @@ BEGIN
   INSERT INTO public.user_settings (user_id)
   VALUES (NEW.id);
   
+  -- Create default free subscription
+  INSERT INTO public.subscriptions (user_id, tier, status)
+  VALUES (NEW.id, 'free', 'active');
+  
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;

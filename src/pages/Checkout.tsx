@@ -6,6 +6,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useSubscription } from '@/hooks/use-subscription';
 import { CreditCard, Lock, ArrowLeft, Check } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { supabaseClient } from '@/lib/supabaseClient';
 
 const paymentMethods = [
   {
@@ -84,6 +85,13 @@ export default function Checkout() {
     setIsProcessing(true);
     
     try {
+      // Get current user ID from Supabase auth
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
       // Integrate with Stripe Checkout
       const response = await fetch('/api/stripe/checkout', {
         method: 'POST',
@@ -91,6 +99,7 @@ export default function Checkout() {
         body: JSON.stringify({
           tier: tier,
           paymentMethod: selectedPayment,
+          userId: user.id,
         })
       });
       
