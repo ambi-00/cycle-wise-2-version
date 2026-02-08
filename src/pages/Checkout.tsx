@@ -6,7 +6,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useSubscription } from '@/hooks/use-subscription';
 import { CreditCard, Lock, ArrowLeft, Check } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { supabaseClient } from '@/lib/supabaseClient';
+import { supabase } from '@/lib/supabaseClient';
 
 const paymentMethods = [
   {
@@ -86,7 +86,7 @@ export default function Checkout() {
     
     try {
       // Get current user ID from Supabase auth
-      const { data: { user } } = await supabaseClient.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
         throw new Error('User not authenticated');
