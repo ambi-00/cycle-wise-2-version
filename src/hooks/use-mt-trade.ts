@@ -16,8 +16,8 @@ export function useMTTrade() {
   const enrichMTTrade = async (tradeId: string, data: MTTradeEnrichment) => {
     setIsUpdating(true);
     try {
-      const { error } = await supabase
-        .from('mt_trades')
+      const { error } = await (supabase
+        .from('mt_trades') as any)
         .update({
           ...data,
           is_enriched: true,

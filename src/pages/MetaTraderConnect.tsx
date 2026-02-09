@@ -74,8 +74,8 @@ export default function MetaTraderConnect() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data, error } = await supabase
-        .from('metatrader_accounts')
+      const { data, error } = await (supabase
+        .from('metatrader_accounts') as any)
         .select('*')
         .eq('user_id', user.id)
         .order('connected_at', { ascending: false });
@@ -125,8 +125,8 @@ export default function MetaTraderConnect() {
       }
 
       // Speichere in Supabase
-      const { data, error } = await supabase
-        .from('metatrader_accounts')
+      const { data, error } = await (supabase
+        .from('metatrader_accounts') as any)
         .insert({
           user_id: user.id,
           account_number: accountNumber,
@@ -170,8 +170,8 @@ export default function MetaTraderConnect() {
 
   const handleToggleAnalytics = async (accountId: string, currentValue: boolean) => {
     try {
-      const { error } = await supabase
-        .from('metatrader_accounts')
+      const { error } = await (supabase
+        .from('metatrader_accounts') as any)
         .update({ include_in_analytics: !currentValue })
         .eq('id', accountId);
 
@@ -190,8 +190,8 @@ export default function MetaTraderConnect() {
     if (!confirm('Account wirklich trennen?')) return;
 
     try {
-      const { error } = await supabase
-        .from('metatrader_accounts')
+      const { error } = await (supabase
+        .from('metatrader_accounts') as any)
         .delete()
         .eq('id', accountId);
 
@@ -570,377 +570,6 @@ export default function MetaTraderConnect() {
             </Card>
           </motion.div>
         )}
-      </div>
-    </main>
-  );
-}
-
-export default function MetaTraderConnect() {
-  const { toast } = useToast();
-  const [accounts, setAccounts] = useState<MetaTraderAccount[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [isConnecting, setIsConnecting] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [platform, setPlatform] = useState<'mt4' | 'mt5'>('mt4');
-  const [accountNumber, setAccountNumber] = useState('');
-  const [password, setPassword] = useState('');
-  const [server, setServer] = useState('');
-  const [customServer, setCustomServer] = useState('');
-  const [propFirm, setPropFirm] = useState('');
-
-  // Lade verbundene Accounts
-  useEffect(() => {
-    loadAccounts();
-  }, []);
-
-  const loadAccounts = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data, error } = await supabase
-        .from('metatrader_accounts')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('connected_at', { ascending: false });
-
-      if (error) throw error;
-      setAccounts(data || []);
-    } catch (error) {
-      console.error('Fehler beim Laden der Accounts:', error);
-      toast({ title: 'Fehler', description: 'Konnte Accounts nicht laden', variant: 'destructive' });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleConnect = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!accountNumber || !password || !server) {
-      toast({ title: 'Fehler', description: 'Bitte alle Felder ausfüllen', variant: 'destructive' });
-      return;
-    }
-
-    setIsConnecting(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Nicht authentifiziert');
-
-      // Teste Verbindung mit MT API
-      const testResponse = await fetch(`${import.meta.env.VITE_MT_API_URL || 'http://localhost:3001'}/api/mt/connect`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          accountNumber,
-          password,
-          server: server === 'custom' ? customServer : server,
-          platform,
-          propFirm: propFirm || null,
-        }),
-      });
-
-      if (!testResponse.ok) {
-        throw new Error('MT API Verbindung fehlgeschlagen');
-      }
-
-      const testData = await testResponse.json();
-      if (!testData.success) {
-        throw new Error(testData.error || 'Konnte Account nicht verbinden');
-      }
-
-      // Speichere in Supabase
-      const { data, error } = await supabase
-        .from('metatrader_accounts')
-        .insert({
-          user_id: user.id,
-          account_number: accountNumber,
-          server: server === 'custom' ? customServer : server,
-          platform,
-          prop_firm: propFirm || null,
-          is_active: true,
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      // Reset Form
-      setAccountNumber('');
-      setPassword('');
-      setServer('');
-      setCustomServer('');
-      setPropFirm('');
-      
-      toast({
-        title: 'Erfolg',
-        description: `MetaTrader ${platform.toUpperCase()} Account verbunden!`,
-      });
-
-      loadAccounts();
-    } catch (error: any) {
-      console.error('Fehler:', error);
-      toast({
-        title: 'Verbindungsfehler',
-        description: error.message || 'Account konnte nicht verbunden werden',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsConnecting(false);
-    }
-  };
-
-  const handleDisconnect = async (accountId: string) => {
-    if (!confirm('Account wirklich trennen?')) return;
-
-    try {
-      const { error } = await supabase
-        .from('metatrader_accounts')
-        .delete()
-        .eq('id', accountId);
-
-      if (error) throw error;
-
-      toast({ title: 'Erfolg', description: 'Account getrennt' });
-      loadAccounts();
-    } catch (error) {
-      toast({ title: 'Fehler', description: 'Konnte Account nicht trennen', variant: 'destructive' });
-    }
-  };
-
-  return (
-    <main className="pb-24 pt-20 lg:pl-64 lg:pt-8">
-      <div className="container mx-auto px-4 max-w-5xl py-8">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
-          <h1 className="text-3xl font-bold mb-2">MetaTrader Connection</h1>
-          <p className="text-muted-foreground">
-            Verbinde deine MetaTrader 4 und 5 Accounts für automatische Trade-Synchronisierung
-          </p>
-        </motion.div>
-
-        <div className="grid md:grid-cols-3 gap-8">
-          {/* Verbindungsformular */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="md:col-span-1"
-          >
-            <Card>
-              <CardHeader>
-                <CardTitle>Neuen Account verbinden</CardTitle>
-                <CardDescription>MT4 oder MT5 Konto hinzufügen</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleConnect} className="space-y-4">
-                  {/* Platform */}
-                  <div>
-                    <label className="text-sm font-medium">Plattform *</label>
-                    <div className="mt-1.5 flex gap-2">
-                      <Button
-                        type="button"
-                        variant={platform === 'mt4' ? 'default' : 'outline'}
-                        className="flex-1"
-                        onClick={() => setPlatform('mt4')}
-                      >
-                        MT4
-                      </Button>
-                      <Button
-                        type="button"
-                        variant={platform === 'mt5' ? 'default' : 'outline'}
-                        className="flex-1"
-                        onClick={() => setPlatform('mt5')}
-                      >
-                        MT5
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Account Number */}
-                  <div>
-                    <label className="text-sm font-medium">Kontonummer *</label>
-                    <Input
-                      type="text"
-                      value={accountNumber}
-                      onChange={(e) => setAccountNumber(e.target.value)}
-                      placeholder="z.B. 12345678"
-                      className="mt-1.5"
-                    />
-                  </div>
-
-                  {/* Password */}
-                  <div>
-                    <label className="text-sm font-medium">Investor-Passwort *</label>
-                    <div className="relative mt-1.5">
-                      <Input
-                        type={showPassword ? 'text' : 'password'}
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        placeholder="••••••••"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2"
-                      >
-                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </button>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Nur Lesezugriff (kein Master-Passwort!)
-                    </p>
-                  </div>
-
-                  {/* Server */}
-                  <div>
-                    <label className="text-sm font-medium">Server *</label>
-                    <select
-                      value={server}
-                      onChange={(e) => {
-                        setServer(e.target.value);
-                        if (e.target.value !== 'custom') setCustomServer('');
-                      }}
-                      className="w-full mt-1.5 px-3 py-2 rounded-md border border-input bg-background"
-                    >
-                      <option value="">Wähle einen Server</option>
-                      {MT_SERVERS[platform]?.map((s) => (
-                        <option key={s.value} value={s.value}>
-                          {s.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {server === 'custom' && (
-                    <div>
-                      <Input
-                        value={customServer}
-                        onChange={(e) => setCustomServer(e.target.value)}
-                        placeholder="z.B. trading.example.com"
-                        className="mt-1.5"
-                      />
-                    </div>
-                  )}
-
-                  {/* Prop Firm (optional) */}
-                  <div>
-                    <label className="text-sm font-medium">Prop Firm (optional)</label>
-                    <Input
-                      value={propFirm}
-                      onChange={(e) => setPropFirm(e.target.value)}
-                      placeholder="z.B. FinProMax"
-                      className="mt-1.5"
-                    />
-                  </div>
-
-                  <Button type="submit" className="w-full" disabled={isConnecting}>
-                    <Link2 className="h-4 w-4 mr-2" />
-                    {isConnecting ? 'Verbinde...' : 'Verbinden'}
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-          </motion.div>
-
-          {/* Verbundene Accounts */}
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="md:col-span-2"
-          >
-            <Card>
-              <CardHeader>
-                <CardTitle>Verbundene Accounts ({accounts.length})</CardTitle>
-                <CardDescription>Deine verwalteten Trading Konten</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {loading ? (
-                  <div className="text-center py-8">Lade Accounts...</div>
-                ) : accounts.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <AlertCircle className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                    <p>Noch keine Accounts verbunden</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {accounts.map((account) => (
-                      <motion.div
-                        key={account.id}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className="p-4 rounded-lg border border-border hover:bg-accent/50 transition-colors"
-                      >
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center gap-3">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                              <Link2 className="h-5 w-5 text-primary" />
-                            </div>
-                            <div>
-                              <div className="font-semibold">
-                                {account.platform.toUpperCase()} • {account.account_number}
-                              </div>
-                              <div className="text-sm text-muted-foreground">
-                                {account.server}
-                                {account.prop_firm && ` • ${account.prop_firm}`}
-                              </div>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            {account.is_active && (
-                              <Badge variant="default" className="gap-1">
-                                <CheckCircle className="h-3 w-3" />
-                                Aktiv
-                              </Badge>
-                            )}
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDisconnect(account.id)}
-                              className="text-destructive hover:bg-destructive/10"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                        {account.last_sync && (
-                          <p className="text-xs text-muted-foreground">
-                            Letzte Sync: {new Date(account.last_sync).toLocaleString('de-DE')}
-                          </p>
-                        )}
-                      </motion.div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Hinweise */}
-            <Card className="mt-6 bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
-              <CardHeader>
-                <CardTitle className="text-blue-900 dark:text-blue-100">Wie du dich verbindest</CardTitle>
-              </CardHeader>
-              <CardContent className="text-sm text-blue-800 dark:text-blue-200 space-y-2">
-                <p>
-                  <strong>1. Kontonummer:</strong> Die Login-ID deines Trading-Kontos
-                </p>
-                <p>
-                  <strong>2. Investor-Passwort:</strong> Das Read-Only Passwort (nicht dein Master-Passwort!)
-                  <br />
-                  <span className="text-xs opacity-75">Du findest das in den Kontoeinstellungen deiner Broker-Plattform</span>
-                </p>
-                <p>
-                  <strong>3. Server:</strong> Der Trading-Server deines Brokers (z.B. ICMarkets, FinProMax)
-                </p>
-                <p className="pt-2 border-t border-blue-200 dark:border-blue-800">
-                  ✅ Nach der Verbindung synchronisieren wir deine Trades automatisch täglich
-                </p>
-              </CardContent>
-            </Card>
-          </motion.div>
-        </div>
       </div>
     </main>
   );

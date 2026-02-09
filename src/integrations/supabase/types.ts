@@ -668,6 +668,149 @@ export type Database = {
         }
         Relationships: []
       }
+      metatrader_accounts: {
+        Row: {
+          id: string
+          user_id: string
+          account_number: string
+          server: string
+          platform: string
+          account_type: string
+          prop_firm: string | null
+          include_in_analytics: boolean
+          connected_at: string | null
+          last_sync: string | null
+          is_active: boolean
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          account_number: string
+          server: string
+          platform: string
+          account_type?: string
+          prop_firm?: string | null
+          include_in_analytics?: boolean
+          connected_at?: string | null
+          last_sync?: string | null
+          is_active?: boolean
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          account_number?: string
+          server?: string
+          platform?: string
+          account_type?: string
+          prop_firm?: string | null
+          include_in_analytics?: boolean
+          connected_at?: string | null
+          last_sync?: string | null
+          is_active?: boolean
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "metatrader_accounts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      mt_trades: {
+        Row: {
+          id: string
+          user_id: string
+          account_id: string
+          ticket: number
+          symbol: string
+          cmd: string
+          open_price: number | null
+          close_price: number | null
+          volume: number | null
+          open_time: string | null
+          close_time: string | null
+          profit: number | null
+          comment: string | null
+          screenshot_url: string | null
+          entry_reason: string | null
+          rrr: number | null
+          position_size: number | null
+          is_enriched: boolean
+          synced_at: string | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          account_id: string
+          ticket: number
+          symbol: string
+          cmd: string
+          open_price?: number | null
+          close_price?: number | null
+          volume?: number | null
+          open_time?: string | null
+          close_time?: string | null
+          profit?: number | null
+          comment?: string | null
+          screenshot_url?: string | null
+          entry_reason?: string | null
+          rrr?: number | null
+          position_size?: number | null
+          is_enriched?: boolean
+          synced_at?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          account_id?: string
+          ticket?: number
+          symbol?: string
+          cmd?: string
+          open_price?: number | null
+          close_price?: number | null
+          volume?: number | null
+          open_time?: string | null
+          close_time?: string | null
+          profit?: number | null
+          comment?: string | null
+          screenshot_url?: string | null
+          entry_reason?: string | null
+          rrr?: number | null
+          position_size?: number | null
+          is_enriched?: boolean
+          synced_at?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mt_trades_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mt_trades_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "metatrader_accounts"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       xp_logs: {
         Row: {
           amount: number

@@ -59,8 +59,8 @@ export default function Statistics() {
   useEffect(() => {
     const loadMTAccounts = async () => {
       try {
-        const { data, error } = await supabase
-          .from('metatrader_accounts')
+        const { data, error } = await (supabase
+          .from('metatrader_accounts') as any)
           .select('id, account_number, platform')
           .eq('is_active', true);
 
@@ -102,8 +102,8 @@ export default function Statistics() {
 
     // Load MT trades from Supabase
     try {
-      let query = supabase
-        .from('mt_trades')
+      let query = (supabase
+        .from('mt_trades') as any)
         .select('*')
         .eq('is_enriched', true); // Only show enriched MT trades
 

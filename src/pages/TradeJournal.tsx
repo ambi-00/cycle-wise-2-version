@@ -295,8 +295,8 @@ export default function TradeJournal() {
     const loadMTTrades = async () => {
       setLoadingMTTrades(true);
       try {
-        const { data: mtTrades, error } = await supabase
-          .from('mt_trades')
+        const { data: mtTrades, error } = await (supabase
+          .from('mt_trades') as any)
           .select('*')
           .order('open_time', { ascending: false });
 
