@@ -143,6 +143,24 @@ async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
     updates.current_period_end = new Date((subscription as any).current_period_end * 1000).toISOString();
   }
 
+  // Get the new tier from subscription items
+  const item = subscription.items?.data?.[0];
+  if (item?.price?.id) {
+    const priceId = item.price.id;
+    // Map Stripe price IDs to tiers
+    if (priceId.includes('premium') || priceId.includes('monthly') || priceId.includes('annual')) {
+      // Try to determine tier from price name or product name
+      const productName = (item.price as any)?.product?.name?.toLowerCase() || '';
+      const priceName = (item.price as any)?.nickname?.toLowerCase() || '';
+      
+      if (productName.includes('pro') || priceName.includes('pro')) {
+        updates.tier = 'pro';
+      } else if (productName.includes('premium') || priceName.includes('premium')) {
+        updates.tier = 'premium';
+      }
+    }
+  }
+
   const { error } = await supabase
     .from('subscriptions')
     .update(updates)
