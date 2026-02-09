@@ -103,8 +103,19 @@ export default function Checkout() {
         })
       });
       
-      const data = await response.json();
+      console.log('Response status:', response.status);
+      console.log('Response headers:', response.headers);
+
+      let data;
+      try {
+        data = await response.json();
+      } catch (parseError) {
+        console.error('Failed to parse response as JSON:', parseError);
+        throw new Error(`Server error (${response.status}): Invalid response format`);
+      }
       
+      console.log('Response data:', data);
+
       if (!response.ok) {
         throw new Error(data.error || `API returned ${response.status}`);
       }
@@ -113,6 +124,7 @@ export default function Checkout() {
       
       // Redirect to Stripe Checkout
       if (url) {
+        console.log('Redirecting to Stripe checkout:', url);
         window.location.href = url;
       } else {
         throw new Error('No checkout URL returned from API');

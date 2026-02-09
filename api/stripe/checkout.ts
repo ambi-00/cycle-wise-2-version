@@ -21,6 +21,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const { tier, paymentMethod, userId } = req.body;
 
+    console.log('Checkout request:', { tier, userId, paymentMethod });
+
     if (!userId) {
       return res.status(400).json({ error: 'User ID is required' });
     }
@@ -33,10 +35,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const priceId = priceIds[tier as keyof typeof priceIds];
     
+    console.log('Price lookup:', { tier, priceId, available: Object.keys(priceIds) });
+
     if (!priceId) {
       console.error(`Missing price ID for tier: ${tier}. Premium: ${process.env.STRIPE_PRICE_ID_PREMIUM}, Pro: ${process.env.STRIPE_PRICE_ID_PRO}`);
       return res.status(400).json({ error: `Server configuration error: Price not configured for ${tier} tier` });
     }
+
+    console.log('Creating checkout session with price:', priceId);
 
     // Create Stripe Checkout Session
     const session = await stripe.checkout.sessions.create({
@@ -55,6 +61,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         user_id: userId,
       },
     });
+
+    console.log('Checkout session created:', { sessionId: session.id, url: session.url ? 'present' : 'missing' });
 
     if (!session.url) {
       return res.status(500).json({ error: 'Failed to generate checkout URL' });
