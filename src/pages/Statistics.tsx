@@ -9,6 +9,7 @@ import RRROptimizationAnalysis from '@/components/RRROptimizationAnalysis';
 import { Lightbulb, Plus, TrendingUp, Lock, Moon, Sprout, Zap, AlertTriangle, BarChart3 } from 'lucide-react';
 import { useSubscription } from '@/hooks/use-subscription';
 import { supabase } from '@/integrations/supabase/client';
+import { usePaymentSuccess } from '@/hooks/use-payment-success';
 
 interface Trade {
   id: string;
@@ -54,6 +55,9 @@ export default function Statistics() {
     { time: '14:00', currency: 'GBP', impact: 'low', title: 'Manufacturing PMI' },
     { time: '15:30', currency: 'USD', impact: 'high', title: 'Fed Chair Speech' },
   ]);
+
+  // Show success message if user was redirected from Stripe
+  usePaymentSuccess();
 
   // Load MT Accounts
   useEffect(() => {
@@ -400,7 +404,7 @@ export default function Statistics() {
                   <p className="text-sm text-muted-foreground mb-6">
                 Advanced trading analytics, RRR optimization, and full performance insights.
               </p>
-              <Button onClick={() => navigate('/checkout?tier=premium&returnTo=/statistics')} size="lg" className="w-full">
+              <Button onClick={() => navigate(`/checkout?tier=premium&returnTo=${window.location.pathname}`)} size="lg" className="w-full">
                 Upgrade to Premium - €9.99/mo
               </Button>
             </CardContent>

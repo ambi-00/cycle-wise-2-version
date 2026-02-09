@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { useSubscription } from "@/hooks/use-subscription";
 import { supabase } from "@/integrations/supabase/client";
 import { MTTradeEnrichmentDialog } from "@/components/MTTradeEnrichmentDialog";
+import { usePaymentSuccess } from "@/hooks/use-payment-success";
 const QuickTradeEntry = lazy(() => import("@/components/QuickTradeEntry").then((m) => ({ default: m.QuickTradeEntry })));
 import { useLocation, Link, useNavigate } from "react-router-dom";
 
@@ -231,6 +232,9 @@ export default function TradeJournal() {
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+
+  // Show success message if user was redirected from Stripe
+  usePaymentSuccess();
 
   // Get today's date for display
   const today = new Date();
@@ -701,7 +705,7 @@ export default function TradeJournal() {
                 {!hasFeature('advanced_filters') && (
                   <div className="col-span-2 p-3 rounded-lg bg-muted/50 text-center">
                     <p className="text-xs text-muted-foreground">
-                      Unlock Cycle Phase and R-Multiple filters with <button type="button" className="underline font-medium" onClick={() => navigate('/checkout?tier=premium&returnTo=/trades')}>Premium</button>
+                      Unlock Cycle Phase and R-Multiple filters with <button type="button" className="underline font-medium" onClick={() => navigate(`/checkout?tier=premium&returnTo=${window.location.pathname}`)}>Premium</button>
                     </p>
                   </div>
                 )}
