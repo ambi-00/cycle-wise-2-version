@@ -3,7 +3,7 @@ import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-12-27.acacia',
+  apiVersion: '2026-01-28.clover',
 });
 
 const supabase = createClient(
@@ -106,7 +106,9 @@ async function handleCheckoutComplete(session: Stripe.Checkout.Session) {
   let currentPeriodEnd = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
   try {
     const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-    currentPeriodEnd = new Date(subscription.current_period_end * 1000).toISOString();
+    if ((subscription as any).current_period_end) {
+      currentPeriodEnd = new Date((subscription as any).current_period_end * 1000).toISOString();
+    }
   } catch (err) {
     console.warn('Failed to fetch subscription details from Stripe:', err);
   }
@@ -133,12 +135,17 @@ async function handleCheckoutComplete(session: Stripe.Checkout.Session) {
 }
 
 async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
+  const updates: any = {
+    status: subscription.status,
+  };
+  
+  if ((subscription as any).current_period_end) {
+    updates.current_period_end = new Date((subscription as any).current_period_end * 1000).toISOString();
+  }
+
   const { error } = await supabase
     .from('subscriptions')
-    .update({
-      status: subscription.status,
-      current_period_end: new Date(subscription.current_period_end! * 1000).toISOString(),
-    })
+    .update(updates)
     .eq('stripe_subscription_id', subscription.id);
 
   if (error) {
@@ -156,12 +163,19 @@ async function handleSubscriptionCanceled(subscription: Stripe.Subscription) {
     .eq('stripe_subscription_id', subscription.id);
 
   if (error) {
-    console.error('Failed to cancel subscription:', error);
+    console.error('Failed to cancel subscript_idion:', error);
   }
 }
 
 async function handlePaymentFailed(invoice: Stripe.Invoice) {
-  const subscriptionId = invoice.subscription as string | null;
+  // Handle both subscription_id and lines for invoice items that belong to subscription
+  let subscriptionId: string | null = null;
+  
+  if ((invoice as any).subscription_id) {
+    subscriptionId = (invoice as any).subscription_id as string;
+  } else if (invoice.lines?.data?.[0]?.subscription) {
+    subscriptionId = invoice.lines.data[0].subscription as string;
+  }
   
   if (!subscriptionId) {
     console.log('No subscription ID in invoice');
