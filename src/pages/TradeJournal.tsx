@@ -635,7 +635,7 @@ export default function TradeJournal() {
                 {!hasFeature('advanced_filters') && (
                   <div className="col-span-2 p-3 rounded-lg bg-muted/50 text-center">
                     <p className="text-xs text-muted-foreground">
-                      Unlock Cycle Phase and R-Multiple filters with <button type="button" className="underline font-medium" onClick={() => navigate('/#pricing')}>Premium</button>
+                      Unlock Cycle Phase and R-Multiple filters with <button type="button" className="underline font-medium" onClick={() => navigate('/checkout?tier=premium&returnTo=/trades')}>Premium</button>
                     </p>
                   </div>
                 )}

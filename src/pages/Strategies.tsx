@@ -79,7 +79,7 @@ export default function Strategies() {
           <div className="flex gap-2">
             <Button 
               variant="outline" 
-              onClick={() => hasPremium ? navigate('/strategies/new') : navigate('/#pricing')}
+              onClick={() => hasPremium ? navigate('/strategies/new') : navigate('/checkout?tier=premium&returnTo=/strategies')}
               disabled={!hasPremium}
             >
               <Plus className="h-4 w-4" />
