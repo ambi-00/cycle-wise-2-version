@@ -58,7 +58,7 @@ export function FeatureGuard({ feature, children, fallback, requiredTier }: Feat
             <Button 
               className="w-full" 
               size="lg"
-              onClick={() => navigate('/pricing')}
+              onClick={() => navigate(`/checkout?tier=${requiredTier}&returnTo=${window.location.pathname}`)}
             >
               Upgrade to {tierName}
             </Button>

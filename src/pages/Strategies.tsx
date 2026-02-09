@@ -99,7 +99,7 @@ export default function Strategies() {
                   <p className="text-sm text-muted-foreground mb-6">
                     Upgrade to Premium to create and track unlimited strategies with detailed confirmations and performance metrics.
                   </p>
-                  <Button onClick={() => navigate('/#pricing')} size="lg" className="w-full">
+                  <Button onClick={() => navigate('/checkout?tier=premium&returnTo=/strategies')} size="lg" className="w-full">
                     Upgrade to Premium - €9.99/mo
                   </Button>
                 </CardContent>

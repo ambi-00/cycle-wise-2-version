@@ -345,7 +345,7 @@ export default function Statistics() {
                   <p className="text-sm text-muted-foreground mb-6">
                 Advanced trading analytics, RRR optimization, and full performance insights.
               </p>
-              <Button onClick={() => navigate('/#pricing')} size="lg" className="w-full">
+              <Button onClick={() => navigate('/checkout?tier=premium&returnTo=/statistics')} size="lg" className="w-full">
                 Upgrade to Premium - €9.99/mo
               </Button>
             </CardContent>

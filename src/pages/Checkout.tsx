@@ -79,6 +79,7 @@ export default function Checkout() {
   const [isProcessing, setIsProcessing] = useState(false);
 
   const tier = (searchParams.get('tier') || 'premium') as 'premium' | 'pro';
+  const returnTo = searchParams.get('returnTo') || '/dashboard';
   const plan = tierDetails[tier];
 
   const handlePayment = async () => {
@@ -100,6 +101,7 @@ export default function Checkout() {
           tier: tier,
           paymentMethod: selectedPayment,
           userId: user.id,
+          returnTo: returnTo,
         })
       });
       

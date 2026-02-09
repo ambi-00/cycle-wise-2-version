@@ -453,7 +453,7 @@ export default function AIInsights() {
                 <p className="text-sm text-muted-foreground mb-6">
                   Upgrade to Pro for AI-powered insights, personalized recommendations, and cycle-based trading analysis.
                 </p>
-                <Button onClick={() => navigate('/#pricing')} size="lg" className="w-full">
+                <Button onClick={() => navigate('/checkout?tier=pro&returnTo=/ai-insights')} size="lg" className="w-full">
                   Upgrade to Pro - €19.99/mo
                 </Button>
               </CardContent>

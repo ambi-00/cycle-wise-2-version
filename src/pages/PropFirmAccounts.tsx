@@ -103,7 +103,7 @@ export default function PropFirmAccounts() {
               <p className="text-sm text-muted-foreground mb-6">
                 Upgrade to Pro for automatic prop firm account integration and real-time trading synchronization.
               </p>
-              <Button onClick={() => navigate('/pricing')} size="lg" className="w-full">
+              <Button onClick={() => navigate('/checkout?tier=pro&returnTo=/propfirm')} size="lg" className="w-full">
                 Upgrade to Pro - €19.99/mo
               </Button>
             </CardContent>

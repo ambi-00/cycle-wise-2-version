@@ -158,7 +158,7 @@ export default function CyclePredictions({ mode = "all" }: CyclePredictionsProps
                     <p className="text-sm text-muted-foreground mb-6">
                       Upgrade to Pro for AI-powered cycle predictions and personalized trading recommendations.
                     </p>
-                    <Button onClick={() => navigate('/#pricing')} size="lg" className="w-full">
+                    <Button onClick={() => navigate('/checkout?tier=pro&returnTo=/dashboard')} size="lg" className="w-full">
                       Upgrade to Pro - €19.99/mo
                     </Button>
                   </CardContent>

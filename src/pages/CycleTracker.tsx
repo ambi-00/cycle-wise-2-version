@@ -425,7 +425,7 @@ export default function CycleTracker() {
                 <p className="text-sm text-muted-foreground mb-6">
                   Upgrade to Premium to track your menstrual cycle and optimize your trading strategy based on hormonal phases.
                 </p>
-                <Button onClick={() => navigate('/pricing')} size="lg" className="w-full">
+                <Button onClick={() => navigate('/checkout?tier=premium&returnTo=/cycle-tracker')} size="lg" className="w-full">
                   Upgrade to Premium - €9.99/mo
                 </Button>
               </CardContent>

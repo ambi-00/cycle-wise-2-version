@@ -87,8 +87,8 @@ export default function Pricing() {
   const navigate = useNavigate();
 
   const handleUpgrade = (tierName: string) => {
-    // Navigate to new Checkout page instead of direct Stripe Payment Links
-    navigate(`/checkout?tier=${tierName.toLowerCase()}`);
+    // Navigate to checkout with tier and returnTo for coming back to pricing
+    navigate(`/checkout?tier=${tierName.toLowerCase()}&returnTo=/pricing`);
   };
 
   const handleManageSubscription = () => {

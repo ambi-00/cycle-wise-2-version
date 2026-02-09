@@ -3,7 +3,7 @@ import Stripe from 'stripe';
 
 // Initialize Stripe with your secret key
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2026-01-28.clover',
+  apiVersion: '2024-12-18.acacia',
 });
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -13,7 +13,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { tier, paymentMethod, userId } = req.body;
+    const { tier, paymentMethod, userId, returnTo } = req.body;
 
     if (!userId) {
       return res.status(400).json({ error: 'User ID is required' });
@@ -31,6 +31,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'Invalid tier' });
     }
 
+    // Determine success URL based on returnTo parameter
+    const successPath = returnTo || '/dashboard';
+    const successUrl = new URL(process.env.FRONTEND_URL || 'http://localhost:8080');
+    successUrl.pathname = successPath;
+    successUrl.searchParams.set('success', 'true');
+    successUrl.searchParams.set('session_id', '{CHECKOUT_SESSION_ID}');
+
     // Create Stripe Checkout Session
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
@@ -41,7 +48,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           quantity: 1,
         },
       ],
-      success_url: `${process.env.FRONTEND_URL || 'http://localhost:8080'}/dashboard?success=true&session_id={CHECKOUT_SESSION_ID}`,
+      success_url: successUrl.toString(),
       cancel_url: `${process.env.FRONTEND_URL || 'http://localhost:8080'}/pricing?canceled=true`,
       metadata: {
         tier: tier,
