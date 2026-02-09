@@ -2,7 +2,7 @@ import { VercelRequest, VercelResponse } from '@vercel/node';
 import Stripe from 'stripe';
 
 // Initialize Stripe with your secret key
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2026-01-28.clover',
 });
 
@@ -10,6 +10,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Only allow POST requests
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  // Check if required environment variables are set
+  if (!process.env.STRIPE_SECRET_KEY) {
+    console.error('Missing STRIPE_SECRET_KEY environment variable');
+    return res.status(500).json({ error: 'Server configuration error: Missing Stripe API key' });
   }
 
   try {
@@ -21,14 +27,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Define price IDs for each tier
     const priceIds = {
-      premium: process.env.STRIPE_PRICE_ID_PREMIUM!,
-      pro: process.env.STRIPE_PRICE_ID_PRO!,
+      premium: process.env.STRIPE_PRICE_ID_PREMIUM,
+      pro: process.env.STRIPE_PRICE_ID_PRO,
     };
 
     const priceId = priceIds[tier as keyof typeof priceIds];
     
     if (!priceId) {
-      return res.status(400).json({ error: 'Invalid tier' });
+      console.error(`Missing price ID for tier: ${tier}. Premium: ${process.env.STRIPE_PRICE_ID_PREMIUM}, Pro: ${process.env.STRIPE_PRICE_ID_PRO}`);
+      return res.status(400).json({ error: `Server configuration error: Price not configured for ${tier} tier` });
     }
 
     // Create Stripe Checkout Session

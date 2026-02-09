@@ -103,17 +103,23 @@ export default function Checkout() {
         })
       });
       
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `API returned ${response.status}`);
+      }
+      
       const { url } = await response.json();
       
       // Redirect to Stripe Checkout
       if (url) {
         window.location.href = url;
       } else {
-        throw new Error('Failed to create checkout session');
+        throw new Error('No checkout URL returned from API');
       }
     } catch (error) {
       console.error('Payment error:', error);
-      alert('Payment processing failed. Please try again or contact support.');
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      alert(`Payment processing failed: ${errorMessage}`);
       setIsProcessing(false);
     }
   };
