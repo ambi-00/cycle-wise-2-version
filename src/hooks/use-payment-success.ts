@@ -19,7 +19,10 @@ export function usePaymentSuccess() {
     const sessionId = searchParams.get('session_id');
     const tier = searchParams.get('tier');
 
+    console.log('usePaymentSuccess hook - checking params:', { success, sessionId, tier, isUpdating });
+
     if (success === 'true' && sessionId && !isUpdating) {
+      console.log('Handling payment success with tier:', tier);
       handlePaymentSuccess(tier);
     }
   }, [searchParams]);
@@ -29,6 +32,8 @@ export function usePaymentSuccess() {
     
     try {
       const { data: { user } } = await supabase.auth.getUser();
+      
+      console.log('Payment success handler:', { tier, userExists: !!user });
       
       if (!user) {
         console.error('No user found');
@@ -43,6 +48,8 @@ export function usePaymentSuccess() {
       // Fallback: If webhook hasn't updated Supabase yet, update it directly
       // This ensures the tier is updated even if the webhook fails
       if (tier && tier !== subscription.tier) {
+        console.log('Updating subscription in Supabase:', { userId: user.id, tier });
+        
         const { error: updateError } = await supabase
           .from('subscriptions')
           .upsert({

@@ -15,6 +15,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const { tier, paymentMethod, userId, returnTo } = req.body;
 
+    console.log('Checkout request:', { tier, paymentMethod, userId, returnTo });
+
     if (!userId) {
       return res.status(400).json({ error: 'User ID is required' });
     }
@@ -54,6 +56,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     successUrl.searchParams.set('success', 'true');
     successUrl.searchParams.set('session_id', '{CHECKOUT_SESSION_ID}');
     successUrl.searchParams.set('tier', tier); // Add tier so frontend can update Supabase if webhook fails
+
+    console.log('Success URL:', successUrl.toString());
+    console.log('Frontend URL:', frontendUrl);
+    console.log('Success path:', successPath);
 
     // Create Stripe Checkout Session
     const session = await stripe.checkout.sessions.create({
