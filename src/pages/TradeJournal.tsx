@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Plus, Filter, Download, Upload, TrendingUp, TrendingDown, Search, CheckCircle, AlertCircle, Lightbulb, X } from "lucide-react";
+import { Plus, Filter, Download, Upload, TrendingUp, TrendingDown, Search, CheckCircle, AlertCircle, Lightbulb, X, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useEffect, useState, lazy, Suspense, useRef } from "react";
@@ -9,6 +9,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useSubscription } from "@/hooks/use-subscription";
+import { supabase } from "@/integrations/supabase/client";
+import { MTTradeEnrichmentDialog } from "@/components/MTTradeEnrichmentDialog";
 const QuickTradeEntry = lazy(() => import("@/components/QuickTradeEntry").then((m) => ({ default: m.QuickTradeEntry })));
 import { useLocation, Link, useNavigate } from "react-router-dom";
 
@@ -210,6 +212,13 @@ export default function TradeJournal() {
   const [trades, setTrades] = useState<any[]>([]);
   const [importing, setImporting] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
+  const [loadingMTTrades, setLoadingMTTrades] = useState(false);
+  const [enrichmentDialog, setEnrichmentDialog] = useState<{
+    isOpen: boolean;
+    tradeId?: string;
+    symbol?: string;
+    openTime?: string;
+  }>({ isOpen: false });
   
   // Filter states
   const [resultFilter, setResultFilter] = useState<string>("");
@@ -280,6 +289,63 @@ export default function TradeJournal() {
       window.removeEventListener('focus', loadTrades);
     };
   }, [dateFilter]);
+
+  // Load MT Trades from Supabase
+  useEffect(() => {
+    const loadMTTrades = async () => {
+      setLoadingMTTrades(true);
+      try {
+        const { data: mtTrades, error } = await supabase
+          .from('mt_trades')
+          .select('*')
+          .order('open_time', { ascending: false });
+
+        if (error) throw error;
+
+        if (mtTrades && mtTrades.length > 0) {
+          const convertedTrades = mtTrades.map((t: any) => ({
+            id: `mt-${t.id}`,
+            mtTradeId: t.id, // Store original ID for enrichment
+            instrument: t.symbol,
+            direction: t.cmd === 'buy' || t.cmd === '0' ? 'long' : 'short',
+            entryPrice: parseFloat(t.open_price || 0),
+            exitPrice: parseFloat(t.close_price || 0),
+            positionSize: parseFloat(t.volume || 0),
+            pnl: parseFloat(t.profit || 0),
+            result: parseFloat(t.profit || 0) > 0 ? 'win' : parseFloat(t.profit || 0) < 0 ? 'loss' : 'breakeven',
+            date: t.open_time ? new Date(t.open_time).toISOString().split('T')[0] : '',
+            time: t.open_time ? new Date(t.open_time).toLocaleTimeString() : '',
+            strategy: 'MetaTrader',
+            notes: `Ticket #${t.ticket}`,
+            isMTTrade: true,
+            mtData: {
+              ticket: t.ticket,
+              screenshot_url: t.screenshot_url,
+              entry_reason: t.entry_reason,
+              rrr: t.rrr,
+              position_size: t.position_size,
+              is_enriched: t.is_enriched,
+            },
+            createdAt: new Date(t.open_time).getTime(),
+          }));
+
+          setTrades((prev) => {
+            // Remove old MT trades and add new ones
+            const nonMTTrades = prev.filter((t: any) => !t.isMTTrade);
+            return [...nonMTTrades, ...convertedTrades].sort(
+              (a: any, b: any) => (b.createdAt || 0) - (a.createdAt || 0)
+            );
+          });
+        }
+      } catch (err: any) {
+        console.error('Error loading MT trades:', err);
+      } finally {
+        setLoadingMTTrades(false);
+      }
+    };
+
+    loadMTTrades();
+  }, []);
 
   const filteredTrades = trades
     .filter((trade: any) =>
@@ -705,8 +771,7 @@ export default function TradeJournal() {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: index * 0.05 }}
-                    className="border-b border-border/50 hover:bg-muted/20 transition-colors cursor-pointer"
-                    onClick={() => navigate(`/trade/new?date=${trade.date}&id=${trade.id}`)}
+                    className="border-b border-border/50 hover:bg-muted/20 transition-colors"
                   >
                     <td className="px-4 py-4">
                       <div>
@@ -714,7 +779,17 @@ export default function TradeJournal() {
                         <p className="text-xs text-muted-foreground">{trade.time}</p>
                       </div>
                     </td>
-                    <td className="px-4 py-4 text-sm font-semibold text-foreground">{trade.instrument}</td>
+                    <td className="px-4 py-4">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold text-foreground">{trade.instrument}</span>
+                        {trade.isMTTrade && (
+                          <Badge variant="outline" className="text-xs gap-1 flex items-center">
+                            <Zap className="h-3 w-3" />
+                            MT4/MT5
+                          </Badge>
+                        )}
+                      </div>
+                    </td>
                     <td className="px-4 py-4">
                       <div className={`inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium ${
                         trade.direction === "long" ? "bg-accent/30 text-accent-foreground" : "bg-destructive/10 text-destructive"
@@ -724,51 +799,89 @@ export default function TradeJournal() {
                       </div>
                     </td>
                     <td className="px-4 py-4 hidden lg:table-cell">
-                      <div className="flex flex-col gap-1">
-                        <span className="text-xs text-muted-foreground">Small</span>
-                        <span className="text-sm font-medium">{trade.tfSmall || trade.tf || '—'}</span>
-                        <span className="text-xs text-muted-foreground">Context</span>
-                        <span className="text-sm font-medium">{trade.tfLarge || '—'}</span>
-                      </div>
+                      {trade.isMTTrade ? (
+                        <div className="flex flex-col gap-1">
+                          <span className="text-xs text-muted-foreground">Entry</span>
+                          <span className="text-sm font-medium">${trade.entryPrice?.toFixed(5)}</span>
+                          <span className="text-xs text-muted-foreground">Exit</span>
+                          <span className="text-sm font-medium">${trade.exitPrice?.toFixed(5)}</span>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col gap-1">
+                          <span className="text-xs text-muted-foreground">Small</span>
+                          <span className="text-sm font-medium">{trade.tfSmall || trade.tf || '—'}</span>
+                          <span className="text-xs text-muted-foreground">Context</span>
+                          <span className="text-sm font-medium">{trade.tfLarge || '—'}</span>
+                        </div>
+                      )}
                     </td>
                     <td className="px-4 py-4">{getResultBadge(trade.result, trade.pnl)}</td>
                     <td className={`px-4 py-4 text-sm font-bold ${
                       trade.rMultiple > 0 ? "text-accent-foreground" : trade.rMultiple < 0 ? "text-destructive" : "text-muted-foreground"
                     }`}>
-                      {trade.rMultiple > 0 ? "+" : ""}{trade.rMultiple}R
+                      {trade.isMTTrade && trade.mtData?.rrr ? (
+                        <>1:{trade.mtData.rrr}</>
+                      ) : (
+                        <>{trade.rMultiple > 0 ? "+" : ""}{trade.rMultiple}R</>
+                      )}
                     </td>
                     <td className="px-4 py-4 text-sm text-foreground hidden lg:table-cell">{trade.strategy}</td>
                     <td className="px-4 py-4 hidden lg:table-cell">
-                      <span className="text-xs text-muted-foreground">{trade.cyclePhase}</span>
+                      <span className="text-xs text-muted-foreground">{trade.cyclePhase || '—'}</span>
                     </td>
                     <td className="px-6 py-6 hidden xl:table-cell">
-                          <div className="flex items-center gap-3">
-                            <div className="flex items-center gap-1">
-                              {[...Array(4)].map((_, i) => {
-                                const doneCount = (trade.checklist || []).filter((c: any) => c.done).length;
-                                return (
-                                  <div
-                                    key={i}
-                                    className={`h-2 w-2 rounded-full ${
-                                      i < doneCount ? "bg-primary" : "bg-muted"
-                                    }`}
-                                  />
-                                );
-                              })}
-                            </div>
-                            {/* show up to two thumbnails from any image/link fields (postImg, tvLink, entryImg, exitImg, entryLink, exitLink) */}
-                            {([
-                              trade.postImg,
-                              trade.tvLink,
-                              trade.entryImg,
-                              trade.exitImg,
-                              trade.entryLink,
-                              trade.exitLink,
-                            ].filter(Boolean) as string[]).slice(0, 2).map((src, i) => (
-                              <img key={i} src={src} alt={`snap-${i}`} className="h-12 w-20 object-cover rounded-md border" />
-                            ))}
+                      {trade.isMTTrade ? (
+                        <div className="flex items-center gap-2">
+                          {!trade.mtData?.is_enriched && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEnrichmentDialog({
+                                  isOpen: true,
+                                  tradeId: trade.mtTradeId,
+                                  symbol: trade.instrument,
+                                  openTime: trade.date,
+                                });
+                              }}
+                              className="text-xs"
+                            >
+                              Enrich
+                            </Button>
+                          )}
+                          {trade.mtData?.screenshot_url && (
+                            <img src={trade.mtData.screenshot_url} alt="MT screenshot" className="h-12 w-20 object-cover rounded-md border" />
+                          )}
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-1">
+                            {[...Array(4)].map((_, i) => {
+                              const doneCount = (trade.checklist || []).filter((c: any) => c.done).length;
+                              return (
+                                <div
+                                  key={i}
+                                  className={`h-2 w-2 rounded-full ${
+                                    i < doneCount ? "bg-primary" : "bg-muted"
+                                  }`}
+                                />
+                              );
+                            })}
                           </div>
-                        </td>
+                          {([
+                            trade.postImg,
+                            trade.tvLink,
+                            trade.entryImg,
+                            trade.exitImg,
+                            trade.entryLink,
+                            trade.exitLink,
+                          ].filter(Boolean) as string[]).slice(0, 2).map((src, i) => (
+                            <img key={i} src={src} alt={`snap-${i}`} className="h-12 w-20 object-cover rounded-md border" />
+                          ))}
+                        </div>
+                      )}
+                    </td>
                   </motion.tr>
                 ))}
               </tbody>
@@ -776,6 +889,19 @@ export default function TradeJournal() {
           </div>
           )}
         </motion.div>
+
+        {/* MT Trade Enrichment Dialog */}
+        <MTTradeEnrichmentDialog
+          isOpen={enrichmentDialog.isOpen}
+          onClose={() => setEnrichmentDialog({ isOpen: false })}
+          tradeId={enrichmentDialog.tradeId || ''}
+          symbol={enrichmentDialog.symbol || ''}
+          openTime={enrichmentDialog.openTime || ''}
+          onSuccess={() => {
+            // Reload MT trades after enrichment
+            window.location.reload();
+          }}
+        />
       </motion.div>
     </main>
   );

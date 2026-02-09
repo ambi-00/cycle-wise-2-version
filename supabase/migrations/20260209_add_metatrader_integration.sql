@@ -51,8 +51,15 @@ create table mt_trades (
   close_time timestamp with time zone,
   profit numeric(15,2),
   comment text,
+  -- Enrichment Fields
+  screenshot_url text,
+  entry_reason text,
+  rrr numeric(10,2), -- Risk Reward Ratio (e.g., 1:2)
+  position_size numeric(15,2),
+  is_enriched boolean default false,
   synced_at timestamp with time zone default now(),
   created_at timestamp with time zone default now(),
+  updated_at timestamp with time zone default now(),
   unique(user_id, account_id, ticket)
 );
 
@@ -71,6 +78,9 @@ create policy "Users can view their own MT trades" on mt_trades
 create policy "System can insert MT trades" on mt_trades
   for insert with check (true);
 
+create policy "Users can update their own MT trades" on mt_trades
+  for update using (auth.uid() = user_id);
+
 -- Create function to update updated_at timestamp
 create or replace function update_updated_at_column()
 returns trigger as $$
@@ -82,4 +92,7 @@ $$ language plpgsql;
 
 -- Create trigger
 create trigger update_metatrader_accounts_updated_at before update on metatrader_accounts
+  for each row execute function update_updated_at_column();
+
+create trigger update_mt_trades_updated_at before update on mt_trades
   for each row execute function update_updated_at_column();
