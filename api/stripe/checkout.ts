@@ -53,6 +53,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     successUrl.pathname = successPath;
     successUrl.searchParams.set('success', 'true');
     successUrl.searchParams.set('session_id', '{CHECKOUT_SESSION_ID}');
+    successUrl.searchParams.set('tier', tier); // Add tier so frontend can update Supabase if webhook fails
 
     // Create Stripe Checkout Session
     const session = await stripe.checkout.sessions.create({
