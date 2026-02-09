@@ -64,6 +64,15 @@ export function usePaymentSuccess() {
         console.log('Updating subscription in Supabase:', { userId: user.id, tier, currentTier: subscription.tier });
         
         try {
+          // First, check what data exists
+          const { data: existingData, error: fetchError } = await supabase
+            .from('subscriptions')
+            .select('*')
+            .eq('user_id', user.id)
+            .single();
+
+          console.log('Existing subscription data:', existingData, 'fetch error:', fetchError);
+
           const { data, error: updateError } = await supabase
             .from('subscriptions')
             .upsert({
@@ -77,7 +86,10 @@ export function usePaymentSuccess() {
 
           if (updateError) {
             console.error('Failed to update subscription:', updateError);
-            console.error('Error details:', { code: updateError.code, message: updateError.message, details: updateError.details });
+            console.error('Error code:', updateError.code);
+            console.error('Error message:', updateError.message);
+            console.error('Error details:', updateError.details);
+            console.error('Error hint:', updateError.hint);
           } else {
             console.log(`Subscription updated successfully:`, data);
             console.log(`Subscription updated to ${tier} for user ${user.id}`);
@@ -86,6 +98,7 @@ export function usePaymentSuccess() {
           // Refresh subscription data to get latest from Supabase
           console.log('Refreshing subscription...');
           await refresh();
+          console.log('Subscription refreshed, new tier:', subscription.tier);
         } catch (err) {
           console.error('Exception during Supabase update:', err);
         }
