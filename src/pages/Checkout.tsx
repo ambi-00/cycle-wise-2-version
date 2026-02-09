@@ -100,6 +100,14 @@ export default function Checkout() {
         userId: user.id,
       });
 
+      // Store tier in sessionStorage so we can retrieve it after Stripe redirect
+      sessionStorage.setItem('pending_tier_upgrade', JSON.stringify({
+        tier,
+        returnTo,
+        timestamp: Date.now(),
+      }));
+      console.log('Stored pending tier upgrade in sessionStorage:', { tier, returnTo });
+
       // Integrate with Stripe Checkout
       const response = await fetch('/api/stripe/checkout', {
         method: 'POST',

@@ -17,9 +17,22 @@ export function usePaymentSuccess() {
   useEffect(() => {
     const success = searchParams.get('success');
     const sessionId = searchParams.get('session_id');
-    const tier = searchParams.get('tier');
+    let tier = searchParams.get('tier');
 
     console.log('usePaymentSuccess hook - checking params:', { success, sessionId, tier, isUpdating });
+
+    // Fallback: If tier is not in URL, try to get it from sessionStorage
+    if (!tier) {
+      try {
+        const pending = JSON.parse(sessionStorage.getItem('pending_tier_upgrade') || '{}');
+        if (pending.tier) {
+          tier = pending.tier;
+          console.log('Retrieved tier from sessionStorage:', tier);
+        }
+      } catch (e) {
+        console.error('Failed to parse sessionStorage:', e);
+      }
+    }
 
     if (success === 'true' && sessionId && !isUpdating) {
       console.log('Handling payment success with tier:', tier);
