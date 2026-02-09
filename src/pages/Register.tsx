@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FcGoogle } from "react-icons/fc";
 import { FaApple } from "react-icons/fa";
-import { TrendingUp } from "lucide-react";
+import { TrendingUp, Eye, EyeOff, Check, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -16,9 +16,15 @@ export default function Register() {
   const [password, setPassword] = useState("");
   const [password2, setPassword2] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showPassword2, setShowPassword2] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   const skipEmail = import.meta.env.VITE_SKIP_EMAIL_VERIFICATION === "true";
+  
+  // Check if passwords match
+  const passwordsMatch = password && password2 && password === password2;
+  const bothPasswordsFilled = password && password2;
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-hero p-6">
@@ -54,19 +60,48 @@ export default function Register() {
                 onChange={(e) => setEmail(e.target.value)}
               />
 
-              <Input
-                type="password"
-                placeholder="Create a password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
+              <div className="relative">
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Create a password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
 
-              <Input
-                type="password"
-                placeholder="Confirm your password"
-                value={password2}
-                onChange={(e) => setPassword2(e.target.value)}
-              />
+              <div className="relative">
+                <Input
+                  type={showPassword2 ? "text" : "password"}
+                  placeholder="Confirm your password"
+                  value={password2}
+                  onChange={(e) => setPassword2(e.target.value)}
+                  className={bothPasswordsFilled ? (passwordsMatch ? "border-green-500 pr-10" : "border-red-500 pr-10") : "pr-10"}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword2(!showPassword2)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {showPassword2 ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+                {bothPasswordsFilled && (
+                  <div className="absolute right-12 top-1/2 -translate-y-1/2">
+                    {passwordsMatch ? (
+                      <Check size={18} className="text-green-500" />
+                    ) : (
+                      <X size={18} className="text-red-500" />
+                    )}
+                  </div>
+                )}
+              </div>
         <form
                 onSubmit={async (e) => {
                   e.preventDefault();
