@@ -90,6 +90,7 @@ const AppContent = () => {
         <Route path="/journal" element={<ProtectedRoute><TradeJournal /></ProtectedRoute>} />
         <Route path="/trade/new" element={<ProtectedRoute><NewTrade /></ProtectedRoute>} />
         <Route path="/cycle" element={<ProtectedRoute><CycleTracker /></ProtectedRoute>} />
+        <Route path="/cycle-tracker" element={<ProtectedRoute><CycleTracker /></ProtectedRoute>} />
         <Route path="/day/:day" element={<ProtectedRoute><Day /></ProtectedRoute>} />
         <Route path="/strategies" element={<ProtectedRoute><Strategies /></ProtectedRoute>} />
         <Route path="/strategies/new" element={<ProtectedRoute><NewStrategy /></ProtectedRoute>} />
