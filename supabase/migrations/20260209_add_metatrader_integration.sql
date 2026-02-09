@@ -1,0 +1,83 @@
+-- Create metatrader_accounts table
+create table metatrader_accounts (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  account_number text not null,
+  server text not null,
+  platform text not null check (platform in ('mt4', 'mt5')),
+  prop_firm text,
+  connected_at timestamp with time zone default now(),
+  last_sync timestamp with time zone,
+  is_active boolean default true,
+  created_at timestamp with time zone default now(),
+  updated_at timestamp with time zone default now(),
+  unique(user_id, account_number, server)
+);
+
+-- Create index for faster queries
+create index idx_metatrader_accounts_user_id on metatrader_accounts(user_id);
+create index idx_metatrader_accounts_active on metatrader_accounts(user_id, is_active);
+
+-- Enable RLS
+alter table metatrader_accounts enable row level security;
+
+-- RLS Policies: Users can only see their own accounts
+create policy "Users can view their own MT accounts" on metatrader_accounts
+  for select using (auth.uid() = user_id);
+
+create policy "Users can insert their own MT accounts" on metatrader_accounts
+  for insert with check (auth.uid() = user_id);
+
+create policy "Users can update their own MT accounts" on metatrader_accounts
+  for update using (auth.uid() = user_id);
+
+create policy "Users can delete their own MT accounts" on metatrader_accounts
+  for delete using (auth.uid() = user_id);
+
+-- Create mt_trades table for synced trades
+create table mt_trades (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  account_id uuid not null references metatrader_accounts(id) on delete cascade,
+  ticket bigint not null,
+  symbol text not null,
+  cmd text not null, -- "buy" or "sell"
+  open_price numeric(15,5),
+  close_price numeric(15,5),
+  volume numeric(15,2),
+  open_time timestamp with time zone,
+  close_time timestamp with time zone,
+  profit numeric(15,2),
+  comment text,
+  synced_at timestamp with time zone default now(),
+  created_at timestamp with time zone default now(),
+  unique(user_id, account_id, ticket)
+);
+
+-- Create index for faster queries
+create index idx_mt_trades_user_id on mt_trades(user_id);
+create index idx_mt_trades_account_id on mt_trades(account_id);
+create index idx_mt_trades_open_time on mt_trades(open_time);
+
+-- Enable RLS
+alter table mt_trades enable row level security;
+
+-- RLS Policies
+create policy "Users can view their own MT trades" on mt_trades
+  for select using (auth.uid() = user_id);
+
+create policy "System can insert MT trades" on mt_trades
+  for insert with check (true);
+
+-- Create function to update updated_at timestamp
+create or replace function update_updated_at_column()
+returns trigger as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$ language plpgsql;
+
+-- Create trigger
+create trigger update_metatrader_accounts_updated_at before update on metatrader_accounts
+  for each row execute function update_updated_at_column();
