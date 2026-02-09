@@ -93,6 +93,13 @@ export default function Checkout() {
         throw new Error('User not authenticated');
       }
 
+      console.log('Checkout page - sending to API:', {
+        tier,
+        returnTo,
+        paymentMethod: selectedPayment,
+        userId: user.id,
+      });
+
       // Integrate with Stripe Checkout
       const response = await fetch('/api/stripe/checkout', {
         method: 'POST',

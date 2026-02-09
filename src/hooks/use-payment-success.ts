@@ -48,27 +48,36 @@ export function usePaymentSuccess() {
       // Fallback: If webhook hasn't updated Supabase yet, update it directly
       // This ensures the tier is updated even if the webhook fails
       if (tier && tier !== subscription.tier) {
-        console.log('Updating subscription in Supabase:', { userId: user.id, tier });
+        console.log('Updating subscription in Supabase:', { userId: user.id, tier, currentTier: subscription.tier });
         
-        const { error: updateError } = await supabase
-          .from('subscriptions')
-          .upsert({
-            user_id: user.id,
-            tier: tier,
-            status: 'active',
-            updated_at: new Date().toISOString(),
-          }, {
-            onConflict: 'user_id'
-          });
+        try {
+          const { data, error: updateError } = await supabase
+            .from('subscriptions')
+            .upsert({
+              user_id: user.id,
+              tier: tier,
+              status: 'active',
+              updated_at: new Date().toISOString(),
+            }, {
+              onConflict: 'user_id'
+            });
 
-        if (updateError) {
-          console.error('Failed to update subscription:', updateError);
-        } else {
-          console.log(`Subscription updated to ${tier} for user ${user.id}`);
+          if (updateError) {
+            console.error('Failed to update subscription:', updateError);
+            console.error('Error details:', { code: updateError.code, message: updateError.message, details: updateError.details });
+          } else {
+            console.log(`Subscription updated successfully:`, data);
+            console.log(`Subscription updated to ${tier} for user ${user.id}`);
+          }
+
+          // Refresh subscription data to get latest from Supabase
+          console.log('Refreshing subscription...');
+          await refresh();
+        } catch (err) {
+          console.error('Exception during Supabase update:', err);
         }
-
-        // Refresh subscription data to get latest from Supabase
-        await refresh();
+      } else {
+        console.log('Tier already matches, skipping update:', { tier, subscription: subscription.tier });
       }
 
       // Show success toast

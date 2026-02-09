@@ -16,6 +16,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const { tier, paymentMethod, userId, returnTo } = req.body;
 
     console.log('Checkout request:', { tier, paymentMethod, userId, returnTo });
+    console.log('Request body:', JSON.stringify(req.body));
+    console.log('returnTo type:', typeof returnTo, 'value:', returnTo, 'length:', returnTo?.length);
 
     if (!userId) {
       return res.status(400).json({ error: 'User ID is required' });
@@ -50,7 +52,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // Determine success URL based on returnTo parameter
-    const successPath = returnTo || '/dashboard';
+    let successPath = returnTo || '/dashboard';
+    
+    // Fallback: Try to extract path from referer header if returnTo is missing
+    if (!returnTo && req.headers.referer) {
+      try {
+        const refererUrl = new URL(req.headers.referer);
+        const refererPath = refererUrl.pathname;
+        console.log('Extracted path from referer:', refererPath);
+        if (refererPath && refererPath !== '/checkout') {
+          successPath = refererPath;
+        }
+      } catch (e) {
+        console.error('Failed to parse referer:', e);
+      }
+    }
+    
     const successUrl = new URL(frontendUrl);
     successUrl.pathname = successPath;
     successUrl.searchParams.set('success', 'true');
