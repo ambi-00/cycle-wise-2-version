@@ -91,15 +91,16 @@ export default function Dashboard() {
   // Enable XP notifications
   useXPNotifications();
 
-  // Check if daily health check-in needs to be shown
+  // Check if daily health check-in needs to be shown (but only AFTER tour is complete)
   useEffect(() => {
     const today = new Date().toISOString().split('T')[0];
     const lastCheckinKey = `cw_daily_checkin_${today}`;
     const hasCheckedInToday = localStorage.getItem(lastCheckinKey);
+    const hasDoneTour = localStorage.getItem("cw_tour_dashboard");
     
-    if (!hasCheckedInToday) {
-      // Show health check-in only once per day
-      setShowHealthCheckIn(true);
+    // Only show health check-in if user has completed tour AND hasn't checked in today
+    if (!hasCheckedInToday && hasDoneTour) {
+      setTimeout(() => setShowHealthCheckIn(true), 1000); // Delay to let tour finish
     }
   }, []);
 

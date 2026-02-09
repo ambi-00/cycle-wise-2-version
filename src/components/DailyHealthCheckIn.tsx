@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { AlertCircle, CheckCircle2, Heart, Brain, Zap, TrendingDown } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Heart, Brain, Zap, TrendingDown, Loader } from 'lucide-react';
 
 interface HealthCheckData {
   date: string;
@@ -42,7 +42,7 @@ const RatingButtons = ({ value, onChange, max = 10 }: { value: number; onChange:
 );
 
 export function DailyHealthCheckIn({ onComplete, isOpen }: DailyHealthCheckInProps) {
-  const [step, setStep] = useState(1); // 1-5 for questions, 6 for recommendations
+  const [step, setStep] = useState(1); // 1-5 for questions, 6 for recommendations, 7 for loading
   const [nutrition, setNutrition] = useState<'poor' | 'fair' | 'good' | 'excellent'>('good');
   const [mood, setMood] = useState(7);
   const [concentration, setConcentration] = useState(7);
@@ -55,92 +55,119 @@ export function DailyHealthCheckIn({ onComplete, isOpen }: DailyHealthCheckInPro
     let riskReduction = 0;
     let riskAdjustment: 'reduce' | 'maintain' | 'increase' = 'maintain';
 
-    // Nutrition checks
-    if (nutrition === 'poor' || nutrition === 'fair') {
-      recommendations.push('🍎 Eat something nutritious before trading - poor nutrition = poor focus');
-      riskReduction += 25;
+    // Calculate overall health score (weighted)
+    const healthScore = (mood + concentration + sleep) / 3;
+    const stressLevel = stress;
+    const nutritionScore = nutrition === 'excellent' ? 10 : nutrition === 'good' ? 7 : nutrition === 'fair' ? 4 : 1;
+
+    // MORE NUANCED RECOMMENDATIONS SYSTEM
+    
+    // 1. Nutrition impact (moderate)
+    if (nutrition === 'poor') {
+      recommendations.push('🍎 Poor nutrition detected - fuel your body first before trading');
+      riskReduction += 10; // Much lower than before
+    } else if (nutrition === 'fair') {
+      recommendations.push('🍎 Fair nutrition - consider eating something substantial');
+      riskReduction += 5;
     } else if (nutrition === 'excellent') {
-      recommendations.push('✅ Great nutrition! Your body is primed for trading');
+      recommendations.push('✅ Excellent nutrition - great foundation for trading');
     }
 
-    // Mood checks
-    if (mood <= 3) {
-      recommendations.push('😔 Your mood is very low - consider taking a break or only trading with MINIMUM risk');
-      riskReduction += 40;
-    } else if (mood <= 5) {
-      recommendations.push('⚠️ Low mood detected - reduce position sizes by 25-50%');
-      riskReduction += 30;
-    } else if (mood >= 9) {
-      recommendations.push('🔥 Excellent mood! But be careful of overconfidence - stick to your rules');
-    }
-
-    // Concentration checks
-    if (concentration <= 3) {
-      recommendations.push('🧠 Your concentration is very low - DO NOT trade today or use 50% smaller positions');
-      riskReduction += 50;
-    } else if (concentration <= 5) {
-      recommendations.push('⚠️ Low concentration - reduce risk by 30%, use only your most proven setups');
-      riskReduction += 30;
-    } else if (concentration <= 6) {
-      recommendations.push('📍 Moderate concentration - be extra strict with entry confirmations');
+    // 2. Mood impact (moderate if low, caution if high)
+    if (mood <= 2) {
+      recommendations.push('😔 Very low mood - avoid high-stress setups, stick to mechanical trades only');
       riskReduction += 15;
-    } else if (concentration >= 9) {
-      recommendations.push('🎯 Excellent focus! Perfect conditions for trading');
+    } else if (mood === 3 || mood === 4) {
+      recommendations.push('⚠️ Low mood - focus on high-conviction setups only');
+      riskReduction += 10;
+    } else if (mood >= 9) {
+      recommendations.push('🔥 Excellent mood! Remember: overconfidence is a risk - stick to your rules strictly');
+      // Don't penalize, just remind
+    } else if (mood >= 7) {
+      recommendations.push('😊 Good mood - solid foundation for trading');
     }
 
-    // Sleep checks
-    if (sleep <= 3) {
-      recommendations.push('😴 Severely sleep deprived - skip trading, your body needs rest');
-      riskReduction += 60;
-    } else if (sleep <= 5) {
-      recommendations.push('😴 Poor sleep quality - trade with 40% smaller positions');
-      riskReduction += 40;
-    } else if (sleep <= 6) {
-      recommendations.push('⚠️ Below average sleep - reduce positions by 20%');
-      riskReduction += 20;
-    }
-
-    // Stress checks
-    if (stress >= 8) {
-      recommendations.push('😰 High stress levels - this will cloud your judgment. Reduce risk by 35%');
+    // 3. Concentration impact (MOST critical)
+    if (concentration <= 2) {
+      recommendations.push('🧠 CRITICAL: Severe concentration issues - skip trading or trade 50%+ smaller positions');
       riskReduction += 35;
-    } else if (stress >= 6) {
-      recommendations.push('⚠️ Moderate-high stress - be extra careful with impulse trades');
+    } else if (concentration <= 4) {
+      recommendations.push('⚠️ Low concentration - reduce position sizes by 25%, trade only proven setups');
       riskReduction += 20;
+    } else if (concentration <= 6) {
+      recommendations.push('📍 Moderate concentration - be extra strict with entry/exit confirmations');
+      riskReduction += 8;
+    } else if (concentration >= 9) {
+      recommendations.push('🎯 Excellent focus - prime conditions for trading');
     }
 
-    // Exercise checks
+    // 4. Sleep impact (VERY important)
+    if (sleep <= 2) {
+      recommendations.push('😴 Severely sleep deprived - prioritize rest, skip trading if possible');
+      riskReduction += 40;
+    } else if (sleep <= 4) {
+      recommendations.push('😴 Poor sleep - trade with 30% smaller positions, avoid risky setups');
+      riskReduction += 25;
+    } else if (sleep <= 6) {
+      recommendations.push('⚠️ Below-average sleep - reduce risk by 10%, focus on quality over quantity');
+      riskReduction += 10;
+    } else if (sleep >= 9) {
+      recommendations.push('😴 Great sleep! Your recovery is solid');
+    }
+
+    // 5. Stress impact (moderate)
+    if (stressLevel >= 9) {
+      recommendations.push('😰 Extreme stress - avoid trading until you decompress (walk, breathe, meditate)');
+      riskReduction += 20;
+    } else if (stressLevel >= 7) {
+      recommendations.push('⚠️ High stress - trade smaller, avoid revenge trading');
+      riskReduction += 12;
+    } else if (stressLevel >= 5) {
+      recommendations.push('📊 Moderate stress - maintain discipline, avoid FOMO');
+      riskReduction += 5;
+    } else if (stressLevel <= 2) {
+      recommendations.push('😌 Very calm - excellent mental state for trading');
+    }
+
+    // 6. Exercise bonus (positive)
     if (hasExercised) {
-      recommendations.push('💪 You exercised! This boosts focus and emotional regulation - nice!');
+      recommendations.push('💪 You exercised! Improved focus & emotional control - great!');
+      // Positive contribution, but doesn't reduce risk
     }
 
-    // Combined checks
-    if (nutrition !== 'excellent' && concentration <= 5) {
-      recommendations.push('🚨 Poor nutrition + low concentration = DANGEROUS combo. Fix nutrition first, then re-assess');
-      riskReduction = Math.min(riskReduction + 20, 75);
+    // ADVANCED COMBINATIONS (only when MULTIPLE bad factors)
+    const lowScoreCount = [mood <= 4, concentration <= 4, sleep <= 4, stressLevel >= 7].filter(Boolean).length;
+    
+    if (lowScoreCount >= 3) {
+      recommendations.push('🚨 Multiple risk factors detected - seriously consider sitting out today or trading micro positions only');
+      riskReduction = Math.min(riskReduction + 15, 70); // Cap at 70%, not 75%
+    } else if (lowScoreCount === 2) {
+      recommendations.push('⚠️ Two risk factors present - extra caution recommended');
+      riskReduction = Math.min(riskReduction + 5, 70);
     }
 
-    if (sleep <= 5 && stress >= 6) {
-      recommendations.push('🚨 Poor sleep + high stress = high risk of emotional decisions. Stay small');
-      riskReduction = Math.min(riskReduction + 15, 75);
-    }
-
-    // No critical issues
-    if (riskReduction === 0) {
-      recommendations.push('✅ You\'re in great shape! Green light for normal trading');
+    // NO PENALTIES for single "fair" scores
+    if (riskReduction === 0 && recommendations.filter(r => r.includes('✅')).length === 0) {
+      recommendations.push('✅ You\'re in reasonable shape for trading - proceed normally with discipline');
       riskAdjustment = 'maintain';
-    } else {
+    } else if (riskReduction > 0) {
       riskAdjustment = 'reduce';
     }
 
-    // Cap risk reduction at reasonable level
-    riskReduction = Math.min(riskReduction, 75);
+    // Cap risk reduction at 70% (more realistic)
+    riskReduction = Math.min(riskReduction, 70);
 
     return { recommendations, riskAdjustment, riskReduction };
   };
 
-  const handleComplete = () => {
+  const handleComplete = async () => {
+    // Show loading screen for 1-2 seconds
+    setStep(7);
     const { recommendations, riskAdjustment, riskReduction } = generateRecommendations();
+    
+    // Simulate thinking/processing
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
     const data: HealthCheckData = {
       date: new Date().toISOString().split('T')[0],
       nutrition,
@@ -375,6 +402,18 @@ export function DailyHealthCheckIn({ onComplete, isOpen }: DailyHealthCheckInPro
                 <Button onClick={handleComplete} className="flex-1 h-11 bg-gradient-to-r from-primary to-primary/70">
                   Start Trading ✅
                 </Button>
+              </div>
+            </div>
+          )}
+
+          {step === 7 && (
+            <div className="flex flex-col items-center justify-center min-h-[400px] gap-6">
+              <div className="relative w-16 h-16">
+                <Loader className="w-16 h-16 text-primary animate-spin" />
+              </div>
+              <div className="text-center">
+                <h3 className="text-lg font-semibold mb-2">Analyzing Your Health Data...</h3>
+                <p className="text-muted-foreground text-sm">Creating personalized trading recommendations</p>
               </div>
             </div>
           )}

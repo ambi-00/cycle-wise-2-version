@@ -158,10 +158,10 @@ export default function OnboardingTour() {
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            className="fixed z-[102]"
+            className="fixed z-[102] max-w-[90vw]"
             style={
               targetRect && currentTourStep.position
-                ? getTooltipPosition(targetRect, currentTourStep.position)
+                ? calculateBoundedTooltipPosition(targetRect, currentTourStep.position)
                 : { top: "50%", left: "50%", transform: "translate(-50%, -50%)" }
             }
           >
@@ -240,6 +240,55 @@ export default function OnboardingTour() {
       )}
     </AnimatePresence>
   );
+}
+
+function calculateBoundedTooltipPosition(
+  targetRect: DOMRect,
+  position: "top" | "bottom" | "left" | "right"
+): React.CSSProperties {
+  // Tooltip dimensions for boundary calculation
+  const tooltipWidth = 380; // w-[380px]
+  const tooltipHeight = 340; // estimated height with all content
+  const offset = 20;
+  const padding = 16; // screen padding
+  
+  // Calculate base position
+  const basePosX = targetRect.left + targetRect.width / 2;
+  const basePosY = position === "bottom" 
+    ? targetRect.bottom + offset
+    : position === "top"
+    ? targetRect.top - offset - tooltipHeight
+    : targetRect.top + targetRect.height / 2;
+  
+  // Apply horizontal boundary checks
+  let finalX = basePosX;
+  const maxX = window.innerWidth - tooltipWidth / 2 - padding;
+  const minX = tooltipWidth / 2 + padding;
+  if (finalX > maxX) finalX = maxX;
+  if (finalX < minX) finalX = minX;
+  
+  // Apply vertical boundary checks
+  let finalY = basePosY;
+  const maxY = window.innerHeight - tooltipHeight - padding;
+  const minY = padding;
+  if (finalY > maxY) finalY = maxY;
+  if (finalY < minY) finalY = minY;
+  
+  // Return position based on where card needs to be
+  if (position === "left" || position === "right") {
+    return {
+      top: finalY,
+      left: position === "right" ? targetRect.right + offset : targetRect.left - offset - tooltipWidth,
+      transform: "translateY(-50%)",
+    };
+  }
+  
+  // Default for top/bottom
+  return {
+    top: finalY,
+    left: finalX,
+    transform: "translateX(-50%)",
+  };
 }
 
 function getTooltipPosition(
