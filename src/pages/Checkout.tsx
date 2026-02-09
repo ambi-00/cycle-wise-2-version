@@ -103,12 +103,13 @@ export default function Checkout() {
         })
       });
       
+      const data = await response.json();
+      
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `API returned ${response.status}`);
+        throw new Error(data.error || `API returned ${response.status}`);
       }
       
-      const { url } = await response.json();
+      const { url } = data;
       
       // Redirect to Stripe Checkout
       if (url) {
