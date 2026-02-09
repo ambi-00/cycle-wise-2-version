@@ -63,6 +63,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).json({ url: session.url });
   } catch (error: any) {
     console.error('Stripe checkout error:', error);
+    console.error('Error message:', error.message);
+    console.error('Error type:', error.type);
+    console.error('Error param:', error.param);
+    
+    // If it's a Stripe-specific error, provide more details
+    if (error.type === 'StripeInvalidRequestError') {
+      return res.status(400).json({ 
+        error: `Stripe validation error: ${error.message}`,
+        details: error.param ? `Invalid parameter: ${error.param}` : error.message
+      });
+    }
+    
     return res.status(500).json({ 
       error: 'Failed to create checkout session',
       message: error.message 
