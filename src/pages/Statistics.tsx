@@ -8,6 +8,7 @@ import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, Cart
 import RRROptimizationAnalysis from '@/components/RRROptimizationAnalysis';
 import { Lightbulb, Plus, TrendingUp, Lock, Moon, Sprout, Zap, AlertTriangle, BarChart3 } from 'lucide-react';
 import { useSubscription } from '@/hooks/use-subscription';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Trade {
   id: string;
@@ -45,6 +46,8 @@ export default function Statistics() {
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [allTrades, setAllTrades] = useState<Trade[]>([]);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [mtAccounts, setMtAccounts] = useState<any[]>([]);
+  const [selectedAccount, setSelectedAccount] = useState<string | null>(null);
   const [newsEvents, setNewsEvents] = useState<NewsItem[]>([
     { time: '08:30', currency: 'USD', impact: 'high', title: 'Non-Farm Payrolls' },
     { time: '10:00', currency: 'EUR', impact: 'medium', title: 'CPI m/m' },
@@ -52,7 +55,27 @@ export default function Statistics() {
     { time: '15:30', currency: 'USD', impact: 'high', title: 'Fed Chair Speech' },
   ]);
 
-  const loadAllTrades = () => {
+  // Load MT Accounts
+  useEffect(() => {
+    const loadMTAccounts = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('metatrader_accounts')
+          .select('id, account_number, platform')
+          .eq('is_active', true);
+
+        if (!error && data) {
+          setMtAccounts(data);
+        }
+      } catch (err) {
+        console.error('Error loading MT accounts:', err);
+      }
+    };
+
+    loadMTAccounts();
+  }, []);
+
+  const loadAllTrades = async () => {
     const trades: Trade[] = [];
     
     // Use the same method as TradeJournal to iterate localStorage
@@ -76,13 +99,45 @@ export default function Statistics() {
         }
       }
     }
+
+    // Load MT trades from Supabase
+    try {
+      let query = supabase
+        .from('mt_trades')
+        .select('*')
+        .eq('is_enriched', true); // Only show enriched MT trades
+
+      if (selectedAccount) {
+        query = query.eq('account_id', selectedAccount);
+      }
+
+      const { data: mtTrades, error } = await query;
+
+      if (!error && mtTrades) {
+        mtTrades.forEach((t: any) => {
+          trades.push({
+            id: `mt-${t.id}`,
+            date: t.open_time ? new Date(t.open_time).toISOString().split('T')[0] : '',
+            instrument: t.symbol,
+            direction: t.cmd === 'buy' || t.cmd === '0' ? 'long' : 'short',
+            pnl: parseFloat(t.profit || 0),
+            rMultiple: t.rrr ? parseFloat(t.rrr) : null,
+            result: parseFloat(t.profit || 0) > 0 ? 'win' : parseFloat(t.profit || 0) < 0 ? 'loss' : 'breakeven',
+            status: 'closed',
+            strategy: 'MetaTrader',
+          });
+        });
+      }
+    } catch (err) {
+      console.error('Error loading MT trades:', err);
+    }
     
     setAllTrades(trades);
   };
 
   useEffect(() => {
     loadAllTrades();
-  }, []);
+  }, [selectedAccount]);
 
   // All hooks MUST be called unconditionally, before any JSX rendering or early returns
   const hasPremium = subscription.tier === 'premium' || subscription.tier === 'pro';
@@ -357,6 +412,34 @@ export default function Statistics() {
           <h1 className="text-3xl font-serif font-bold tracking-tight text-foreground mb-2">Trade Statistics</h1>
           <p className="text-sm text-muted-foreground">Analyze your trading performance and upcoming market events</p>
         </div>
+
+        {/* Account Filter - Show if MT accounts exist */}
+        {mtAccounts.length > 0 && (
+          <div className="mb-6 p-4 rounded-lg bg-muted/30 border border-border">
+            <p className="text-sm font-medium mb-3">Filter by Account</p>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant={selectedAccount === null ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSelectedAccount(null)}
+                className="rounded-full"
+              >
+                All Accounts
+              </Button>
+              {mtAccounts.map((account) => (
+                <Button
+                  key={account.id}
+                  variant={selectedAccount === account.id ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setSelectedAccount(account.id)}
+                  className="rounded-full"
+                >
+                  {account.platform.toUpperCase()} - {account.account_number.slice(-4)}
+                </Button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Monthly Stats Cards - Show only if there's data */}
         {allTrades.length > 0 && (
