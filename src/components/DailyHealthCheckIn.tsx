@@ -49,6 +49,9 @@ export function DailyHealthCheckIn({ onComplete, isOpen }: DailyHealthCheckInPro
   const [sleep, setSleep] = useState(7);
   const [stress, setStress] = useState(4);
   const [hasExercised, setHasExercised] = useState(false);
+  const [recommendations, setRecommendations] = useState<string[]>([]);
+  const [riskReduction, setRiskReduction] = useState(0);
+  const [riskAdjustment, setRiskAdjustment] = useState<'reduce' | 'maintain' | 'increase'>('maintain');
 
   const generateRecommendations = (): { recommendations: string[]; riskAdjustment: 'reduce' | 'maintain' | 'increase'; riskReduction: number } => {
     const recommendations: string[] = [];
@@ -160,14 +163,24 @@ export function DailyHealthCheckIn({ onComplete, isOpen }: DailyHealthCheckInPro
     return { recommendations, riskAdjustment, riskReduction };
   };
 
-  const handleComplete = async () => {
-    // Show loading screen for 1-2 seconds
+  const handleLoadingToRecommendations = async () => {
+    // Show loading screen, then show recommendations
     setStep(7);
     const { recommendations, riskAdjustment, riskReduction } = generateRecommendations();
     
     // Simulate thinking/processing
     await new Promise(resolve => setTimeout(resolve, 1500));
     
+    // Store recommendations for display
+    setRecommendations(recommendations);
+    setRiskReduction(riskReduction);
+    setRiskAdjustment(riskAdjustment);
+    
+    // Now show the recommendations
+    setStep(6);
+  };
+
+  const handleFinalSubmit = () => {
     const data: HealthCheckData = {
       date: new Date().toISOString().split('T')[0],
       nutrition,
@@ -191,10 +204,8 @@ export function DailyHealthCheckIn({ onComplete, isOpen }: DailyHealthCheckInPro
 
   if (!isOpen) return null;
 
-  const { recommendations, riskReduction } = generateRecommendations();
-
   // Progress bar
-  const progress = (step / 6) * 100;
+  const progress = (step / 7) * 100;
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -331,7 +342,7 @@ export function DailyHealthCheckIn({ onComplete, isOpen }: DailyHealthCheckInPro
 
               <div className="flex gap-2">
                 <Button onClick={() => setStep(4)} variant="outline" className="flex-1 h-11">← Back</Button>
-                <Button onClick={() => setStep(6)} className="flex-1 h-11">See Recommendations →</Button>
+                <Button onClick={handleLoadingToRecommendations} className="flex-1 h-11">See Recommendations →</Button>
               </div>
             </div>
           )}
@@ -398,9 +409,9 @@ export function DailyHealthCheckIn({ onComplete, isOpen }: DailyHealthCheckInPro
               </div>
 
               <div className="flex gap-2">
-                <Button onClick={() => setStep(5)} variant="outline" className="flex-1 h-11">← Edit</Button>
-                <Button onClick={handleComplete} className="flex-1 h-11 bg-gradient-to-r from-primary to-primary/70">
-                  Start Trading ✅
+                <Button onClick={() => setStep(5)} variant="outline" className="flex-1 h-11">← Back</Button>
+                <Button onClick={handleFinalSubmit} className="flex-1 h-11 bg-gradient-to-r from-primary to-primary/70">
+                  Confirm & Start Trading ✅
                 </Button>
               </div>
             </div>
