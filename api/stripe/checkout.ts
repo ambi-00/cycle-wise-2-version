@@ -2,8 +2,8 @@ import { VercelRequest, VercelResponse } from '@vercel/node';
 import Stripe from 'stripe';
 
 // Initialize Stripe with your secret key
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2024-12-18.acacia',
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: '2026-01-28.clover',
 });
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -12,16 +12,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // Check if required environment variables are set
-  if (!process.env.STRIPE_SECRET_KEY) {
-    console.error('Missing STRIPE_SECRET_KEY environment variable');
-    return res.status(500).json({ error: 'Server configuration error: Missing Stripe API key' });
-  }
-
   try {
     const { tier, paymentMethod, userId } = req.body;
-
-    console.log('Checkout request:', { tier, userId, paymentMethod });
 
     if (!userId) {
       return res.status(400).json({ error: 'User ID is required' });
@@ -29,20 +21,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Define price IDs for each tier
     const priceIds = {
-      premium: process.env.STRIPE_PRICE_ID_PREMIUM,
-      pro: process.env.STRIPE_PRICE_ID_PRO,
+      premium: process.env.STRIPE_PRICE_ID_PREMIUM!,
+      pro: process.env.STRIPE_PRICE_ID_PRO!,
     };
 
     const priceId = priceIds[tier as keyof typeof priceIds];
     
-    console.log('Price lookup:', { tier, priceId, available: Object.keys(priceIds) });
-
     if (!priceId) {
-      console.error(`Missing price ID for tier: ${tier}. Premium: ${process.env.STRIPE_PRICE_ID_PREMIUM}, Pro: ${process.env.STRIPE_PRICE_ID_PRO}`);
-      return res.status(400).json({ error: `Server configuration error: Price not configured for ${tier} tier` });
+      return res.status(400).json({ error: 'Invalid tier' });
     }
-
-    console.log('Creating checkout session with price:', priceId);
 
     // Create Stripe Checkout Session
     const session = await stripe.checkout.sessions.create({
@@ -62,8 +49,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       },
     });
 
-    console.log('Checkout session created:', { sessionId: session.id, url: session.url ? 'present' : 'missing' });
-
     if (!session.url) {
       return res.status(500).json({ error: 'Failed to generate checkout URL' });
     }
@@ -71,18 +56,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).json({ url: session.url });
   } catch (error: any) {
     console.error('Stripe checkout error:', error);
-    console.error('Error message:', error.message);
-    console.error('Error type:', error.type);
-    console.error('Error param:', error.param);
-    
-    // If it's a Stripe-specific error, provide more details
-    if (error.type === 'StripeInvalidRequestError') {
-      return res.status(400).json({ 
-        error: `Stripe validation error: ${error.message}`,
-        details: error.param ? `Invalid parameter: ${error.param}` : error.message
-      });
-    }
-    
     return res.status(500).json({ 
       error: 'Failed to create checkout session',
       message: error.message 

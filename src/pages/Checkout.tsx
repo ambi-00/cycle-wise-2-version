@@ -92,8 +92,6 @@ export default function Checkout() {
         throw new Error('User not authenticated');
       }
 
-      console.log('Starting checkout for user:', user.id);
-
       // Integrate with Stripe Checkout
       const response = await fetch('/api/stripe/checkout', {
         method: 'POST',
@@ -105,42 +103,17 @@ export default function Checkout() {
         })
       });
       
-      console.log('Response status:', response.status);
-      console.log('Response content-type:', response.headers.get('content-type'));
-
-      // Get response as text first
-      const responseText = await response.text();
-      console.log('Response text:', responseText);
-
-      let data;
-      try {
-        data = JSON.parse(responseText);
-      } catch (parseError) {
-        console.error('Failed to parse response as JSON');
-        console.error('Response was:', responseText.substring(0, 500));
-        throw new Error(`Server error (${response.status}): Response was not valid JSON`);
+      const { url } = await response.json();
+      
+      // Redirect to Stripe Checkout
+      if (url) {
+        window.location.href = url;
+      } else {
+        throw new Error('Failed to create checkout session');
       }
-      
-      console.log('Parsed data:', data);
-
-      if (!response.ok) {
-        throw new Error(data.error || `API returned ${response.status}`);
-      }
-      
-      const { url } = data;
-      
-      if (!url) {
-        throw new Error('No checkout URL in response');
-      }
-
-      console.log('Redirecting to:', url);
-      window.location.href = url;
-      
     } catch (error) {
-      console.error('Payment error details:', error);
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error('Final error message:', errorMessage);
-      alert(`Payment failed: ${errorMessage}`);
+      console.error('Payment error:', error);
+      alert('Payment processing failed. Please try again or contact support.');
       setIsProcessing(false);
     }
   };
