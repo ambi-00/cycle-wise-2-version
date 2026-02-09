@@ -16,6 +16,7 @@ import CycleTrackerTour from "@/components/CycleTrackerTour";
 import { Card, CardContent } from "@/components/ui/card";
 import { useSubscription } from "@/hooks/use-subscription";
 import { FeatureGuard } from "@/components/FeatureGuard";
+import { usePaymentSuccess } from "@/hooks/use-payment-success";
 
 type DayData = {
   day: number;
@@ -217,6 +218,7 @@ export default function CycleTracker() {
   const [currentMonth] = useState("January 2025");
   const [selectedDay, setSelectedDay] = useState<number | null>(() => new Date().getDate());
   const navigate = useNavigate();
+  usePaymentSuccess();
   const [safetyModeEnabled, setSafetyModeEnabled] = useState(() => {
     return localStorage.getItem('cw_safety_mode_enabled') === 'true';
   });
@@ -425,7 +427,7 @@ export default function CycleTracker() {
                 <p className="text-sm text-muted-foreground mb-6">
                   Upgrade to Premium to track your menstrual cycle and optimize your trading strategy based on hormonal phases.
                 </p>
-                <Button onClick={() => navigate('/checkout?tier=premium&returnTo=/cycle-tracker')} size="lg" className="w-full">
+                <Button onClick={() => navigate(`/checkout?tier=premium&returnTo=${window.location.pathname}`)} size="lg" className="w-full">
                   Upgrade to Premium - €9.99/mo
                 </Button>
               </CardContent>

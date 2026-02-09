@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import PropFirmConnect from "@/components/PropFirmConnect";
 import { useSubscription } from "@/hooks/use-subscription";
+import { usePaymentSuccess } from "@/hooks/use-payment-success";
 
 type PropFirmAccount = {
   id: string;
@@ -29,6 +30,7 @@ export default function PropFirmAccounts() {
   const navigate = useNavigate();
   const [accounts, setAccounts] = useState<PropFirmAccount[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  usePaymentSuccess();
 
   useEffect(() => {
     try {
@@ -102,7 +104,7 @@ export default function PropFirmAccounts() {
               <h3 className="font-semibold text-xl mb-2">Pro Feature</h3>
               <p className="text-sm text-muted-foreground mb-6">
                 Upgrade to Pro for automatic prop firm account integration and real-time trading synchronization.
-              </p>
+              </p>`/checkout?tier=pro&returnTo=${window.location.pathname}`
               <Button onClick={() => navigate('/checkout?tier=pro&returnTo=/propfirm')} size="lg" className="w-full">
                 Upgrade to Pro - €19.99/mo
               </Button>

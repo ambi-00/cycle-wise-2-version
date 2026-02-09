@@ -2,6 +2,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useSubscription } from '@/hooks/use-subscription';
+import { usePaymentSuccess } from '@/hooks/use-payment-success';
 import { Check, Sparkles, Zap, Crown } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
@@ -85,10 +86,11 @@ const tiers = [
 export default function Pricing() {
   const { subscription, hasFeature } = useSubscription();
   const navigate = useNavigate();
+  usePaymentSuccess();
 
   const handleUpgrade = (tierName: string) => {
     // Navigate to checkout with tier and returnTo for coming back to pricing
-    navigate(`/checkout?tier=${tierName.toLowerCase()}&returnTo=/pricing`);
+    navigate(`/checkout?tier=${tierName.toLowerCase()}&returnTo=${window.location.pathname}`);
   };
 
   const handleManageSubscription = () => {

@@ -6,12 +6,14 @@ import NaturalLanguageInsights from "@/components/NaturalLanguageInsights";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSubscription } from "@/hooks/use-subscription";
+import { usePaymentSuccess } from "@/hooks/use-payment-success";
 
 export default function AIInsights() {
   const navigate = useNavigate();
   const { subscription, hasFeature, loading: subLoading } = useSubscription();
   const [trades, setTrades] = useState<any[]>([]);
   const [hasData, setHasData] = useState(false);
+  usePaymentSuccess();
 
   useEffect(() => {
     // Load all trades from localStorage
@@ -453,7 +455,7 @@ export default function AIInsights() {
                 <p className="text-sm text-muted-foreground mb-6">
                   Upgrade to Pro for AI-powered insights, personalized recommendations, and cycle-based trading analysis.
                 </p>
-                <Button onClick={() => navigate('/checkout?tier=pro&returnTo=/ai-insights')} size="lg" className="w-full">
+                  <Button onClick={() => navigate(`/checkout?tier=pro&returnTo=${window.location.pathname}`)} size="lg" className="w-full">
                   Upgrade to Pro - €19.99/mo
                 </Button>
               </CardContent>

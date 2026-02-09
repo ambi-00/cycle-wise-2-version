@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useSubscription } from "@/hooks/use-subscription";
+import { usePaymentSuccess } from "@/hooks/use-payment-success";
 
 const mockStrategies = [
   {
@@ -48,6 +49,7 @@ export default function Strategies() {
   const { toast } = useToast();
   const { subscription, loading: subLoading } = useSubscription();
   const [strategies, setStrategies] = useState(mockStrategies);
+  usePaymentSuccess();
 
   useEffect(() => {
     // Load user-created strategies from localStorage
@@ -78,7 +80,7 @@ export default function Strategies() {
           </div>
           <div className="flex gap-2">
             <Button 
-              variant="outline" 
+              variant="outline" `/checkout?tier=premium&returnTo=${window.location.pathname}`
               onClick={() => hasPremium ? navigate('/strategies/new') : navigate('/checkout?tier=premium&returnTo=/strategies')}
               disabled={!hasPremium}
             >
@@ -99,7 +101,7 @@ export default function Strategies() {
                   <p className="text-sm text-muted-foreground mb-6">
                     Upgrade to Premium to create and track unlimited strategies with detailed confirmations and performance metrics.
                   </p>
-                  <Button onClick={() => navigate('/checkout?tier=premium&returnTo=/strategies')} size="lg" className="w-full">
+                  <Button onClick={() => navigate(`/checkout?tier=premium&returnTo=${window.location.pathname}`)} size="lg" className="w-full">
                     Upgrade to Premium - €9.99/mo
                   </Button>
                 </CardContent>
