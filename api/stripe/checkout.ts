@@ -31,9 +31,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'Invalid tier' });
     }
 
+    // Determine frontend base URL - use request headers to determine the origin
+    let frontendUrl = process.env.FRONTEND_URL || 'http://localhost:8080';
+    
+    // If running on Vercel with request headers, try to get the real origin
+    if (req.headers['x-forwarded-proto'] && req.headers['x-forwarded-host']) {
+      frontendUrl = `${req.headers['x-forwarded-proto']}://${req.headers['x-forwarded-host']}`;
+    } else if (req.headers.referer) {
+      // Extract origin from referer header
+      try {
+        const refererUrl = new URL(req.headers.referer);
+        frontendUrl = `${refererUrl.protocol}//${refererUrl.host}`;
+      } catch (e) {
+        // Use default if referer is invalid
+      }
+    }
+
     // Determine success URL based on returnTo parameter
     const successPath = returnTo || '/dashboard';
-    const successUrl = new URL(process.env.FRONTEND_URL || 'http://localhost:8080');
+    const successUrl = new URL(frontendUrl);
     successUrl.pathname = successPath;
     successUrl.searchParams.set('success', 'true');
     successUrl.searchParams.set('session_id', '{CHECKOUT_SESSION_ID}');
@@ -49,7 +65,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         },
       ],
       success_url: successUrl.toString(),
-      cancel_url: `${process.env.FRONTEND_URL || 'http://localhost:8080'}/pricing?canceled=true`,
+      cancel_url: `${frontendUrl}/pricing?canceled=true`,
       metadata: {
         tier: tier,
         user_id: userId,
