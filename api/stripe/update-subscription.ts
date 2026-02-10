@@ -1,5 +1,5 @@
-import { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
@@ -15,44 +15,32 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const { userId, tier } = req.body;
 
     if (!userId || !tier) {
-      return res.status(400).json({ error: 'userId and tier are required' });
+      return res.status(400).json({ error: 'Missing userId or tier' });
     }
 
-    // Validate tier
     if (!['free', 'premium', 'pro'].includes(tier)) {
       return res.status(400).json({ error: 'Invalid tier' });
     }
 
-    // Check if user exists
-    const { data: user, error: userError } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('id', userId)
-      .single();
-
-    if (userError || !user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    // Update subscription tier
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('subscriptions')
-      .update({
+      .upsert({
+        user_id: userId,
         tier: tier,
         status: 'active',
+        updated_at: new Date().toISOString(),
+      }, {
+        onConflict: 'user_id'
       })
-      .eq('user_id', userId);
+      .select();
 
     if (error) {
-      return res.status(500).json({ error: 'Failed to update subscription', details: error });
+      return res.status(500).json({ error: error.message });
     }
 
-    return res.status(200).json({ 
-      success: true, 
-      message: `Subscription updated to ${tier} for user ${userId}` 
-    });
+    return res.status(200).json({ success: true, data });
+
   } catch (error: any) {
-    console.error('Update subscription error:', error);
-    return res.status(500).json({ error: 'Failed to update subscription' });
+    return res.status(500).json({ error: error.message });
   }
 }
