@@ -22,8 +22,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'Invalid tier' });
     }
 
-    // Service role key bypasses RLS, so upsert works here
-    const { data, error } = await supabase
+    // Service role key bypasses RLS
+    // First try update, if no rows affected, do insert
+    const { data: updateData, error: updateError } = await supabase
       .from('subscriptions')
       .update({
         tier: tier,
@@ -33,11 +34,31 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .eq('user_id', userId)
       .select();
 
-    if (error) {
-      return res.status(500).json({ error: error.message });
+    if (updateError) {
+      console.error('Update failed:', updateError);
+      return res.status(500).json({ error: updateError.message });
     }
 
-    return res.status(200).json({ success: true, data });
+    // If update returned no rows, the user has no subscription row yet → insert
+    if (!updateData || updateData.length === 0) {
+      console.log('No existing row, inserting new subscription for user:', userId);
+      const { data: insertData, error: insertError } = await supabase
+        .from('subscriptions')
+        .insert({
+          user_id: userId,
+          tier: tier,
+          status: 'active',
+        })
+        .select();
+
+      if (insertError) {
+        console.error('Insert failed:', insertError);
+        return res.status(500).json({ error: insertError.message });
+      }
+      return res.status(200).json({ success: true, data: insertData });
+    }
+
+    return res.status(200).json({ success: true, data: updateData });
 
   } catch (error: any) {
     return res.status(500).json({ error: error.message });

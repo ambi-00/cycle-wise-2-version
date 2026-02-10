@@ -1,17 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useToast } from './use-toast';
-import { useSubscription } from './use-subscription';
 import { supabase } from '@/integrations/supabase/client';
 
 /**
  * Hook to show success message after Stripe payment redirect
- * Also updates Supabase with the new subscription tier (as fallback if webhook fails)
+ * Updates Supabase subscription tier directly (fallback if webhook fails)
  */
 export function usePaymentSuccess() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { toast } = useToast();
-  const { subscription, refresh } = useSubscription();
   const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
@@ -19,124 +17,149 @@ export function usePaymentSuccess() {
     const sessionId = searchParams.get('session_id');
     let tier = searchParams.get('tier');
 
-    console.log('=== usePaymentSuccess DEBUG ===');
-    console.log('Full URL:', window.location.href);
-    console.log('All params:', Object.fromEntries(searchParams.entries()));
-    console.log('success:', success, '| session_id:', sessionId, '| tier:', tier, '| isUpdating:', isUpdating);
+    console.log('=== usePaymentSuccess ===');
+    console.log('URL:', window.location.href);
+    console.log('Params:', { success, sessionId, tier, isUpdating });
 
-    // Fallback: If tier is not in URL, try to get it from sessionStorage
+    // Fallback: get tier from sessionStorage
     if (!tier) {
       try {
         const pending = JSON.parse(sessionStorage.getItem('pending_tier_upgrade') || '{}');
         if (pending.tier) {
           tier = pending.tier;
-          console.log('Retrieved tier from sessionStorage:', tier);
+          console.log('Got tier from sessionStorage:', tier);
         }
       } catch (e) {
-        console.error('Failed to parse sessionStorage:', e);
+        // ignore
       }
     }
 
-    if (success === 'true' && sessionId && !isUpdating) {
-      console.log('>>> TRIGGERING handlePaymentSuccess with tier:', tier);
+    if (success === 'true' && !isUpdating && tier) {
+      console.log('>>> TRIGGERING payment success handler, tier:', tier);
       handlePaymentSuccess(tier);
-    } else {
-      console.log('>>> NOT triggering because:', {
-        successIsTrueStr: success === 'true',
-        hasSessionId: !!sessionId,
-        isNotUpdating: !isUpdating,
-      });
     }
   }, [searchParams]);
 
-  async function handlePaymentSuccess(tier: string | null) {
+  async function handlePaymentSuccess(tier: string) {
     setIsUpdating(true);
     
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      // Wait a moment for auth session to be restored after Stripe redirect
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      const { data: { session } } = await supabase.auth.getSession();
+      console.log('Auth session exists:', !!session);
       
-      console.log('Payment success handler:', { tier, userExists: !!user });
-      
-      if (!user) {
-        console.error('No user found');
-        setIsUpdating(false);
+      if (!session) {
+        console.error('No auth session - user may need to log in again');
+        // Try to update via the API endpoint instead (uses service role key)
+        await updateViaApi(tier);
         return;
       }
 
-      // Determine the tier for the message
-      let displayTier = tier || subscription.tier || 'premium';
-      const tierName = displayTier.charAt(0).toUpperCase() + displayTier.slice(1);
+      const userId = session.user.id;
+      console.log('User ID:', userId);
 
-      // Fallback: If webhook hasn't updated Supabase yet, update it directly
-      // This ensures the tier is updated even if the webhook fails
-      if (tier && tier !== subscription.tier) {
-        console.log('Updating subscription in Supabase:', { userId: user.id, tier, currentTier: subscription.tier });
-        
-        try {
-          // First, check what data exists
-          const { data: existingData, error: fetchError } = await supabase
-            .from('subscriptions')
-            .select('*')
-            .eq('user_id', user.id)
-            .single();
+      // Step 1: Check current subscription
+      const { data: existing, error: fetchError } = await supabase
+        .from('subscriptions')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
 
-          console.log('Existing subscription data:', existingData, 'fetch error:', fetchError);
+      console.log('Current subscription:', existing, 'Error:', fetchError);
 
-          const { data, error: updateError } = await supabase
-            .from('subscriptions')
-            .update({
-              tier: tier,
-              status: 'active',
-              updated_at: new Date().toISOString(),
-            })
-            .eq('user_id', user.id)
-            .select();
-
-          if (updateError) {
-            console.error('Failed to update subscription:', updateError);
-            console.error('Error code:', updateError.code);
-            console.error('Error message:', updateError.message);
-            console.error('Error details:', updateError.details);
-            console.error('Error hint:', updateError.hint);
-          } else {
-            console.log(`Subscription updated successfully:`, data);
-            console.log(`Subscription updated to ${tier} for user ${user.id}`);
-          }
-
-          // Refresh subscription data to get latest from Supabase
-          console.log('Refreshing subscription...');
-          await refresh();
-          console.log('Subscription refreshed, new tier:', subscription.tier);
-        } catch (err) {
-          console.error('Exception during Supabase update:', err);
-        }
+      // Step 2: Update the subscription
+      let updateResult;
+      
+      if (existing) {
+        // UPDATE existing row
+        updateResult = await supabase
+          .from('subscriptions')
+          .update({
+            tier: tier,
+            status: 'active',
+          })
+          .eq('user_id', userId)
+          .select();
       } else {
-        console.log('Tier already matches, skipping update:', { tier, subscription: subscription.tier });
+        // INSERT new row (user has no subscription yet)
+        updateResult = await supabase
+          .from('subscriptions')
+          .insert({
+            user_id: userId,
+            tier: tier,
+            status: 'active',
+          })
+          .select();
+      }
+
+      console.log('Update result:', updateResult.data, 'Error:', updateResult.error);
+
+      if (updateResult.error) {
+        console.error('Direct update failed, trying API fallback...');
+        await updateViaApi(tier, userId);
+      } else {
+        console.log('Subscription updated to', tier, '!');
       }
 
       // Show success toast
+      const tierName = tier.charAt(0).toUpperCase() + tier.slice(1);
       toast({
         title: '🎉 Subscription activated!',
         description: `You now have full access to ${tierName} features. Enjoy!`,
       });
 
-      // Remove success params from URL after a short delay
+      // Clear sessionStorage
+      sessionStorage.removeItem('pending_tier_upgrade');
+
+      // Remove params from URL
       setTimeout(() => {
         const params = new URLSearchParams(searchParams);
         params.delete('success');
         params.delete('session_id');
         params.delete('tier');
         setSearchParams(params);
-      }, 500);
+        // Force reload to refresh subscription state everywhere
+        window.location.reload();
+      }, 1000);
 
     } catch (error) {
-      console.error('Error handling payment success:', error);
+      console.error('Payment success error:', error);
       toast({
         title: 'Subscription activated!',
-        description: 'Your subscription is now active. Refresh the page if features are not available.',
+        description: 'Your payment was successful. Please refresh the page.',
       });
     } finally {
       setIsUpdating(false);
+    }
+  }
+
+  // Fallback: Use the API endpoint which has service_role access
+  async function updateViaApi(tier: string, userId?: string) {
+    try {
+      let uid = userId;
+      if (!uid) {
+        const { data: { user } } = await supabase.auth.getUser();
+        uid = user?.id;
+      }
+      
+      if (!uid) {
+        console.error('Cannot update: no user ID available');
+        return;
+      }
+
+      console.log('Calling API fallback to update subscription...');
+      const response = await fetch('/api/stripe/update-subscription', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: uid, tier }),
+      });
+      
+      const result = await response.json();
+      console.log('API update result:', result);
+    } catch (err) {
+      console.error('API fallback also failed:', err);
     }
   }
 }

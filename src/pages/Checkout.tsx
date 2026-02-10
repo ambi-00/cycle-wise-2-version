@@ -6,7 +6,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useSubscription } from '@/hooks/use-subscription';
 import { CreditCard, Lock, ArrowLeft, Check } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { supabase } from '@/lib/supabaseClient';
+import { supabase } from '@/integrations/supabase/client';
 
 const paymentMethods = [
   {
