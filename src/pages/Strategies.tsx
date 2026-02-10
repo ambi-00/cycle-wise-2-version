@@ -80,7 +80,7 @@ export default function Strategies() {
           </div>
           <div className="flex gap-2">
             <Button 
-              variant="outline" `/checkout?tier=premium&returnTo=${window.location.pathname}`
+              variant="outline"
               onClick={() => hasPremium ? navigate('/strategies/new') : navigate('/checkout?tier=premium&returnTo=/strategies')}
               disabled={!hasPremium}
             >
