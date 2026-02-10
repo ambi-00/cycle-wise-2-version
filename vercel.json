@@ -2,27 +2,21 @@
   "version": 2,
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "routes": [
+  "headers": [
     {
-      "src": "/assets/(.*)\\.js$",
-      "dest": "/assets/$1.js",
-      "headers": {
-        "content-type": "application/javascript; charset=utf-8"
-      }
+      "source": "/assets/(.*)\\.js$",
+      "headers": [
+        { "key": "Content-Type", "value": "application/javascript; charset=utf-8" }
+      ]
     },
     {
-      "src": "/assets/(.*)\\.css$",
-      "dest": "/assets/$1.css",
-      "headers": {
-        "content-type": "text/css; charset=utf-8"
-      }
-    },
-    {
-      "handle": "filesystem"
-    },
-    {
-      "src": "/.*",
-      "dest": "/index.html"
+      "source": "/assets/(.*)\\.css$",
+      "headers": [
+        { "key": "Content-Type", "value": "text/css; charset=utf-8" }
+      ]
     }
+  ],
+  "rewrites": [
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
 }
