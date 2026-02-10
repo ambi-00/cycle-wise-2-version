@@ -22,16 +22,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'Invalid tier' });
     }
 
+    // Service role key bypasses RLS, so upsert works here
     const { data, error } = await supabase
       .from('subscriptions')
-      .upsert({
-        user_id: userId,
+      .update({
         tier: tier,
         status: 'active',
         updated_at: new Date().toISOString(),
-      }, {
-        onConflict: 'user_id'
       })
+      .eq('user_id', userId)
       .select();
 
     if (error) {

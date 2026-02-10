@@ -75,14 +75,13 @@ export function usePaymentSuccess() {
 
           const { data, error: updateError } = await supabase
             .from('subscriptions')
-            .upsert({
-              user_id: user.id,
+            .update({
               tier: tier,
               status: 'active',
               updated_at: new Date().toISOString(),
-            }, {
-              onConflict: 'user_id'
-            });
+            })
+            .eq('user_id', user.id)
+            .select();
 
           if (updateError) {
             console.error('Failed to update subscription:', updateError);
