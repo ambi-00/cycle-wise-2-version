@@ -19,7 +19,10 @@ export function usePaymentSuccess() {
     const sessionId = searchParams.get('session_id');
     let tier = searchParams.get('tier');
 
-    console.log('usePaymentSuccess hook - checking params:', { success, sessionId, tier, isUpdating });
+    console.log('=== usePaymentSuccess DEBUG ===');
+    console.log('Full URL:', window.location.href);
+    console.log('All params:', Object.fromEntries(searchParams.entries()));
+    console.log('success:', success, '| session_id:', sessionId, '| tier:', tier, '| isUpdating:', isUpdating);
 
     // Fallback: If tier is not in URL, try to get it from sessionStorage
     if (!tier) {
@@ -35,8 +38,14 @@ export function usePaymentSuccess() {
     }
 
     if (success === 'true' && sessionId && !isUpdating) {
-      console.log('Handling payment success with tier:', tier);
+      console.log('>>> TRIGGERING handlePaymentSuccess with tier:', tier);
       handlePaymentSuccess(tier);
+    } else {
+      console.log('>>> NOT triggering because:', {
+        successIsTrueStr: success === 'true',
+        hasSessionId: !!sessionId,
+        isNotUpdating: !isUpdating,
+      });
     }
   }, [searchParams]);
 
