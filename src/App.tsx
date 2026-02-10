@@ -10,6 +10,7 @@ import AIInsightsNotification from "@/components/AIInsightsNotification";
 import { XPToastContainer } from "@/components/XPToast";
 import { useEffect } from "react";
 import { initializeSyncManager } from "@/lib/syncManager";
+import { usePaymentSuccess } from "@/hooks/use-payment-success";
 
 import Landing from "./pages/Landing";
 import Dashboard from "./pages/Dashboard";
@@ -52,6 +53,9 @@ const queryClient = new QueryClient();
 
 const AppContent = () => {
   const location = useLocation();
+
+  // Handle payment success on ANY page (Stripe redirects back here)
+  usePaymentSuccess();
 
   // Initialize Sync Manager on app start
   useEffect(() => {
