@@ -115,17 +115,7 @@ export function Navigation() {
                     : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 }`}
               >
-                Prop Firm Connector
-              </NavLink>
-              <NavLink
-                to="/metatrader"
-                className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
-                  location.pathname === "/metatrader"
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                }`}
-              >
-                MetaTrader Connection
+                My Accounts
               </NavLink>
               <NavLink
                 to="/propfirm-compare"
