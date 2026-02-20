@@ -24,20 +24,30 @@ export function useAppMode(): AppModeState {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         
+        console.log('🎬 App Mode Debug - User:', user?.id);
+        
         if (!user) {
+          console.log('🎬 App Mode: No user found, defaulting to USER');
           setAppMode('USER');
           setIsLoading(false);
           return;
         }
 
-        const { data: profile } = await supabase
+        const { data: profile, error } = await supabase
           .from('profiles')
           .select('app_mode')
           .eq('id', user.id)
           .single();
 
+        console.log('🎬 App Mode Debug - Profile:', profile);
+        console.log('🎬 App Mode Debug - Error:', error);
+        console.log('🎬 App Mode Debug - Mode:', profile?.app_mode);
+
         if (profile?.app_mode) {
           setAppMode(profile.app_mode as AppMode);
+          console.log('🎬 App Mode SET TO:', profile.app_mode);
+        } else {
+          console.log('🎬 App Mode: No app_mode in profile, defaulting to USER');
         }
       } catch (error) {
         console.error('Failed to load app mode:', error);
@@ -58,6 +68,8 @@ export function useAppMode(): AppModeState {
  */
 export function useFeatureFlags() {
   const { appMode } = useAppMode();
+  
+  console.log('🎬 Feature Flags - App Mode:', appMode);
 
   return {
     // Gamification (XP, Streaks, Achievements)
