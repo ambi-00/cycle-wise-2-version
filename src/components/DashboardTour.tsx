@@ -65,28 +65,53 @@ export default function DashboardTour() {
   
   // Tooltip dimensions and padding
   const tooltipWidth = 384; // max-w-sm
-  const tooltipHeight = 280; // estimated height
-  const padding = 20;
+  const tooltipHeight = 220; // actual estimated height
+  const padding = 16;
+  const gap = 12;
   
   // Calculate initial position
   let tooltipX = targetRect ? targetRect.left + targetRect.width / 2 : window.innerWidth / 2;
-  let tooltipY = targetRect
-    ? step.position === "bottom"
-      ? targetRect.bottom + 20
-      : targetRect.top - tooltipHeight - 20
-    : padding;
+  let tooltipY = 0;
   
-  // Horizontal boundary checks
-  const maxX = window.innerWidth - tooltipWidth / 2 - padding;
-  const minX = tooltipWidth / 2 + padding;
-  if (tooltipX > maxX) tooltipX = maxX;
-  if (tooltipX < minX) tooltipX = minX;
+  // Try preferred position first
+  if (step.position === "bottom") {
+    tooltipY = targetRect ? targetRect.bottom + gap : padding;
+  } else {
+    tooltipY = targetRect ? targetRect.top - tooltipHeight - gap : padding;
+  }
   
-  // Vertical boundary checks
+  // Vertical boundary checks with position flipping
   const maxY = window.innerHeight - tooltipHeight - padding;
   const minY = padding;
-  if (tooltipY > maxY) tooltipY = maxY;
-  if (tooltipY < minY) tooltipY = minY;
+  
+  if (tooltipY > maxY) {
+    // Not enough space at bottom, try top
+    const topPosition = targetRect ? targetRect.top - tooltipHeight - gap : padding;
+    if (topPosition >= minY) {
+      tooltipY = topPosition;
+    } else {
+      tooltipY = Math.max(minY, maxY);
+    }
+  } else if (tooltipY < minY) {
+    // Not enough space at top, try bottom
+    const bottomPosition = targetRect ? targetRect.bottom + gap : padding;
+    if (bottomPosition <= maxY) {
+      tooltipY = bottomPosition;
+    } else {
+      tooltipY = Math.max(minY, minY);
+    }
+  }
+  
+  // Horizontal boundary checks - keep centered when possible
+  const halfWidth = tooltipWidth / 2;
+  const maxX = window.innerWidth - padding;
+  const minX = padding;
+  
+  if (tooltipX - halfWidth < minX) {
+    tooltipX = halfWidth + padding;
+  } else if (tooltipX + halfWidth > maxX) {
+    tooltipX = maxX - halfWidth - padding;
+  }
 
   return (
     <AnimatePresence>

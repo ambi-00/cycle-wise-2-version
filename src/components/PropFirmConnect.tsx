@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { encryptData, decryptData } from '@/lib/encryption';
 
 type PropFirmAccount = {
   id: string;
@@ -25,6 +26,9 @@ type PropFirmAccount = {
   trades?: number;
   openTrades?: number;
   profit?: number;
+  // NEW: Cost tracking for Monthly Reflection
+  initialCost?: number;
+  payoutHistory?: Array<{ date: string; amount: number }>;
 };
 
 const PROP_FIRMS = [
@@ -230,36 +234,44 @@ export function PropFirmConnect() {
     setCustomServer('');
   };
 
-  const addAccount = () => {
+  const addAccount = async () => {
     if (!selectedPropFirm || !accountNumber || !password || !actualServer) {
       alert('Please fill in all required fields (Account Number, Password, Server)');
       return;
     }
 
-    const newAccount: PropFirmAccount = {
-      id: Date.now().toString(),
-      propFirm: selectedPropFirm,
-      accountNumber,
-      password, // In production: encrypt before storing
-      server: actualServer,
-      platform,
-      status: 'disconnected',
-      lastSync: undefined,
-    };
+    try {
+      // Encrypt password before storing
+      const encryptedPassword = await encryptData(password);
 
-    saveAccounts([...accounts, newAccount]);
-    
-    // Reset form
-    setSelectedPropFirm('');
-    setAccountNumber('');
-    setPassword('');
-    setServer('');
-    setCustomServer('');
-    setPlatform('mt5');
-    setIsAddingAccount(false);
+      const newAccount: PropFirmAccount = {
+        id: Date.now().toString(),
+        propFirm: selectedPropFirm,
+        accountNumber,
+        password: encryptedPassword, // Now encrypted
+        server: actualServer,
+        platform,
+        status: 'disconnected',
+        lastSync: undefined,
+      };
 
-    // Auto-sync after adding
-    syncAccount(newAccount.id);
+      saveAccounts([...accounts, newAccount]);
+      
+      // Reset form
+      setSelectedPropFirm('');
+      setAccountNumber('');
+      setPassword('');
+      setServer('');
+      setCustomServer('');
+      setPlatform('mt5');
+      setIsAddingAccount(false);
+
+      // Auto-sync after adding
+      syncAccount(newAccount.id);
+    } catch (error) {
+      console.error('Failed to add account:', error);
+      alert('Failed to encrypt and save account');
+    }
   };
 
   const removeAccount = (id: string) => {
@@ -282,6 +294,15 @@ export function PropFirmConnect() {
     const API_URL = import.meta.env.VITE_MT_API_URL || 'http://localhost:3001';
 
     try {
+      // Decrypt password before using
+      let decryptedPassword = account.password;
+      try {
+        decryptedPassword = await decryptData(account.password);
+      } catch (e) {
+        // If decryption fails, password might be already decrypted or corrupted
+        console.warn('Could not decrypt password, using as-is:', e);
+      }
+
       // Step 1: Connect account if not connected yet
       if (!account.metaApiId) {
         const connectRes = await fetch(`${API_URL}/api/mt/connect`, {
@@ -289,7 +310,7 @@ export function PropFirmConnect() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             accountNumber: account.accountNumber,
-            password: account.password,
+            password: decryptedPassword,
             server: account.server,
             platform: account.platform,
             propFirm: account.propFirm,

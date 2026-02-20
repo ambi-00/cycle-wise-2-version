@@ -12,6 +12,14 @@ export default function ProtectedRoute({ children }: Props) {
 
   useEffect(() => {
     let mounted = true;
+    
+    // Demo mode - skip authentication for development
+    if (import.meta.env.VITE_SKIP_EMAIL_VERIFICATION === 'true') {
+      setAuthenticated(true);
+      setLoading(false);
+      return;
+    }
+    
     (async () => {
       try {
         const { data } = await supabase.auth.getSession();

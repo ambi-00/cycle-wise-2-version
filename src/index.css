@@ -173,4 +173,9 @@
   .shadow-glow {
     box-shadow: var(--shadow-glow);
   }
+
+  /* Tabular numbers for consistent digit alignment */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums lining-nums;
+  }
 }

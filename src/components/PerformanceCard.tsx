@@ -31,7 +31,7 @@ export function PerformanceCard({ title, value, change, type, icon = "trending" 
       <div className="flex items-start justify-between">
         <div className="space-y-1">
           <p className="text-sm font-medium text-muted-foreground">{title}</p>
-          <p className="text-2xl font-bold text-foreground">{formatValue()}</p>
+          <p className="text-2xl font-bold text-foreground tabular-nums">{formatValue()}</p>
         </div>
         <div className={`rounded-xl p-2.5 ${
           isPositive ? "bg-accent text-accent-foreground" : "bg-destructive/10 text-destructive"
@@ -42,7 +42,7 @@ export function PerformanceCard({ title, value, change, type, icon = "trending" 
       
       {change !== undefined && (
         <div className="mt-3 flex items-center gap-1.5">
-          <span className={`text-sm font-medium ${isPositive ? "text-emerald-600" : "text-destructive"}`}>
+          <span className={`text-sm font-medium tabular-nums ${isPositive ? "text-emerald-600" : "text-destructive"}`}>
             {isPositive ? "+" : ""}{change}%
           </span>
           <span className="text-xs text-muted-foreground">vs last month</span>

@@ -7,6 +7,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSubscription } from "@/hooks/use-subscription";
 import { usePaymentSuccess } from "@/hooks/use-payment-success";
+import { loadTradesFromLocalStorage } from "@/lib/tradeLoaders";
 
 export default function AIInsights() {
   const navigate = useNavigate();
@@ -16,19 +17,7 @@ export default function AIInsights() {
   usePaymentSuccess();
 
   useEffect(() => {
-    // Load all trades from localStorage
-    const allTrades = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key?.startsWith('cw_journal_')) {
-        try {
-          const journal = JSON.parse(localStorage.getItem(key) || '{}');
-          if (journal.trades && Array.isArray(journal.trades)) {
-            allTrades.push(...journal.trades);
-          }
-        } catch {}
-      }
-    }
+    const allTrades = loadTradesFromLocalStorage();
     setTrades(allTrades);
     setHasData(allTrades.length > 0);
   }, []);

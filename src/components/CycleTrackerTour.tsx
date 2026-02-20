@@ -71,50 +71,81 @@ export default function CycleTrackerTour() {
   
   // Tooltip dimensions and padding
   const tooltipWidth = 384; // max-w-sm
-  const tooltipHeight = 300; // estimated height
-  const padding = 20;
+  const tooltipHeight = 240; // actual estimated height
+  const padding = 16;
+  const gap = 12;
   
   // Calculate initial position
   let tooltipX = targetRect ? targetRect.left + targetRect.width / 2 : window.innerWidth / 2;
-  let tooltipY = targetRect
-    ? step.position === "bottom"
-      ? targetRect.bottom + 20
-      : targetRect.top + targetRect.height / 2
-    : padding;
-  
+  let tooltipY = 0;
   let tooltipTransform = "translateX(-50%)";
   
-  // Handle left positioning
-  if (step.position === "left" && targetRect) {
-    tooltipX = targetRect.left - 20;
+  // Position based on preference
+  if (step.position === "bottom") {
+    tooltipY = targetRect ? targetRect.bottom + gap : padding;
+  } else if (step.position === "top") {
+    tooltipY = targetRect ? targetRect.top - tooltipHeight - gap : padding;
+  } else if (step.position === "left") {
+    tooltipX = targetRect ? targetRect.left - gap : padding;
+    tooltipY = targetRect ? targetRect.top + targetRect.height / 2 : padding;
     tooltipTransform = "translateX(-100%) translateY(-50%)";
-    
-    // If would go off left edge, show on right instead
-    if (tooltipX - tooltipWidth < padding) {
-      tooltipX = targetRect.right + 20;
-      tooltipTransform = "translateY(-50%)";
-    }
-    
-    // Check right boundary for right-positioned tooltip
-    if (tooltipX + tooltipWidth > window.innerWidth - padding) {
-      tooltipX = targetRect.left - 20;
-      tooltipTransform = "translateX(-100%) translateY(-50%)";
-    }
+  } else if (step.position === "right") {
+    tooltipX = targetRect ? targetRect.right + gap : padding;
+    tooltipY = targetRect ? targetRect.top + targetRect.height / 2 : padding;
+    tooltipTransform = "translateY(-50%)";
   }
   
-  // Horizontal boundary checks for center-positioned tooltips
-  if (step.position !== "left") {
-    const maxX = window.innerWidth - tooltipWidth / 2 - padding;
-    const minX = tooltipWidth / 2 + padding;
-    if (tooltipX > maxX) tooltipX = maxX;
-    if (tooltipX < minX) tooltipX = minX;
-  }
-  
-  // Vertical boundary checks
+  // Vertical boundary checks with flipping
   const maxY = window.innerHeight - tooltipHeight - padding;
   const minY = padding;
-  if (tooltipY > maxY) tooltipY = maxY;
-  if (tooltipY < minY) tooltipY = minY;
+  
+  if ((step.position === "bottom" || step.position === "top") && (tooltipY > maxY || tooltipY < minY)) {
+    // Try opposite vertical position
+    if (step.position === "bottom") {
+      const topPosition = targetRect ? targetRect.top - tooltipHeight - gap : padding;
+      if (topPosition >= minY) {
+        tooltipY = topPosition;
+      } else {
+        tooltipY = Math.max(minY, Math.min(maxY, tooltipY));
+      }
+    } else {
+      const bottomPosition = targetRect ? targetRect.bottom + gap : padding;
+      if (bottomPosition <= maxY) {
+        tooltipY = bottomPosition;
+      } else {
+        tooltipY = Math.max(minY, Math.min(maxY, tooltipY));
+      }
+    }
+  } else if (step.position === "left" || step.position === "right") {
+    // Center vertically on target, but keep in viewport
+    tooltipY = Math.max(minY, Math.min(maxY, tooltipY));
+  }
+  
+  // Horizontal boundary checks
+  const maxX = window.innerWidth - padding;
+  const minX = padding;
+  
+  if (step.position === "left") {
+    // Check if left position would overflow
+    if (tooltipX - tooltipWidth < minX) {
+      tooltipX = targetRect ? targetRect.right + gap : padding;
+      tooltipTransform = "translateY(-50%)";
+    }
+  } else if (step.position === "right") {
+    // Check if right position would overflow
+    if (tooltipX + tooltipWidth > maxX) {
+      tooltipX = targetRect ? targetRect.left - gap : padding;
+      tooltipTransform = "translateX(-100%) translateY(-50%)";
+    }
+  } else {
+    // Center positioned - keep centered when possible
+    const halfWidth = tooltipWidth / 2;
+    if (tooltipX - halfWidth < minX) {
+      tooltipX = halfWidth + padding;
+    } else if (tooltipX + halfWidth > maxX) {
+      tooltipX = maxX - halfWidth - padding;
+    }
+  }
 
   return (
     <AnimatePresence>

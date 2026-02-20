@@ -3,6 +3,7 @@ import { Sparkles, TrendingUp, TrendingDown, AlertCircle, Target, Calendar } fro
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import { loadTradesFromLocalStorage } from "@/lib/tradeLoaders";
 
 interface TradePattern {
   type: "positive" | "negative" | "warning";
@@ -16,20 +17,7 @@ export default function NaturalLanguageInsights() {
   const analyzeTradePatterns = (): TradePattern[] => {
     const patterns: TradePattern[] = [];
     
-    // Load all trades
-    const trades: any[] = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key?.startsWith('cw_journal_')) {
-        try {
-          const journal = JSON.parse(localStorage.getItem(key) || '{}');
-          (journal.trades || []).forEach((t: any) => {
-            trades.push({
-              ...t,
-              date: key.replace('cw_journal_', ''),
-            });
-          });
-        } catch {}
+    const trades = loadTradesFromLocalStorage();
       }
     }
 

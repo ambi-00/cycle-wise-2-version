@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { AIInsightsEngine, loadInsights, saveInsights } from '@/lib/aiInsightsEngine';
+import { loadAllTrades } from '@/lib/supabaseHelpers';
 
 /**
  * Hook to automatically generate AI insights weekly
@@ -7,34 +8,9 @@ import { AIInsightsEngine, loadInsights, saveInsights } from '@/lib/aiInsightsEn
  */
 export function useWeeklyInsightGeneration() {
   useEffect(() => {
-    const checkAndGenerateInsights = () => {
-      // Load all trades from localStorage
-      const loadAllTrades = () => {
-        const allTrades: any[] = [];
-        
-        for (let i = 0; i < localStorage.length; i++) {
-          const key = localStorage.key(i);
-          if (key && key.startsWith('cw_journal_')) {
-            try {
-              const raw = localStorage.getItem(key);
-              if (!raw) continue;
-              const dayData = JSON.parse(raw);
-              // Handle both old format (array) and new format (object with trades array)
-              if (Array.isArray(dayData)) {
-                allTrades.push(...dayData);
-              } else if (dayData.trades && Array.isArray(dayData.trades)) {
-                allTrades.push(...dayData.trades);
-              }
-            } catch (e) {
-              // Ignore malformed entries
-            }
-          }
-        }
-        
-        return allTrades;
-      };
-
-      const trades = loadAllTrades();
+    const checkAndGenerateInsights = async () => {
+      // Load all trades using the shared helper
+      const trades = await loadAllTrades();
       
       // Need at least 5 trades to generate insights
       if (trades.length < 5) return;

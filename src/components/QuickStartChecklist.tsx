@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useNavigate } from "react-router-dom";
+import { hasAnyTrades } from "@/lib/tradeLoaders";
 
 interface ChecklistItem {
   id: string;
@@ -47,19 +48,7 @@ export default function QuickStartChecklist() {
       description: "Record a trade to start building your journal",
       action: "Add Trade",
       route: `/trade/new?date=${new Date().toISOString().slice(0, 10)}`,
-      checkFunction: () => {
-        // Check if any trade exists
-        for (let i = 0; i < localStorage.length; i++) {
-          const key = localStorage.key(i);
-          if (key?.startsWith('cw_journal_')) {
-            try {
-              const journal = JSON.parse(localStorage.getItem(key) || '{}');
-              if (journal.trades && journal.trades.length > 0) return true;
-            } catch {}
-          }
-        }
-        return false;
-      },
+      checkFunction: () => hasAnyTrades(),
     },
     {
       id: "first-strategy",
@@ -101,16 +90,23 @@ export default function QuickStartChecklist() {
   useEffect(() => {
     // Check if user has dismissed checklist
     const dismissed = localStorage.getItem("cw_checklist_dismissed");
-    const completed = localStorage.getItem("cw_onboarding_completed");
     
-    if (!dismissed && completed) {
-      // Show checklist if onboarding completed but checklist not dismissed
+    if (!dismissed) {
+      // Show checklist on first login (unless user dismissed it)
       setIsOpen(true);
     }
 
     // Update checked items
     updateCheckedItems();
   }, []);
+
+  useEffect(() => {
+    // Auto-dismiss when all items are complete
+    if (isOpen && checkedItems.size === checklistItems.length) {
+      localStorage.setItem("cw_checklist_dismissed", "true");
+      setIsOpen(false);
+    }
+  }, [checkedItems, checklistItems.length, isOpen]);
 
   const updateCheckedItems = () => {
     const checked = new Set<string>();

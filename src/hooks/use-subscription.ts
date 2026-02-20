@@ -65,6 +65,13 @@ export function useSubscription() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Demo mode - provide premium features for development
+    if (import.meta.env.VITE_SKIP_EMAIL_VERIFICATION === 'true') {
+      setSubscription({ tier: 'premium', status: 'active' });
+      setLoading(false);
+      return;
+    }
+    
     loadSubscription();
   }, []);
 

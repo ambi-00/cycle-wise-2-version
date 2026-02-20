@@ -17,6 +17,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useSubscription } from "@/hooks/use-subscription";
 import { FeatureGuard } from "@/components/FeatureGuard";
 import { usePaymentSuccess } from "@/hooks/use-payment-success";
+import { generateCalendarData, DayData } from "@/lib/cycleHelpers";
 
 type DayData = {
   day: number;

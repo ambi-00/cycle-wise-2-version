@@ -56,7 +56,7 @@ export function StreakDisplay() {
         <Flame className={`h-5 w-5 ${loginStreak >= 7 ? 'text-primary' : 'text-muted-foreground'}`} />
         <div>
           <p className="text-xs text-muted-foreground">Login Streak</p>
-          <p className="text-sm font-bold text-foreground">{loginStreak} days</p>
+          <p className="text-sm font-bold text-foreground tabular-nums">{loginStreak} days</p>
         </div>
       </motion.div>
 
@@ -70,7 +70,7 @@ export function StreakDisplay() {
         <Calendar className={`h-5 w-5 ${tradingStreak >= 5 ? 'text-primary' : 'text-muted-foreground'}`} />
         <div>
           <p className="text-xs text-muted-foreground">Trading Streak</p>
-          <p className="text-sm font-bold text-foreground">{tradingStreak} days</p>
+          <p className="text-sm font-bold text-foreground tabular-nums">{tradingStreak} days</p>
         </div>
       </motion.div>
 
@@ -85,7 +85,7 @@ export function StreakDisplay() {
           <TrendingUp className="h-5 w-5 text-green-500" />
           <div>
             <p className="text-xs text-muted-foreground">Win Streak</p>
-            <p className="text-sm font-bold text-foreground">{winLossStreak.winStreak} wins</p>
+            <p className="text-sm font-bold text-foreground tabular-nums">{winLossStreak.winStreak} wins</p>
           </div>
         </motion.div>
       )}
@@ -101,7 +101,7 @@ export function StreakDisplay() {
           <TrendingDown className="h-5 w-5 text-red-500" />
           <div>
             <p className="text-xs text-muted-foreground">Loss Streak</p>
-            <p className="text-sm font-bold text-foreground">{winLossStreak.lossStreak} losses</p>
+            <p className="text-sm font-bold text-foreground tabular-nums">{winLossStreak.lossStreak} losses</p>
           </div>
         </motion.div>
       )}

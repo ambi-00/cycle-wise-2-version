@@ -8,6 +8,7 @@ import { Navigation } from "@/components/Navigation";
 import AIChatbot from "@/components/AIChatbot";
 import AIInsightsNotification from "@/components/AIInsightsNotification";
 import { XPToastContainer } from "@/components/XPToast";
+import ErrorBoundary from "@/components/ErrorBoundary";
 import { useEffect } from "react";
 import { initializeSyncManager } from "@/lib/syncManager";
 import { usePaymentSuccess } from "@/hooks/use-payment-success";
@@ -29,6 +30,7 @@ import AIInsights from "./pages/AIInsights";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import Statistics from "./pages/Statistics";
+import MonthlyReflection from "./pages/MonthlyReflection";
 import PropFirmAccounts from "./pages/PropFirmAccounts";
 import PropFirmCompare from "./pages/PropFirmCompare";
 import MetaTraderConnect from "./pages/MetaTraderConnect";
@@ -69,15 +71,18 @@ const AppContent = () => {
     <div className="min-h-screen bg-background pb-20 lg:pb-0">
       {!isLandingPage && <Navigation />}
 
-      {/* Top-right profile avatar is provided by the Dashboard page; removed global ProfileButton */}
-
       {/* AI Chatbot - available on all pages except landing */}
       {!isLandingPage && <AIChatbot />}
 
       {/* AI Insights Notifications - pop up when new insights are discovered */}
       {!isLandingPage && <AIInsightsNotification />}
 
-      <Routes>
+      {/* XP Toast Notifications */}
+      <XPToastContainer />
+
+      {/* Error Boundary wrapping all routes */}
+      <ErrorBoundary>
+        <Routes>
         {/* Landing Page */}
         <Route path="/" element={<Landing />} />
 
@@ -105,6 +110,7 @@ const AppContent = () => {
         <Route path="/challenges" element={<ProtectedRoute><Challenges /></ProtectedRoute>} />
         <Route path="/insights" element={<ProtectedRoute><AIInsights /></ProtectedRoute>} />
         <Route path="/statistics" element={<ProtectedRoute><Statistics /></ProtectedRoute>} />
+        <Route path="/monthly-reflection" element={<ProtectedRoute><MonthlyReflection /></ProtectedRoute>} />
         <Route path="/prop-firms" element={<ProtectedRoute><PropFirmAccounts /></ProtectedRoute>} />
         <Route path="/propfirm-compare" element={<ProtectedRoute><PropFirmCompare /></ProtectedRoute>} />
         <Route path="/metatrader" element={<ProtectedRoute><MetaTraderConnect /></ProtectedRoute>} />
@@ -122,7 +128,8 @@ const AppContent = () => {
         
         {/* 404 */}
         <Route path="*" element={<NotFound />} />
-      </Routes>
+        </Routes>
+      </ErrorBoundary>
     </div>
   );
 };

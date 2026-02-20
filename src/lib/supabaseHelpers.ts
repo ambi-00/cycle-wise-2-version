@@ -6,6 +6,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { syncSave, syncLoad } from '@/lib/syncManager';
+import { getWinLossStreak as calculateWinLossStreak, loadTradesFromLocalStorage } from '@/lib/tradeLoaders';
 
 // ============================================
 // TRADES
@@ -1621,61 +1622,11 @@ export async function getXPLeaderboard(period: 'weekly' | 'monthly' | 'alltime',
 
 /**
  * Calculate win/loss streak (consecutive wins or losses) from localStorage
+ * Uses centralized tradeLoaders utility
  */
 export async function getWinLossStreak(userId: string): Promise<{ winStreak: number; lossStreak: number; currentType: 'win' | 'loss' | 'none' }> {
   try {
-    // Load all trades from localStorage (similar to TradeJournal pattern)
-    const trades: any[] = [];
-    
-    if (typeof window !== 'undefined') {
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i) || "";
-        if (key.startsWith("cw_journal_")) {
-          try {
-            const raw = localStorage.getItem(key);
-            if (!raw) continue;
-            const data = JSON.parse(raw);
-            (data.trades || []).forEach((t: any) => trades.push(t));
-          } catch (e) {
-            // ignore malformed entries
-          }
-        }
-      }
-    }
-
-    if (!trades || trades.length === 0) return { winStreak: 0, lossStreak: 0, currentType: 'none' };
-
-    // Sort by date descending (most recent first)
-    trades.sort((a: any, b: any) => {
-      const dateA = new Date(a.date || 0).getTime();
-      const dateB = new Date(b.date || 0).getTime();
-      return dateB - dateA;
-    });
-
-    // Filter out breakeven trades
-    const relevantTrades = trades.filter((t: any) => t.result === 'win' || t.result === 'loss');
-    if (relevantTrades.length === 0) return { winStreak: 0, lossStreak: 0, currentType: 'none' };
-
-    // Count consecutive trades from most recent
-    let currentType: 'win' | 'loss' | 'none' = 'none';
-    let streak = 0;
-
-    for (const trade of relevantTrades) {
-      if (currentType === 'none') {
-        currentType = trade.result as 'win' | 'loss';
-        streak = 1;
-      } else if (trade.result === currentType) {
-        streak++;
-      } else {
-        break;
-      }
-    }
-
-    return {
-      winStreak: currentType === 'win' ? streak : 0,
-      lossStreak: currentType === 'loss' ? streak : 0,
-      currentType
-    };
+    return calculateWinLossStreak();
   } catch (error) {
     console.error('Failed to calculate win/loss streak:', error);
     return { winStreak: 0, lossStreak: 0, currentType: 'none' };

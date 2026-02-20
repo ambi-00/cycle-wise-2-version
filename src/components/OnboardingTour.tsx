@@ -248,46 +248,88 @@ function calculateBoundedTooltipPosition(
 ): React.CSSProperties {
   // Tooltip dimensions for boundary calculation
   const tooltipWidth = 380; // w-[380px]
-  const tooltipHeight = 340; // estimated height with all content
-  const offset = 20;
+  const tooltipHeight = 320; // estimated height
+  const gap = 16;
   const padding = 16; // screen padding
   
-  // Calculate base position
-  const basePosX = targetRect.left + targetRect.width / 2;
-  const basePosY = position === "bottom" 
-    ? targetRect.bottom + offset
-    : position === "top"
-    ? targetRect.top - offset - tooltipHeight
-    : targetRect.top + targetRect.height / 2;
+  let posX = 0;
+  let posY = 0;
+  let transform = "translate(-50%, 0)";
   
-  // Apply horizontal boundary checks
-  let finalX = basePosX;
-  const maxX = window.innerWidth - tooltipWidth / 2 - padding;
-  const minX = tooltipWidth / 2 + padding;
-  if (finalX > maxX) finalX = maxX;
-  if (finalX < minX) finalX = minX;
-  
-  // Apply vertical boundary checks
-  let finalY = basePosY;
-  const maxY = window.innerHeight - tooltipHeight - padding;
-  const minY = padding;
-  if (finalY > maxY) finalY = maxY;
-  if (finalY < minY) finalY = minY;
-  
-  // Return position based on where card needs to be
-  if (position === "left" || position === "right") {
-    return {
-      top: finalY,
-      left: position === "right" ? targetRect.right + offset : targetRect.left - offset - tooltipWidth,
-      transform: "translateY(-50%)",
-    };
+  // Calculate position based on preference
+  if (position === "bottom") {
+    posX = targetRect.left + targetRect.width / 2;
+    posY = targetRect.bottom + gap;
+    transform = "translate(-50%, 0)";
+  } else if (position === "top") {
+    posX = targetRect.left + targetRect.width / 2;
+    posY = targetRect.top - tooltipHeight - gap;
+    transform = "translate(-50%, 0)";
+  } else if (position === "left") {
+    posX = targetRect.left - gap;
+    posY = targetRect.top + targetRect.height / 2;
+    transform = "translate(-100%, -50%)";
+  } else if (position === "right") {
+    posX = targetRect.right + gap;
+    posY = targetRect.top + targetRect.height / 2;
+    transform = "translate(0, -50%)";
   }
   
-  // Default for top/bottom
+  // Vertical boundary checks with flipping
+  const maxY = window.innerHeight - tooltipHeight - padding;
+  const minY = padding;
+  
+  if (position === "bottom" || position === "top") {
+    if (posY > maxY) {
+      // Try opposite position
+      const topPosition = targetRect.top - tooltipHeight - gap;
+      if (topPosition >= minY) {
+        posY = topPosition;
+      } else {
+        posY = Math.max(minY, Math.min(maxY, posY));
+      }
+    } else if (posY < minY) {
+      const bottomPosition = targetRect.bottom + gap;
+      if (bottomPosition <= maxY) {
+        posY = bottomPosition;
+      } else {
+        posY = Math.max(minY, Math.min(maxY, posY));
+      }
+    }
+  } else {
+    // Left/right positioning - center vertically with bounds
+    posY = Math.max(minY, Math.min(maxY, posY));
+  }
+  
+  // Horizontal boundary checks
+  const maxX = window.innerWidth - padding;
+  const minX = padding;
+  
+  if (position === "left" || position === "right") {
+    // Check if would overflow
+    if (position === "left" && posX - tooltipWidth < minX) {
+      // Switch to right
+      posX = targetRect.right + gap;
+      transform = "translate(0, -50%)";
+    } else if (position === "right" && posX + tooltipWidth > maxX) {
+      // Switch to left
+      posX = targetRect.left - gap;
+      transform = "translate(-100%, -50%)";
+    }
+  } else {
+    // Center positioned - keep centered when possible
+    const halfWidth = tooltipWidth / 2;
+    if (posX - halfWidth < minX) {
+      posX = halfWidth + padding;
+    } else if (posX + halfWidth > maxX) {
+      posX = maxX - halfWidth - padding;
+    }
+  }
+  
   return {
-    top: finalY,
-    left: finalX,
-    transform: "translateX(-50%)",
+    top: posY,
+    left: posX,
+    transform,
   };
 }
 

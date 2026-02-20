@@ -12,15 +12,39 @@ import QuickStartChecklist from "@/components/QuickStartChecklist";
 import { XPBar } from "@/components/XPBar";
 import { StreakDisplay } from "@/components/StreakDisplay";
 import { ProfileButton } from "@/components/ProfileButton";
+import { DashboardCustomizer } from "@/components/DashboardCustomizer";
+import { useFeatureFlags } from "@/hooks/use-app-mode";
+import {
+  loadDashboardConfig,
+  saveDashboardConfig,
+  DashboardConfig,
+} from "@/lib/dashboardWidgets";
 const AIInsightCard = lazy(() => import("@/components/AIInsightCard").then((m) => ({ default: m.AIInsightCard })));
 const RecentTradesTable = lazy(() => import("@/components/RecentTradesTable").then((m) => ({ default: m.RecentTradesTable })));
 const LeaderboardPreview = lazy(() => import("@/components/LeaderboardPreview").then((m) => ({ default: m.LeaderboardPreview })));
 const PropFirmSummary = lazy(() => import("@/components/PropFirmSummary").then((m) => ({ default: m.PropFirmSummary })));
-import { Bell, User } from "lucide-react";
+import { Bell, Settings, Edit3, Check } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { updateLoginStreak } from "@/lib/supabaseHelpers";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  rectSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 // Mock data for demonstration
 const rawMockTrades = [
@@ -39,6 +63,48 @@ const parseToIso = (d: string) => {
     return undefined;
   }
 };
+
+// Sortable Widget Wrapper
+function SortableWidget({ id, children, isEditMode }: { id: string; children: React.ReactNode; isEditMode: boolean }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id, disabled: !isEditMode });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    cursor: isEditMode ? 'move' : 'default',
+  };
+
+  const handleClick = (e: React.MouseEvent) => {
+    if (isEditMode) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...(isEditMode ? { ...attributes, ...listeners } : {})}
+      className={`${isEditMode ? 'ring-2 ring-primary/50 rounded-2xl hover:ring-primary' : ''}`}
+      onClick={handleClick}
+      onClickCapture={handleClick}
+    >
+      {isEditMode && (
+        <div className="absolute inset-0 z-10" style={{ pointerEvents: 'all' }} />
+      )}
+      {children}
+    </div>
+  );
+}
 
 const mockTrades = rawMockTrades.map((t) => ({ ...t, iso: parseToIso(t.date) }));
 
@@ -68,13 +134,26 @@ const loadAllStoredTrades = () => {
 };
 
 export default function Dashboard() {
+  const features = useFeatureFlags();
   const [safetyModeEnabled, setSafetyModeEnabled] = useState(() => {
     return localStorage.getItem('cw_safety_mode_enabled') === 'true';
   });
   const [userName, setUserName] = useState<string>("");
   const [showHealthCheckIn, setShowHealthCheckIn] = useState(false);
   const [healthCheckData, setHealthCheckData] = useState<any>(null);
-  const [riskAdjustment, setRiskAdjustment] = useState<number>(0); // percentage to reduce risk by
+  const [riskAdjustment, setRiskAdjustment] = useState<number>(0);
+  const [showCustomizer, setShowCustomizer] = useState(false);
+  const [dashboardConfig, setDashboardConfig] = useState<DashboardConfig>(() =>
+    loadDashboardConfig()
+  );
+  const [isEditMode, setIsEditMode] = useState(false);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   // Enable automatic weekly AI insights generation
   useWeeklyInsightGeneration();
@@ -97,10 +176,9 @@ export default function Dashboard() {
     const lastCheckinKey = `cw_daily_checkin_${today}`;
     const hasCheckedInToday = localStorage.getItem(lastCheckinKey);
     const hasDoneTour = localStorage.getItem("cw_tour_dashboard");
-    
-    // Only show health check-in if user has completed tour AND hasn't checked in today
+
     if (!hasCheckedInToday && hasDoneTour) {
-      setTimeout(() => setShowHealthCheckIn(true), 1000); // Delay to let tour finish
+      setTimeout(() => setShowHealthCheckIn(true), 1000);
     }
   }, []);
 
@@ -109,14 +187,12 @@ export default function Dashboard() {
     const loadUserName = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        // Get the name as set during registration
         if (user?.user_metadata?.name) {
           setUserName(user.user_metadata.name);
         } else {
           setUserName("");
         }
 
-        // Update login streak on dashboard load
         if (user) {
           try {
             await updateLoginStreak(user.id);
@@ -156,7 +232,6 @@ export default function Dashboard() {
       }
     }
     if (logged.length > 0) {
-      // Sort descending, finde den Start der letzten Periode (wie CycleTracker)
       const sorted = [...logged].sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
       let currentPeriodStart = sorted[0];
       for (let i = 0; i < sorted.length - 1; i++) {
@@ -183,8 +258,7 @@ export default function Dashboard() {
       const diff = Math.floor((today.getTime() - last.getTime()) / msPerDay);
       const cycleDay = (((diff % avg) + avg) % avg) + 1;
       setCurrentCycleDay(cycleDay);
-      
-      // Calculate the phase for the current cycle day
+
       const follicularEnd = Math.min(per + 7, avg);
       const ovulationEnd = Math.min(per + 11, avg);
       let phase: "menstruation" | "follicular" | "ovulation" | "luteal" = "menstruation";
@@ -210,6 +284,7 @@ export default function Dashboard() {
     let pnl = 0;
     let rSum = 0;
     const map: Record<string, { count: number; wins: number; totalR: number; pnl: number }> = {};
+
     for (const t of storedTrades) {
       total += 1;
       if (t.result === 'win') wins += 1;
@@ -251,9 +326,161 @@ export default function Dashboard() {
     setHealthCheckData(data);
     setRiskAdjustment(data.riskReduction);
     setShowHealthCheckIn(false);
-    
-    // Store in localStorage so it persists
     localStorage.setItem(`cw_daily_checkin_${data.date}`, JSON.stringify(data));
+  };
+
+  const handleSaveConfig = (newConfig: DashboardConfig) => {
+    setDashboardConfig(newConfig);
+    saveDashboardConfig(newConfig);
+  };
+
+  const enabledWidgets = dashboardConfig.widgets
+    .filter(w => w.enabled)
+    .sort((a, b) => a.order - b.order);
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const oldIndex = enabledWidgets.findIndex(w => w.id === active.id);
+      const newIndex = enabledWidgets.findIndex(w => w.id === over.id);
+      
+      const reordered = arrayMove(enabledWidgets, oldIndex, newIndex);
+      
+      const updated = {
+        ...dashboardConfig,
+        widgets: dashboardConfig.widgets.map(w => {
+          const newOrderIndex = reordered.findIndex(rw => rw.id === w.id);
+          if (newOrderIndex !== -1) {
+            return { ...w, order: newOrderIndex };
+          }
+          return w;
+        }),
+      };
+      setDashboardConfig(updated);
+      saveDashboardConfig(updated);
+    }
+  };
+
+  // Render widget based on ID
+  const renderWidget = (widget: any) => {
+    switch (widget.id) {
+      case 'cycle-phase':
+        return (
+          <CyclePhaseIndicator
+            phase={currentPhase}
+            day={currentCycleDay || 1}
+            recommendation={
+              currentPhase === "menstruation" ? "Energy may be lower. Consider smaller position sizes or taking a break."
+              : currentPhase === "follicular" ? "Rising energy and focus. Good time for analytical trading."
+              : currentPhase === "ovulation" ? "Peak confidence and communication. Be mindful of overconfidence."
+              : "Increased emotional sensitivity. Review decisions carefully before entering."
+            }
+          />
+        );
+      case 'performance-cards':
+        return (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <PerformanceCard title="Monthly P&L" value={totalPnl} change={12.5} type="currency" />
+            <PerformanceCard title="Win Rate" value={totalTrades ? Math.round((totalWins / totalTrades) * 100) : 0} change={5} type="percentage" icon="percent" />
+            <PerformanceCard title="Avg R" value={avgR} change={8} type="ratio" icon="target" />
+            <PerformanceCard title="Trades" value={totalTrades} type="count" />
+          </div>
+        );
+      case 'ai-insight':
+        return (
+          <Suspense fallback={<div className="rounded-2xl bg-card p-5 shadow-card h-24" />}>
+            <AIInsightCard
+              insight={
+                strategySummary && strategySummary.length > 0
+                  ? strategySummary
+                      .slice(0, 3)
+                      .map((s: any) => `${s.name}: ${Math.round((s.wins / s.count) * 100) || 0}% (${s.count})`)
+                      .join(" • ")
+                  : "Your win rate increases by 42% when you trade during your Follicular phase with volume confirmation."
+              }
+              category="pattern"
+              actionLabel="View Full Analysis"
+            />
+          </Suspense>
+        );
+      case 'recent-trades':
+        return (
+          <Suspense fallback={<div className="rounded-2xl bg-card p-5 shadow-card" />}>
+            <RecentTradesTable
+              trades={(() => {
+                const mapTrade = (t: any) => ({
+                  id: t.id || String(t.createdAt || Date.now()),
+                  date: t.date || t.iso || "Unknown",
+                  instrument: t.instrument || "Unknown",
+                  direction: (t.direction === "short" ? "short" : "long") as "long" | "short",
+                  result: (t.result === "win" || t.result === "loss" || t.result === "breakeven" ? t.result : "breakeven") as "win" | "loss" | "breakeven",
+                  rMultiple: typeof t.rMultiple === "number" && t.rMultiple != null ? t.rMultiple : Number(t.rMultiple) || 0,
+                  strategy: t.strategy || "",
+                  cyclePhase: t.cyclePhase || t.phase || "",
+                });
+                const displayed = (storedTrades || []).map(mapTrade);
+                if (displayed.length > 0) return displayed;
+                return mockTrades.map((m) => ({
+                  id: m.id,
+                  date: m.date,
+                  instrument: m.instrument,
+                  direction: m.direction,
+                  result: m.result,
+                  rMultiple: m.rMultiple,
+                  strategy: m.strategy,
+                  cyclePhase: (m.cyclePhase || "") as string,
+                }));
+              })()}
+            />
+          </Suspense>
+        );
+      case 'journal-entry':
+        return (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-2xl bg-card p-5 shadow-card"
+          >
+            <div className="flex items-center gap-3">
+              <div className="rounded-xl bg-card p-2.5">
+                <span className="text-[22px]">📔</span>
+              </div>
+              <h3 className="font-semibold text-foreground">Journal Entry</h3>
+            </div>
+            <div className="mt-4">
+              <p className="text-sm text-muted-foreground max-w-md">
+                Reflect on your cycle, symptoms, and trading day. Journaling helps you discover patterns and improve your performance.
+              </p>
+              <Button
+                className="w-full py-3 text-sm font-medium mt-6"
+                size="default"
+                onClick={() => {
+                  const today = new Date();
+                  const iso = today.toISOString().slice(0, 10);
+                  navigate(`/day/${iso}`);
+                }}
+              >
+                Add Journal Entry for Today
+              </Button>
+            </div>
+          </motion.div>
+        );
+      case 'prop-firm-summary':
+        return (
+          <Suspense fallback={<div className="rounded-2xl bg-card p-5 shadow-card h-32" />}>
+            <PropFirmSummary totalExpenses={2450} totalPayouts={8920} netProfit={6470} roi={264} />
+          </Suspense>
+        );
+      case 'leaderboard-preview':
+        return (
+          <Suspense fallback={<div className="rounded-2xl bg-card p-5 shadow-card h-32" />}>
+            <LeaderboardPreview entries={mockLeaderboard} type="discipline" currentUserRank={12} />
+          </Suspense>
+        );
+      default:
+        return null;
+    }
   };
 
   return (
@@ -279,6 +506,15 @@ export default function Dashboard() {
               <Bell className="h-5 w-5" />
               <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-primary" />
             </button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setShowCustomizer(true)}
+              className="rounded-xl"
+              title="Customize Dashboard"
+            >
+              <Settings className="h-5 w-5" />
+            </Button>
             <ProfileButton />
           </div>
         </motion.header>
@@ -286,74 +522,33 @@ export default function Dashboard() {
         {/* Quick Start Checklist */}
         <QuickStartChecklist />
 
-        {/* XP Bar */}
-        <motion.div variants={itemVariants} className="mb-6 xp-bar">
-          <XPBar />
-        </motion.div>
+        {/* XP Bar - only in USER mode */}
+        {features.showGamification && (
+          <motion.div variants={itemVariants} className="mb-6 xp-bar">
+            <XPBar />
+          </motion.div>
+        )}
 
-        {/* Streaks */}
-        <motion.div variants={itemVariants} className="mb-6">
-          <StreakDisplay />
-        </motion.div>
+        {/* Streaks - only in USER mode */}
+        {features.showGamification && (
+          <motion.div variants={itemVariants} className="mb-6">
+            <StreakDisplay />
+          </motion.div>
+        )}
 
         <div className="grid gap-6 lg:grid-cols-3">
           <motion.div variants={itemVariants} className="space-y-6 lg:col-span-2">
-
-            {/* Calculate phase and day for today, using the same logic as CycleTracker (always use detectedStart from logs, not possibly outdated state) */}
-            {(() => {
-              // Hole die aktuelle Phase direkt aus dem Calendar-Generator wie im CycleTracker
-              const today = new Date();
-              const year = today.getFullYear();
-              const month = today.getMonth();
-              // Hole Settings aus localStorage
-              const avg = Number(localStorage.getItem("cw_avgCycleLength") || 28);
-              const per = Number(localStorage.getItem("cw_periodLength") || 5);
-              const lastPeriodStart = localStorage.getItem("cw_lastPeriodStart") || null;
-              // Calendar-Logik wie in CycleTracker
-              function generateCalendarData(year: number, monthIndex: number, avgCycleLength: number, lastPeriodStartIso: string|null, periodLength: number) {
-                const days = [];
-                const msPerDay = 1000 * 60 * 60 * 24;
-                const lastStart = lastPeriodStartIso ? new Date(lastPeriodStartIso) : null;
-                const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
-                for (let i = 1; i <= daysInMonth; i++) {
-                  const date = new Date(year, monthIndex, i);
-                  let cycleDay = 1;
-                  if (lastStart) {
-                    const diff = Math.floor((date.getTime() - lastStart.getTime()) / msPerDay);
-                    cycleDay = (((diff % avgCycleLength) + avgCycleLength) % avgCycleLength) + 1;
-                  }
-                  const follicularEnd = Math.min(periodLength + 7, avgCycleLength);
-                  const ovulationEnd = Math.min(periodLength + 11, avgCycleLength);
-                  const phase = cycleDay <= periodLength ? "menstruation" : cycleDay <= follicularEnd ? "follicular" : cycleDay <= ovulationEnd ? "ovulation" : "luteal";
-                  days.push({ day: i, date, cycleDay, phase });
-                }
-                return days;
+            {/* Cycle Phase */}
+            <CyclePhaseIndicator
+              phase={currentPhase}
+              day={currentCycleDay || 1}
+              recommendation={
+                currentPhase === "menstruation" ? "Energy may be lower. Consider smaller position sizes or taking a break."
+                : currentPhase === "follicular" ? "Rising energy and focus. Good time for analytical trading."
+                : currentPhase === "ovulation" ? "Peak confidence and communication. Be mindful of overconfidence."
+                : "Increased emotional sensitivity. Review decisions carefully before entering."
               }
-              const calendarData = generateCalendarData(year, month, avg, lastPeriodStart, per);
-              const todayObj = calendarData.find(d => d.date.getDate() === today.getDate());
-              if (!todayObj) {
-                return (
-                  <div className="rounded-2xl bg-card p-6 shadow-card text-center">
-                    <div className="text-lg font-semibold mb-2">No Period Data Found</div>
-                    <div className="text-muted-foreground mb-2">Please log at least one period day in the calendar or journal so the cycle phase can be calculated.</div>
-                  </div>
-                );
-              }
-              // Passende Empfehlung je nach Phase
-              const recommendations: Record<string, string> = {
-                menstruation: "Energy may be lower. Consider smaller position sizes or taking a break.",
-                follicular: "Rising energy and focus. Good time for analytical trading.",
-                ovulation: "Peak confidence and communication. Be mindful of overconfidence.",
-                luteal: "Increased emotional sensitivity. Review decisions carefully before entering.",
-              };
-              return (
-                <CyclePhaseIndicator
-                  phase={todayObj.phase}
-                  day={todayObj.cycleDay}
-                  recommendation={recommendations[todayObj.phase]}
-                />
-              );
-            })()}
+            />
 
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <PerformanceCard title="Monthly P&L" value={totalPnl} change={12.5} type="currency" />
@@ -377,58 +572,38 @@ export default function Dashboard() {
               />
             </Suspense>
 
-            {strategySummary && strategySummary.length > 0 && (
-              <div className="mt-4 flex flex-wrap gap-2">
-                {strategySummary.slice(0, 6).map((s: any) => (
-                  <button
-                    key={s.name}
-                    onClick={() => navigate(`/journal?strategy=${encodeURIComponent(s.name)}`)}
-                    className="rounded-full bg-muted/20 px-3 py-1 text-sm text-foreground hover:bg-muted/40"
-                  >
-                    {s.name} — {Math.round((s.wins / s.count) * 100) || 0}% ({s.count})
-                  </button>
-                ))}
-              </div>
-            )}
-
-            <Suspense fallback={<div className="rounded-2xl bg-card p-5 shadow-card" />}> 
+            <Suspense fallback={<div className="rounded-2xl bg-card p-5 shadow-card" />}>
               <RecentTradesTable
                 trades={(() => {
-                const mapTrade = (t: any) => ({
-                  id: t.id || String(t.createdAt || Date.now()),
-                  date: t.date || t.iso || "Unknown",
-                  instrument: t.instrument || "Unknown",
-                  direction: (t.direction === "short" ? "short" : "long") as "long" | "short",
-                  result: (t.result === "win" || t.result === "loss" || t.result === "breakeven" ? t.result : "breakeven") as
-                    | "win"
-                    | "loss"
-                    | "breakeven",
-                  rMultiple: typeof t.rMultiple === "number" && t.rMultiple != null ? t.rMultiple : Number(t.rMultiple) || 0,
-                  strategy: t.strategy || "",
-                  cyclePhase: t.cyclePhase || t.phase || "",
-                });
+                  const mapTrade = (t: any) => ({
+                    id: t.id || String(t.createdAt || Date.now()),
+                    date: t.date || t.iso || "Unknown",
+                    instrument: t.instrument || "Unknown",
+                    direction: (t.direction === "short" ? "short" : "long") as "long" | "short",
+                    result: (t.result === "win" || t.result === "loss" || t.result === "breakeven" ? t.result : "breakeven") as "win" | "loss" | "breakeven",
+                    rMultiple: typeof t.rMultiple === "number" && t.rMultiple != null ? t.rMultiple : Number(t.rMultiple) || 0,
+                    strategy: t.strategy || "",
+                    cyclePhase: t.cyclePhase || t.phase || "",
+                  });
 
-                const displayed = (storedTrades || []).map(mapTrade);
-                if (displayed.length > 0) return displayed;
-                return mockTrades.map((m) => ({
-                  id: m.id,
-                  date: m.date,
-                  instrument: m.instrument,
-                  direction: m.direction,
-                  result: m.result,
-                  rMultiple: m.rMultiple,
-                  strategy: m.strategy,
-                  cyclePhase: (m.cyclePhase || "") as string,
-                }));
-              })()}
+                  const displayed = (storedTrades || []).map(mapTrade);
+                  if (displayed.length > 0) return displayed;
+                  return mockTrades.map((m) => ({
+                    id: m.id,
+                    date: m.date,
+                    instrument: m.instrument,
+                    direction: m.direction,
+                    result: m.result,
+                    rMultiple: m.rMultiple,
+                    strategy: m.strategy,
+                    cyclePhase: (m.cyclePhase || "") as string,
+                  }));
+                })()}
               />
             </Suspense>
           </motion.div>
 
           <motion.div variants={itemVariants} className="space-y-6">
-            {/* Safety Mode Toggle - Hidden for initial launch, uncomment to re-enable */}
-            {/* <SafetyModeToggle enabled={safetyModeEnabled} onToggle={setSafetyModeEnabled} suggested={false} /> */}
-
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -445,8 +620,8 @@ export default function Dashboard() {
                   Reflect on your cycle, symptoms, and trading day. Journaling helps you discover patterns and improve your performance.
                 </p>
                 <Button
-                  className="w-full py-4 text-base font-semibold mt-6"
-                  size="lg"
+                  className="w-full py-3 text-sm font-medium mt-6"
+                  size="default"
                   onClick={() => {
                     const today = new Date();
                     const iso = today.toISOString().slice(0, 10);
@@ -462,12 +637,23 @@ export default function Dashboard() {
               <PropFirmSummary totalExpenses={2450} totalPayouts={8920} netProfit={6470} roi={264} />
             </Suspense>
 
-            <Suspense fallback={<div className="rounded-2xl bg-card p-5 shadow-card h-32" />}>
-              <LeaderboardPreview entries={mockLeaderboard} type="discipline" currentUserRank={12} />
-            </Suspense>
+            {features.showLeaderboard && (
+              <Suspense fallback={<div className="rounded-2xl bg-card p-5 shadow-card h-32" />}>
+                <LeaderboardPreview entries={mockLeaderboard} type="discipline" currentUserRank={12} />
+              </Suspense>
+            )}
           </motion.div>
         </div>
       </motion.div>
+
+      {/* Customizer Modal */}
+      {showCustomizer && (
+        <DashboardCustomizer
+          config={dashboardConfig}
+          onClose={() => setShowCustomizer(false)}
+          onSave={handleSaveConfig}
+        />
+      )}
     </main>
   );
 }

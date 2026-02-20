@@ -10,6 +10,7 @@ import { Lightbulb, Plus, TrendingUp, Lock, Moon, Sprout, Zap, AlertTriangle, Ba
 import { useSubscription } from '@/hooks/use-subscription';
 import { supabase } from '@/integrations/supabase/client';
 import { usePaymentSuccess } from '@/hooks/use-payment-success';
+import { loadAllTrades } from '@/lib/supabaseHelpers';
 
 interface Trade {
   id: string;
@@ -79,68 +80,50 @@ export default function Statistics() {
     loadMTAccounts();
   }, []);
 
-  const loadAllTrades = async () => {
-    const trades: Trade[] = [];
-    
-    // Use the same method as TradeJournal to iterate localStorage
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i) || "";
-      if (key.startsWith("cw_journal_")) {
-        try {
-          const raw = localStorage.getItem(key);
-          if (!raw) continue;
-          const data = JSON.parse(raw);
-          if (data.trades && Array.isArray(data.trades)) {
-            data.trades.forEach((t: any) => {
-              trades.push({
-                ...t,
-                status: t.status || (t.result && t.result !== '' ? 'closed' : 'open')
-              });
-            });
-          }
-        } catch (e) {
-          // ignore parse errors
-        }
-      }
-    }
-
-    // Load MT trades from Supabase
+  const loadAllTradesData = async () => {
     try {
-      let query = (supabase
-        .from('mt_trades') as any)
-        .select('*')
-        .eq('is_enriched', true); // Only show enriched MT trades
+      const loadedTrades = await loadAllTrades();
+      
+      // Load MT trades from Supabase
+      try {
+        let query = (supabase
+          .from('mt_trades') as any)
+          .select('*')
+          .eq('is_enriched', true); // Only show enriched MT trades
 
-      if (selectedAccount) {
-        query = query.eq('account_id', selectedAccount);
-      }
+        if (selectedAccount) {
+          query = query.eq('account_id', selectedAccount);
+        }
 
-      const { data: mtTrades, error } = await query;
+        const { data: mtTrades, error } = await query;
 
-      if (!error && mtTrades) {
-        mtTrades.forEach((t: any) => {
-          trades.push({
-            id: `mt-${t.id}`,
-            date: t.open_time ? new Date(t.open_time).toISOString().split('T')[0] : '',
-            instrument: t.symbol,
-            direction: t.cmd === 'buy' || t.cmd === '0' ? 'long' : 'short',
-            pnl: parseFloat(t.profit || 0),
-            rMultiple: t.rrr ? parseFloat(t.rrr) : null,
-            result: parseFloat(t.profit || 0) > 0 ? 'win' : parseFloat(t.profit || 0) < 0 ? 'loss' : 'breakeven',
-            status: 'closed',
-            strategy: 'MetaTrader',
+        if (!error && mtTrades) {
+          mtTrades.forEach((t: any) => {
+            loadedTrades.push({
+              id: `mt-${t.id}`,
+              date: t.open_time ? new Date(t.open_time).toISOString().split('T')[0] : '',
+              instrument: t.symbol,
+              direction: t.cmd === 'buy' || t.cmd === '0' ? 'long' : 'short',
+              pnl: parseFloat(t.profit || 0),
+              rMultiple: t.rrr ? parseFloat(t.rrr) : null,
+              result: parseFloat(t.profit || 0) > 0 ? 'win' : parseFloat(t.profit || 0) < 0 ? 'loss' : 'breakeven',
+              status: 'closed',
+              strategy: 'MetaTrader',
+            });
           });
-        });
+        }
+      } catch (err) {
+        console.error('Error loading MT trades:', err);
       }
+      
+      setAllTrades(loadedTrades);
     } catch (err) {
-      console.error('Error loading MT trades:', err);
+      console.error('Error loading trades:', err);
     }
-    
-    setAllTrades(trades);
   };
 
   useEffect(() => {
-    loadAllTrades();
+    loadAllTradesData();
   }, [selectedAccount]);
 
   // All hooks MUST be called unconditionally, before any JSX rendering or early returns

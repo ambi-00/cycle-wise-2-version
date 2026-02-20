@@ -1,0 +1,259 @@
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence, Reorder } from "framer-motion";
+import { DailyHealthCheckIn } from "@/components/DailyHealthCheckIn";
+import { useWeeklyInsightGeneration } from "@/hooks/use-weekly-insights";
+import { useXPNotifications } from "@/hooks/use-xp-notifications";
+import MigrationDialog from "@/components/MigrationDialog";
+import DashboardTour from "@/components/DashboardTour";
+import QuickStartChecklist from "@/components/QuickStartChecklist";
+import { ProfileButton } from "@/components/ProfileButton";
+import { DashboardCustomizer } from "@/components/DashboardCustomizer";
+import {
+  loadDashboardConfig,
+  getEnabledWidgets,
+  DashboardConfig,
+  WidgetId,
+  getColSpan,
+} from "@/lib/dashboardWidgets";
+import { getWidgetHeightClass } from "@/lib/widgetSizing";
+import * as Widgets from "@/components/widgets";
+import { Bell, Settings } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { updateLoginStreak } from "@/lib/supabaseHelpers";
+
+// Widget component map
+const WIDGET_COMPONENTS: Record<WidgetId, React.ComponentType<{ size: any }>> = {
+  'cycle-phase': Widgets.CyclePhaseWidget,
+  'performance-cards': Widgets.PerformanceCardsWidget,
+  'ai-insight': Widgets.AIInsightWidget,
+  'recent-trades': Widgets.RecentTradesWidget,
+  'strategy-performance': Widgets.StrategyPerformanceWidget,
+  'hot-instruments': Widgets.HotInstrumentsWidget,
+  'xp-bar': Widgets.XPBarWidget,
+  'streak-display': Widgets.StreakDisplayWidget,
+  'journal-entry': Widgets.JournalEntryWidget,
+  'prop-firm-summary': Widgets.PropFirmWidget,
+  'leaderboard-preview': Widgets.LeaderboardWidget,
+  'equity-curve': () => <div className="rounded-2xl bg-card p-6 shadow-card text-center text-muted-foreground">Premium feature coming soon</div>,
+  'discipline-meter': Widgets.DisciplineMeterWidget,
+  'daily-goal': Widgets.DailyGoalWidget,
+  'win-rate-meter': Widgets.WinRateMeterWidget,
+  'best-worst-trades': Widgets.BestWorstTradesWidget,
+  'cycle-phase-performance': Widgets.CyclePhasePerformanceWidget,
+  'monthly-stats': Widgets.MonthlyStatsWidget,
+  'trade-frequency': Widgets.TradeFrequencyWidget,
+  'risk-assessment': Widgets.RiskAssessmentWidget,
+  'pnl-meter': Widgets.PnLMeterWidget,
+  'trade-ratio': Widgets.TradeRatioWidget,
+  'streak-meter': Widgets.StreakMeterWidget,
+  'profit-factor': Widgets.ProfitFactorWidget,
+  'drawdown-meter': Widgets.DrawdownMeterWidget,
+  'strategy-comparison': Widgets.StrategyComparisonWidget,
+  'best-worst-days': Widgets.BestWorstDaysWidget,
+  'instrument-heatmap': Widgets.InstrumentHeatmapWidget,
+};
+
+export default function Dashboard() {
+  // Enable hooks
+  useWeeklyInsightGeneration();
+  useXPNotifications();
+
+  // State
+  const [userName, setUserName] = useState<string>("");
+  const [showHealthCheckIn, setShowHealthCheckIn] = useState(false);
+  const [healthCheckData, setHealthCheckData] = useState<any>(null);
+  const [riskAdjustment, setRiskAdjustment] = useState<number>(0);
+  const [showCustomizer, setShowCustomizer] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [dashboardConfig, setDashboardConfig] = useState<DashboardConfig>(() => 
+    loadDashboardConfig()
+  );
+  const navigate = useNavigate();
+
+  // Load user and health check-in
+  useEffect(() => {
+    const today = new Date().toISOString().split('T')[0];
+    const lastCheckinKey = `cw_daily_checkin_${today}`;
+    const hasCheckedInToday = localStorage.getItem(lastCheckinKey);
+    const hasDoneTour = localStorage.getItem("cw_tour_dashboard");
+    
+    if (!hasCheckedInToday && hasDoneTour) {
+      setTimeout(() => setShowHealthCheckIn(true), 1000);
+    }
+  }, []);
+
+  useEffect(() => {
+    const loadUserName = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user?.user_metadata?.name) {
+          setUserName(user.user_metadata.name);
+        } else {
+          setUserName("");
+        }
+
+        if (user) {
+          try {
+            await updateLoginStreak(user.id);
+          } catch (error) {
+            console.error('Failed to update login streak:', error);
+          }
+        }
+      } catch (e) {
+        setUserName("");
+      }
+    };
+    loadUserName();
+  }, []);
+
+  const handleHealthCheckInComplete = (data: any) => {
+    setHealthCheckData(data);
+    setRiskAdjustment(data.riskReduction);
+    setShowHealthCheckIn(false);
+    localStorage.setItem(`cw_daily_checkin_${data.date}`, JSON.stringify(data));
+  };
+
+  const handleSaveConfig = (newConfig: DashboardConfig) => {
+    setDashboardConfig(newConfig);
+  };
+
+  const enabledWidgets = getEnabledWidgets(dashboardConfig);
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: { staggerChildren: 0.05 },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 },
+  };
+
+  return (
+    <main className="min-h-screen bg-background pb-24 pt-20 lg:pl-64 lg:pt-8">
+      <MigrationDialog />
+      <DailyHealthCheckIn isOpen={showHealthCheckIn} onComplete={handleHealthCheckInComplete} />
+      <DashboardTour />
+
+      <motion.div 
+        variants={containerVariants} 
+        initial="hidden" 
+        animate="visible" 
+        className="mx-auto max-w-7xl p-4 lg:p-8"
+      >
+        {/* Header */}
+        <motion.header variants={itemVariants} className="dashboard-header mb-8 flex items-center justify-between">
+          <div>
+            <h1 className="font-serif text-2xl font-bold text-foreground lg:text-3xl">
+              Welcome back, {userName ? userName : "Trader"}
+            </h1>
+            <p className="mt-1 text-muted-foreground">Let's make today profitable and aligned with your body.</p>
+            {riskAdjustment > 0 && (
+              <div className="mt-2 flex items-center gap-2">
+                <span className="inline-block rounded-full bg-warning/20 px-3 py-1 text-xs font-semibold text-warning">
+                  ⚠️ Recommended Risk Reduction: -{riskAdjustment}%
+                </span>
+              </div>
+            )}
+          </div>
+          <div className="flex items-center gap-3">
+            <button className="relative rounded-xl bg-card p-2.5 text-muted-foreground shadow-soft hover:text-foreground">
+              <Bell className="h-5 w-5" />
+              <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-primary" />
+            </button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setShowCustomizer(true)}
+              className="rounded-xl"
+              title="Customize Dashboard"
+            >
+              <Settings className="h-5 w-5" />
+            </Button>
+            <ProfileButton />
+          </div>
+        </motion.header>
+
+        {/* Quick Start Checklist */}
+        <QuickStartChecklist />
+
+        {/* Dashboard Grid - Draggable Widgets */}
+        <motion.div variants={itemVariants}>
+          <Reorder.Group
+            axis="y"
+            values={enabledWidgets}
+            onReorder={(newOrder) => {
+              if (!isEditMode) return;
+              // Update order numbers based on new position
+              const updatedWidgets = dashboardConfig.widgets.map(w => {
+                const newPosition = newOrder.findIndex(nw => nw.id === w.id);
+                if (newPosition !== -1) {
+                  return { ...w, order: newPosition + 1 };
+                }
+                return w;
+              });
+              const updatedConfig = {
+                ...dashboardConfig,
+                widgets: updatedWidgets,
+              };
+              setDashboardConfig(updatedConfig);
+              localStorage.setItem('cw_dashboard_config', JSON.stringify(updatedConfig));
+              localStorage.setItem('cw_dashboard_config_version', '2');
+            }}
+            className="grid gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 auto-rows-max"
+          >
+            <AnimatePresence mode="popLayout">
+              {enabledWidgets.map((widget) => {
+                const WidgetComponent = WIDGET_COMPONENTS[widget.id];
+                if (!WidgetComponent) return null;
+
+                return (
+                  <Reorder.Item key={widget.id} value={widget}>
+                    <motion.div
+                      layout
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.8 }}
+                      className={`${getColSpan(widget.size)} ${isEditMode ? 'cursor-grab active:cursor-grabbing hover:shadow-lg hover:scale-[1.02] ring-2 ring-primary/50' : 'cursor-default'} transition-all duration-200`}
+                      whileHover={isEditMode ? { scale: 1.02 } : {}}
+                    >
+                      <div className={`relative h-full ${isEditMode ? 'opacity-75 hover:opacity-100' : ''} transition-opacity`}>
+                        <WidgetComponent size={widget.size} />
+                        {isEditMode && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/20 rounded-2xl opacity-0 hover:opacity-100 transition-opacity pointer-events-none">
+                            <div className="text-white font-semibold text-xs">📌 Drag to reorder</div>
+                          </div>
+                        )}
+                      </div>
+                    </motion.div>
+                  </Reorder.Item>
+                );
+              })}
+            </AnimatePresence>
+          </Reorder.Group>
+        </motion.div>
+      </motion.div>
+
+      {/* Customizer Modal */}
+      <AnimatePresence>
+        {showCustomizer && (
+          <DashboardCustomizer
+            config={dashboardConfig}
+            onClose={() => setShowCustomizer(false)}
+            onSave={handleSaveConfig}
+            isEditMode={isEditMode}
+            onEditModeToggle={(enabled) => {
+              setIsEditMode(enabled);
+              if (enabled) setShowCustomizer(false); // Close modal when entering edit mode
+            }}
+          />
+        )}
+      </AnimatePresence>
+    </main>
+  );
+}

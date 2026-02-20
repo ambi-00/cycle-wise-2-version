@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Zap } from "lucide-react";
 import { getGamificationStats, RANKS } from "@/lib/supabaseHelpers";
 import { supabase } from "@/integrations/supabase/client";
+import { loadTradesFromLocalStorage } from "@/lib/tradeLoaders";
 
 export function XPBar() {
   const [stats, setStats] = useState<any>(null);
@@ -15,18 +16,61 @@ export function XPBar() {
   async function loadStats() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        // Create fallback stats from localStorage trades
+        createFallbackStats();
+        return;
+      }
 
       const data = await getGamificationStats(user.id);
-      setStats(data);
+      if (data) {
+        setStats(data);
+      } else {
+        // Fallback if no DB data
+        createFallbackStats();
+      }
     } catch (error) {
       console.error('Failed to load gamification stats:', error);
+      createFallbackStats();
     } finally {
       setLoading(false);
     }
   }
 
-  if (loading || !stats) return null;
+  function createFallbackStats() {
+    // Calculate XP from local trades: 1 XP per trade + 5 XP for wins
+    const trades = loadTradesFromLocalStorage();
+    let totalXP = trades.length; // 1 XP per trade
+    let wins = 0;
+    for (const t of trades) {
+      if (t.result === 'win') {
+        wins += 1;
+        totalXP += 5; // 5 bonus XP for wins
+      }
+    }
+
+    // Determine rank based on total XP
+    let rank = 'bronze';
+    if (totalXP >= 1000) rank = 'diamond';
+    else if (totalXP >= 500) rank = 'platinum';
+    else if (totalXP >= 200) rank = 'gold';
+    else if (totalXP >= 50) rank = 'silver';
+
+    setStats({
+      total_xp: totalXP,
+      current_rank: rank,
+      login_streak: 0,
+      trading_streak: 0,
+    });
+  }
+
+  if (loading || !stats) {
+    return (
+      <div className="bg-card rounded-xl p-4 shadow-soft border border-border">
+        <div className="h-6 bg-muted rounded animate-pulse" />
+      </div>
+    );
+  }
 
   const currentXP = stats.total_xp || 0;
   const currentRank = stats.current_rank || 'bronze';
@@ -52,14 +96,14 @@ export function XPBar() {
             <p className="text-sm font-semibold text-foreground">{rankData.name}</p>
             <p className="text-xs text-muted-foreground flex items-center gap-1">
               <Zap className="h-3 w-3 text-accent-foreground" />
-              {currentXP.toLocaleString()} XP
+              <span className="tabular-nums">{currentXP.toLocaleString()}</span> XP
             </p>
           </div>
         </div>
         {nextRank && (
           <div className="text-right">
             <p className="text-xs text-muted-foreground">Next: {nextRank.name}</p>
-            <p className="text-xs font-medium text-foreground">
+            <p className="text-xs font-medium text-foreground tabular-nums">
               {(xpForNextRank - currentXP).toLocaleString()} XP
             </p>
           </div>
