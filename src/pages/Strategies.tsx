@@ -47,7 +47,7 @@ const mockStrategies = [
 export default function Strategies() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { subscription, loading: subLoading } = useSubscription();
+  const { subscription, loading: subLoading, hasFeature } = useSubscription();
   const [strategies, setStrategies] = useState(mockStrategies);
   usePaymentSuccess();
 
@@ -63,7 +63,7 @@ export default function Strategies() {
     return <div className="min-h-screen bg-background" />;
   }
 
-  const hasPremium = subscription.tier === 'premium' || subscription.tier === 'pro';
+  const hasPremium = hasFeature('unlimited_strategies');
   
   return (
     <main className="pb-24 pt-20 lg:pl-64 lg:pt-8">
