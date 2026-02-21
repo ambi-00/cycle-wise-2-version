@@ -321,10 +321,7 @@ export default function Dashboard() {
           />
         );
       case 'performance-cards':
-        // In FILMING mode with no real trades, don't show performance cards
-        if (appMode === 'FILMING' && totalTrades === 0) {
-          return null;
-        }
+        // Always show performance cards - display 0 if no trades
         return (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <PerformanceCard title="Monthly P&L" value={totalPnl} change={12.5} type="currency" />
@@ -351,10 +348,7 @@ export default function Dashboard() {
           </Suspense>
         ) : null;
       case 'recent-trades':
-        // In FILMING mode with no real trades, don't show recent trades widget
-        if (appMode === 'FILMING' && storedTrades.length === 0) {
-          return null;
-        }
+        // Always show recent trades - empty array in FILMING mode without trades
         return (
           <Suspense fallback={<div className="rounded-2xl bg-card p-5 shadow-card" />}>
             <RecentTradesTable
@@ -502,15 +496,13 @@ export default function Dashboard() {
               }
             />
 
-            {/* In FILMING mode with no real trades, don't show performance cards */}
-            {!(appMode === 'FILMING' && totalTrades === 0 && !appModeLoading) && (
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <PerformanceCard title="Monthly P&L" value={totalPnl} change={12.5} type="currency" />
-                <PerformanceCard title="Win Rate" value={totalTrades ? Math.round((totalWins / totalTrades) * 100) : 0} change={5} type="percentage" icon="percent" />
-                <PerformanceCard title="Avg R" value={avgR} change={8} type="ratio" icon="target" />
-                <PerformanceCard title="Trades" value={totalTrades} type="count" />
-              </div>
-            )}
+            {/* Always show performance cards - shows 0 if no trades */}
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <PerformanceCard title="Monthly P&L" value={totalPnl} change={12.5} type="currency" />
+              <PerformanceCard title="Win Rate" value={totalTrades ? Math.round((totalWins / totalTrades) * 100) : 0} change={5} type="percentage" icon="percent" />
+              <PerformanceCard title="Avg R" value={avgR} change={8} type="ratio" icon="target" />
+              <PerformanceCard title="Trades" value={totalTrades} type="count" />
+            </div>
 
             <Suspense fallback={<div className="rounded-2xl bg-card p-5 shadow-card h-24" />}>
               <AIInsightCard
@@ -527,40 +519,39 @@ export default function Dashboard() {
               />
             </Suspense>
 
-            {/* In FILMING mode with no real trades, don't show the recent trades section */}
-            {!(appMode === 'FILMING' && storedTrades.length === 0 && !appModeLoading) && (
-              <Suspense fallback={<div className="rounded-2xl bg-card p-5 shadow-card" />}>
-                <RecentTradesTable
-                  trades={(() => {
-                    const mapTrade = (t: any) => ({
-                      id: t.id || String(t.createdAt || Date.now()),
-                      date: t.date || t.iso || "Unknown",
-                      instrument: t.instrument || "Unknown",
-                      direction: (t.direction === "short" ? "short" : "long") as "long" | "short",
-                      result: (t.result === "win" || t.result === "loss" || t.result === "breakeven" ? t.result : "breakeven") as "win" | "loss" | "breakeven",
-                      rMultiple: typeof t.rMultiple === "number" && t.rMultiple != null ? t.rMultiple : Number(t.rMultiple) || 0,
-                      strategy: t.strategy || "",
-                      cyclePhase: t.cyclePhase || t.phase || "",
-                    });
+            {/* Always show recent trades table - shows empty or mock data */}
+            <Suspense fallback={<div className="rounded-2xl bg-card p-5 shadow-card" />}>
+              <RecentTradesTable
+                trades={(() => {
+                  const mapTrade = (t: any) => ({
+                    id: t.id || String(t.createdAt || Date.now()),
+                    date: t.date || t.iso || "Unknown",
+                    instrument: t.instrument || "Unknown",
+                    direction: (t.direction === "short" ? "short" : "long") as "long" | "short",
+                    result: (t.result === "win" || t.result === "loss" || t.result === "breakeven" ? t.result : "breakeven") as "win" | "loss" | "breakeven",
+                    rMultiple: typeof t.rMultiple === "number" && t.rMultiple != null ? t.rMultiple : Number(t.rMultiple) || 0,
+                    strategy: t.strategy || "",
+                    cyclePhase: t.cyclePhase || t.phase || "",
+                  });
 
-                    const displayed = (storedTrades || []).map(mapTrade);
-                    if (displayed.length > 0) return displayed;
-                    // In FILMING mode, don't show mock trades
-                    if (appMode === 'FILMING') return [];
-                    return mockTrades.map((m) => ({
-                      id: m.id,
-                      date: m.date,
-                      instrument: m.instrument,
-                      direction: m.direction,
-                      result: m.result,
-                      rMultiple: m.rMultiple,
-                      strategy: m.strategy,
-                      cyclePhase: (m.cyclePhase || "") as string,
-                    }));
-                  })()}
-                />
-              </Suspense>
-            )}
+                  const displayed = (storedTrades || []).map(mapTrade);
+                  if (displayed.length > 0) return displayed;
+                  // In FILMING mode with no trades: show empty array (RecentTradesTable will show "No trades yet")
+                  if (appMode === 'FILMING') return [];
+                  // In USER/DEMO mode: show mock trades as placeholder
+                  return mockTrades.map((m) => ({
+                    id: m.id,
+                    date: m.date,
+                    instrument: m.instrument,
+                    direction: m.direction,
+                    result: m.result,
+                    rMultiple: m.rMultiple,
+                    strategy: m.strategy,
+                    cyclePhase: (m.cyclePhase || "") as string,
+                  }));
+                })()}
+              />
+            </Suspense>
           </motion.div>
 
           <motion.div variants={itemVariants} className="space-y-6">
