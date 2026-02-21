@@ -15,7 +15,6 @@ import CyclePredictions from "@/components/CyclePredictions";
 import CycleTrackerTour from "@/components/CycleTrackerTour";
 import { Card, CardContent } from "@/components/ui/card";
 import { useSubscription } from "@/hooks/use-subscription";
-import { useAppMode } from "@/hooks/use-app-mode";
 import { FeatureGuard } from "@/components/FeatureGuard";
 import { usePaymentSuccess } from "@/hooks/use-payment-success";
 import { generateCalendarData, DayData } from "@/lib/cycleHelpers";
@@ -388,14 +387,13 @@ export default function CycleTracker() {
   };
 
   const { subscription, loading: subLoading, hasFeature } = useSubscription();
-  const { appMode, isLoading: appModeLoading } = useAppMode();
 
-  // Show blank while subscription OR app mode loads (no flicker)
-  if (subLoading || appModeLoading) {
+  // Show blank while subscription loads (no flicker)
+  if (subLoading) {
     return <div className="min-h-screen bg-background" />;
   }
 
-  // Use hasFeature from hook - respects FILMING/DEMO modes and tier access
+  // Use hasFeature from hook - checks subscription tier
   const hasPremium = hasFeature('cycle_tracking');
 
   return (

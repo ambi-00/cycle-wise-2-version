@@ -59,8 +59,9 @@ export default function AIInsights() {
     }
   }, [appMode]);
 
-  // Show blank while subscription or app mode loads (no flicker)
-  if (subLoading || appModeLoading) {
+  // Show blank while subscription loads (no flicker)
+  // appMode loading doesn't need to block - trades will load when ready
+  if (subLoading) {
     return <div className="min-h-screen bg-background" />;
   }
 

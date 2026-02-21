@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAppMode } from './use-app-mode';
 
 export type SubscriptionTier = 'free' | 'premium' | 'pro';
 
@@ -59,7 +58,6 @@ const SCREENSHOT_LIMITS = {
 };
 
 export function useSubscription() {
-  const { appMode, isLoading: appModeLoading } = useAppMode();
   const [subscription, setSubscription] = useState<Subscription>({
     tier: 'free',
     status: 'active',
@@ -67,21 +65,8 @@ export function useSubscription() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Wait for app mode to load first
-    if (appModeLoading) {
-      setLoading(true);
-      return;
-    }
-
-    // DEMO and FILMING modes - provide PRO features for videos/demos
-    if (appMode === 'DEMO' || appMode === 'FILMING') {
-      console.log('📊 Subscription - Auto-set to PRO for', appMode, 'mode');
-      setSubscription({ tier: 'pro', status: 'active' });
-      setLoading(false);
-      return;
-    }
-
-    // Dev mode - provide PRO features for development (no login needed)
+    // Dev mode only - provide PRO features for development (no login needed)
+    // FILMING/DEMO modes do NOT affect subscription tier - they only affect UI visibility
     if (import.meta.env.VITE_SKIP_EMAIL_VERIFICATION === 'true') {
       console.log('📊 Subscription - Auto-set to PRO for dev mode (SKIP_EMAIL_VERIFICATION=true)');
       setSubscription({ tier: 'pro', status: 'active' });
@@ -90,7 +75,7 @@ export function useSubscription() {
     }
     
     loadSubscription();
-  }, [appMode, appModeLoading]);
+  }, []);
 
   async function loadSubscription() {
     try {
