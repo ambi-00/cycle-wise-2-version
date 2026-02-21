@@ -18,20 +18,22 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { useState } from "react";
 import SyncStatusIndicator from "@/components/SyncStatusIndicator";
+import { useFeatureFlags } from "@/hooks/use-app-mode";
 
 const navItems = [
-  { path: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-  { path: "/journal", icon: BookOpen, label: "Trade Journal" },
-  { path: "/statistics", icon: BarChart3, label: "Statistics" },
+  { path: "/dashboard", icon: LayoutDashboard, label: "Dashboard", requireFeature: null },
+  { path: "/journal", icon: BookOpen, label: "Trade Journal", requireFeature: null },
+  { path: "/statistics", icon: BarChart3, label: "Statistics", requireFeature: null },
   // Prop Firms handled separately for expandable nav
-  { path: "/cycle", icon: Calendar, label: "Cycle Tracker" },
-  { path: "/strategies", icon: TrendingUp, label: "Strategies" },
-  { path: "/challenges", icon: Trophy, label: "Challenges" },
-  { path: "/insights", icon: Sparkles, label: "AI Insights" },
+  { path: "/cycle", icon: Calendar, label: "Cycle Tracker", requireFeature: null },
+  { path: "/strategies", icon: TrendingUp, label: "Strategies", requireFeature: null },
+  { path: "/challenges", icon: Trophy, label: "Challenges", requireFeature: 'showChallenges' },
+  { path: "/insights", icon: Sparkles, label: "AI Insights", requireFeature: null },
 ];
 
 export function Navigation() {
   const location = useLocation();
+  const features = useFeatureFlags();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [showPropFirmsSubnav, setShowPropFirmsSubnav] = useState(
     location.pathname.startsWith("/prop-firms") || location.pathname.startsWith("/propfirm-compare")
@@ -65,7 +67,15 @@ export function Navigation() {
           </Link>
         </div>
         <div className="mt-10 flex flex-1 flex-col gap-2">
-          {navItems.map((item) => {
+          {navItems
+            .filter((item) => {
+              // Filter out items based on feature flags
+              if (item.requireFeature) {
+                return features[item.requireFeature as keyof typeof features];
+              }
+              return true;
+            })
+            .map((item) => {
             const isActive = location.pathname === item.path;
             return (
               <NavLink
@@ -117,16 +127,18 @@ export function Navigation() {
               >
                 My Accounts
               </NavLink>
-              <NavLink
-                to="/propfirm-compare"
-                className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
-                  location.pathname === "/propfirm-compare"
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                }`}
-              >
-                Prop Firm Comparison
-              </NavLink>
+              {features.showPropFirmComparison && (
+                <NavLink
+                  to="/propfirm-compare"
+                  className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
+                    location.pathname === "/propfirm-compare"
+                      ? "bg-primary/10 text-primary"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  }`}
+                >
+                  Prop Firm Comparison
+                </NavLink>
+              )}
             </div>
           )}
         </div>
@@ -228,17 +240,19 @@ export function Navigation() {
             >
               MetaTrader Connection
             </NavLink>
-            <NavLink
-              to="/propfirm-compare"
-              className={`rounded-lg px-3 py-2 text-sm font-medium transition-all ${
-                location.pathname === "/propfirm-compare"
-                  ? "bg-primary/10 text-primary"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
-              }`}
-              onClick={() => setShowPropFirmsSubnav(false)}
-            >
-              Prop Firm Comparison
-            </NavLink>
+            {features.showPropFirmComparison && (
+              <NavLink
+                to="/propfirm-compare"
+                className={`rounded-lg px-3 py-2 text-sm font-medium transition-all ${
+                  location.pathname === "/propfirm-compare"
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                }`}
+                onClick={() => setShowPropFirmsSubnav(false)}
+              >
+                Prop Firm Comparison
+              </NavLink>
+            )}
           </div>
         )}
       </div>
@@ -251,7 +265,14 @@ export function Navigation() {
           className="fixed inset-0 z-30 bg-background/95 backdrop-blur-sm pt-16 lg:hidden"
         >
           <div className="flex flex-col gap-2 p-4">
-            {navItems.map((item) => (
+            {navItems
+              .filter((item) => {
+                if (item.requireFeature) {
+                  return features[item.requireFeature as keyof typeof features];
+                }
+                return true;
+              })
+              .map((item) => (
               <NavLink
                 key={item.path}
                 to={item.path}
