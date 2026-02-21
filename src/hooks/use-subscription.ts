@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAppMode } from './use-app-mode';
 
 export type SubscriptionTier = 'free' | 'premium' | 'pro';
 
@@ -94,8 +95,10 @@ export function useSubscription() {
 
       if (error || !data) {
         // No subscription found = free tier
+        console.log('📊 Subscription Debug - No data found, defaulting to free');
         setSubscription({ tier: 'free', status: 'active' });
       } else {
+        console.log('📊 Subscription Debug - Loaded:', data.tier, data.status);
         setSubscription({
           tier: data.tier as SubscriptionTier,
           status: data.status as 'active' | 'inactive' | 'cancelled',
