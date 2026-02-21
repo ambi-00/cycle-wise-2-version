@@ -5,6 +5,7 @@ import { SafetyModeToggle } from "@/components/SafetyModeToggle";
 import { PerformanceCard } from "@/components/PerformanceCard";
 import { DailyHealthCheckIn } from "@/components/DailyHealthCheckIn";
 import { loadCycleSettings, getCurrentCycleInfo, hasCompletedTodayCheckIn } from "@/lib/demoDataLoaders";
+import { loadTradesFromLocalStorage } from "@/lib/tradeLoaders";
 import { useWeeklyInsightGeneration } from "@/hooks/use-weekly-insights";
 import { useXPNotifications } from "@/hooks/use-xp-notifications";
 import MigrationDialog from "@/components/MigrationDialog";
@@ -115,22 +116,11 @@ const mockLeaderboard = [
   { rank: 3, name: "Luna P.", avatar: "👩‍🔬", score: 756 },
 ];
 
-// helper: load all trades stored under cw_journal_{ISO}
+// Use centralized trade loader (supports DEMO mode)
 const loadAllStoredTrades = () => {
-  const trades: any[] = [];
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i) || "";
-    if (key.startsWith("cw_journal_")) {
-      try {
-        const raw = localStorage.getItem(key);
-        if (!raw) continue;
-        const data = JSON.parse(raw);
-        (data.trades || []).forEach((t: any) => trades.push(t));
-      } catch (e) {
-        // ignore malformed entries
-      }
-    }
-  }
+  console.log('📊 Dashboard: Loading trades...');
+  const trades = loadTradesFromLocalStorage();
+  console.log('📊 Dashboard: Loaded', trades.length, 'trades');
   return trades;
 };
 

@@ -10,15 +10,12 @@ import { generateDemoTrades } from "@/data/demo-data";
  */
 function isInDemoMode(): boolean {
   try {
-    // Check localStorage for app mode (set by Settings page)
-    const profiles = localStorage.getItem('sb-localhost-auth-token') || localStorage.getItem('sb-xgqbpfgbccfghxajmrde-auth-token');
-    if (profiles) {
-      // In a real scenario, we'd check Supabase. For now, check a dedicated key.
-      const demoMode = localStorage.getItem('cw_app_mode');
-      return demoMode === 'DEMO';
-    }
-    return false;
+    const demoMode = localStorage.getItem('cw_app_mode');
+    const isDemo = demoMode === 'DEMO';
+    console.log('🔍 Checking DEMO mode:', demoMode, '| Is Demo:', isDemo);
+    return isDemo;
   } catch {
+    console.log('🔍 DEMO mode check failed');
     return false;
   }
 }
