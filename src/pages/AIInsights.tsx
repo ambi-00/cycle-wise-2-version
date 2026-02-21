@@ -69,17 +69,17 @@ export default function AIInsights() {
     return (
       <main className="pb-24 pt-20 lg:pl-64 lg:pt-8">
         <div className="relative">
-          {!subLoading && appMode !== 'FILMING' && appMode !== 'DEMO' && subscription.tier !== 'pro' && (
+          {!subLoading && appMode !== 'FILMING' && appMode !== 'DEMO' && subscription.tier === 'free' && (
             <div className="fixed inset-y-0 right-0 left-0 lg:left-64 z-50 flex items-center justify-center p-6 bg-black/20 backdrop-blur-sm">
               <Card className="max-w-md w-full">
                 <CardContent className="p-8 text-center">
                   <Lock className="h-12 w-12 text-primary mx-auto mb-4" />
-                  <h3 className="font-semibold text-xl mb-2">Pro Feature</h3>
+                  <h3 className="font-semibold text-xl mb-2">Premium Feature</h3>
                   <p className="text-sm text-muted-foreground mb-6">
-                    Upgrade to Pro for AI-powered insights, personalized recommendations, and cycle-based trading analysis.
+                    Upgrade to Premium for AI-powered insights, personalized recommendations, and cycle-based trading analysis.
                   </p>
                   <Button onClick={() => navigate('/#pricing')} size="lg" className="w-full">
-                    Upgrade to Pro - €19.99/mo
+                    Upgrade to Premium - €9.99/mo
                   </Button>
                 </CardContent>
               </Card>
