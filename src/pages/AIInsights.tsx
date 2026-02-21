@@ -75,12 +75,12 @@ export default function AIInsights() {
               <Card className="max-w-md w-full">
                 <CardContent className="p-8 text-center">
                   <Lock className="h-12 w-12 text-primary mx-auto mb-4" />
-                  <h3 className="font-semibold text-xl mb-2">Premium Feature</h3>
+                  <h3 className="font-semibold text-xl mb-2">Pro Feature</h3>
                   <p className="text-sm text-muted-foreground mb-6">
-                    Upgrade to Premium for AI-powered insights, personalized recommendations, and cycle-based trading analysis.
+                    Upgrade to Pro for AI-powered insights, personalized recommendations, and cycle-based trading analysis.
                   </p>
-                  <Button onClick={() => navigate('/#pricing')} size="lg" className="w-full">
-                    Upgrade to Premium - €9.99/mo
+                  <Button onClick={() => navigate('/checkout?tier=pro&returnTo=/insights')} size="lg" className="w-full">
+                    Upgrade to Pro - €19.99/mo
                   </Button>
                 </CardContent>
               </Card>

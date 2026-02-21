@@ -32,7 +32,7 @@ const FEATURES = {
   propfirm_discounts: ['premium', 'pro'],
   
   // PRO features (AI-powered)
-  ai_insights_weekly: ['premium', 'pro'],
+  ai_insights_weekly: ['pro'],
   ai_insights_daily: ['pro'],
   smart_predictions: ['pro'],
   propfirm_integration: ['pro'],
