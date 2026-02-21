@@ -43,6 +43,7 @@ export default function NewStrategy() {
   const [confirmations, setConfirmations] = useState<string[]>([]);
   const [rules, setRules] = useState<string[]>([]);
   const [entryTriggers, setEntryTriggers] = useState<string[]>([]);
+  const [slCriteria, setSlCriteria] = useState<string[]>([]); // NEW: SL criteria
   const [exitRules, setExitRules] = useState<string[]>([]);
   const [exitCriteria, setExitCriteria] = useState<string[]>([]); // NEW: Dropdown exit criteria
   
@@ -56,6 +57,7 @@ export default function NewStrategy() {
   const [newConfirmation, setNewConfirmation] = useState("");
   const [newRule, setNewRule] = useState("");
   const [newEntryTrigger, setNewEntryTrigger] = useState("");
+  const [newSlCriteria, setNewSlCriteria] = useState(""); // NEW
   const [newExitRule, setNewExitRule] = useState("");
   const [newExitCriteria, setNewExitCriteria] = useState(""); // NEW
 
@@ -117,6 +119,17 @@ export default function NewStrategy() {
 
   const removeEntryTrigger = (index: number) => {
     setEntryTriggers(entryTriggers.filter((_, i) => i !== index));
+  };
+
+  const addSlCriteria = () => {
+    if (newSlCriteria.trim()) {
+      setSlCriteria([...slCriteria, newSlCriteria.trim()]);
+      setNewSlCriteria("");
+    }
+  };
+
+  const removeSlCriteria = (index: number) => {
+    setSlCriteria(slCriteria.filter((_, i) => i !== index));
   };
 
   const addExitRule = () => {
@@ -216,6 +229,7 @@ export default function NewStrategy() {
       timeframes: selectedTimeframes,
       confirmations,
       entryTriggers,
+      slCriteria, // NEW: SL criteria
       exitRules,
       exitCriteria, // NEW: Exit criteria dropdown options
       generalRules: rules,
@@ -433,6 +447,52 @@ export default function NewStrategy() {
               {entryTriggers.length === 0 && (
                 <p className="text-center text-sm text-muted-foreground py-4">
                   No entry triggers added yet
+                </p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* SL Criteria - NEW */}
+        <Card>
+          <CardHeader>
+            <CardTitle>SL Criteria</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              What specific stop loss criteria do you use? (e.g., pips, % risk, price level)
+            </p>
+            <div className="flex gap-2">
+              <Input
+                placeholder="e.g., 50 pips, Break of structure, Previous Low"
+                value={newSlCriteria}
+                onChange={(e) => setNewSlCriteria(e.target.value)}
+                onKeyPress={(e) => e.key === "Enter" && addSlCriteria()}
+              />
+              <Button onClick={addSlCriteria}>
+                <Plus className="h-4 w-4" />
+                Add
+              </Button>
+            </div>
+            <div className="space-y-2">
+              {slCriteria.map((criteria, i) => (
+                <div
+                  key={i}
+                  className="flex items-center justify-between rounded-lg bg-warning/10 p-3"
+                >
+                  <span className="text-sm text-foreground">{criteria}</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeSlCriteria(i)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+              {slCriteria.length === 0 && (
+                <p className="text-center text-sm text-muted-foreground py-4">
+                  No SL criteria added yet
                 </p>
               )}
             </div>
