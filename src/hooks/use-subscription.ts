@@ -59,7 +59,7 @@ const SCREENSHOT_LIMITS = {
 };
 
 export function useSubscription() {
-  const { appMode } = useAppMode();
+  const { appMode, isLoading: appModeLoading } = useAppMode();
   const [subscription, setSubscription] = useState<Subscription>({
     tier: 'free',
     status: 'active',
@@ -67,6 +67,12 @@ export function useSubscription() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Wait for app mode to load first
+    if (appModeLoading) {
+      setLoading(true);
+      return;
+    }
+
     // DEMO and FILMING modes - provide PRO features for videos/demos
     if (appMode === 'DEMO' || appMode === 'FILMING') {
       console.log('📊 Subscription - Auto-set to PRO for', appMode, 'mode');
@@ -83,7 +89,7 @@ export function useSubscription() {
     }
     
     loadSubscription();
-  }, [appMode]);
+  }, [appMode, appModeLoading]);
 
   async function loadSubscription() {
     try {
