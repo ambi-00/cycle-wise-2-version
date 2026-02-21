@@ -12,6 +12,7 @@ import { loadCycleSettings } from '@/lib/demoDataLoaders';
 import { saveTrade, updateTrade, uploadTradeImage, type TradeInsert } from '@/lib/supabaseHelpers';
 import { useToast } from '@/hooks/use-toast';
 import { useSubscription } from '@/hooks/use-subscription';
+import TradeReviewModal, { type TradeExecutionReview } from '@/components/TradeReviewModal';
 
 const DEFAULT_STRATEGIES = [
   { name: 'ICT Silver Bullet', minConfirmations: 3 },
@@ -126,6 +127,12 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
   const [imageBeforeLarge, setImageBeforeLarge] = useState<string | null>(null);
   const [imageAfterSmall, setImageAfterSmall] = useState<string | null>(null);
   const [imageAfterLarge, setImageAfterLarge] = useState<string | null>(null);
+
+  // Trade Review Modal State (NEW)
+  const [showTradeReview, setShowTradeReview] = useState(false);
+  const [pendingTradeData, setPendingTradeData] = useState<TradeInsert | null>(null);
+  const [pendingTradeId, setPendingTradeId] = useState<string | null>(null);
+  const [pendingIsEdit, setPendingIsEdit] = useState(false);
 
   const [viewMode, setViewMode] = useState<'before' | 'during' | 'after'>('before');
   const [preSmallUrl, setPreSmallUrl] = useState('');
@@ -563,11 +570,22 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
         cycle_phase: cyclePhase,
       };
 
+      // Check if trade is being closed - if so, show review modal
+      const isClosing = tradeData.status === 'closed';
+      
+      if (isClosing) {
+        // Store trade data and show review modal
+        setPendingTradeData(tradeData);
+        setPendingTradeId(editingId);
+        setPendingIsEdit(!!editingId);
+        setShowTradeReview(true);
+        return; // Don't save yet - wait for review completion
+      }
+
+      // If not closing, save immediately (open trade)
       if (editingId) {
-        // Update existing trade
         await updateTrade(editingId, tradeData);
       } else {
-        // Create new trade
         await saveTrade(tradeData);
       }
 
@@ -577,6 +595,36 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
       navigate('/journal');
     } catch (e: any) {
       console.error('Save error:', e);
+      alert(`Failed to save trade: ${e.message || 'Unknown error'}`);
+    }
+  };
+
+  // Handle trade review completion (NEW)
+  const handleTradeReviewComplete = async (reviewData: TradeExecutionReview) => {
+    if (!pendingTradeData) return;
+
+    try {
+      // Merge review data with trade data
+      const finalTradeData: TradeInsert = {
+        ...pendingTradeData,
+        ...reviewData,
+      };
+
+      // Save the trade with execution quality data
+      if (pendingIsEdit && pendingTradeId) {
+        await updateTrade(pendingTradeId, finalTradeData);
+      } else {
+        await saveTrade(finalTradeData);
+      }
+
+      // Reset pending state
+      setPendingTradeData(null);
+      setPendingTradeId(null);
+      setPendingIsEdit(false);
+
+      navigate('/journal');
+    } catch (e: any) {
+      console.error('Save error after review:', e);
       alert(`Failed to save trade: ${e.message || 'Unknown error'}`);
     }
   };
@@ -1437,6 +1485,35 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Trade Review Modal - NEW */}
+      {pendingTradeData && (
+        <TradeReviewModal
+          open={showTradeReview}
+          onOpenChange={setShowTradeReview}
+          onComplete={handleTradeReviewComplete}
+          tradeData={{
+            id: pendingTradeId || 'new',
+            symbol: pendingTradeData.instrument,
+            result: pendingTradeData.result as 'win' | 'loss' | 'breakeven',
+            profitLoss: pendingTradeData.pnl || 0,
+            strategy: pendingTradeData.strategy || undefined,
+          }}
+          strategyExitCriteria={
+            pendingTradeData.strategy 
+              ? (() => {
+                  try {
+                    const strategies = JSON.parse(localStorage.getItem('cw_strategies') || '[]');
+                    const strategy = strategies.find((s: any) => s.name === pendingTradeData.strategy);
+                    return strategy?.exitCriteria || [];
+                  } catch {
+                    return [];
+                  }
+                })()
+              : []
+          }
+        />
       )}
     </main>
   );

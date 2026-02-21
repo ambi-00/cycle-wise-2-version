@@ -50,6 +50,15 @@ export interface TradeInsert {
   image_after_large_tf?: string | null;
   cycle_day?: number | null;
   cycle_phase?: string | null;
+  
+  // EXECUTION QUALITY TRACKING (NEW)
+  followed_entry_criteria?: boolean | null;
+  followed_exit_criteria?: boolean | null;
+  risk_appropriate?: boolean | null;
+  emotionally_neutral?: boolean | null;
+  execution_score?: number | null;
+  execution_notes?: string | null;
+  exit_criteria_used?: string | null;
 }
 
 /**
@@ -1313,10 +1322,17 @@ export const XP_REWARDS = {
   AI_INSIGHT_PROFITABLE: 200,
   AI_INSIGHT_READ: 50,
   NO_REVENGE_TRADING: 50,
+  
+  // EXECUTION QUALITY (NEW)
+  PERFECT_EXECUTION: 100, // 100% execution score
+  EXCELLENT_EXECUTION: 50, // 75-99% execution score
+  GOOD_EXECUTION: 25, // 50-74% execution score
+  EXECUTION_STREAK_5: 150, // 5 trades in a row with 75%+ execution
+  EXECUTION_STREAK_10: 300, // 10 trades in a row with 75%+ execution
 };
 
 /**
- * Calculate XP for a trade based on rule compliance
+ * Calculate XP for a trade based on rule compliance AND execution quality
  */
 export function calculateTradeXP(trade: any, userRules?: any): { xp: number; reasons: string[] } {
   let xp = 0;
@@ -1360,6 +1376,21 @@ export function calculateTradeXP(trade: any, userRules?: any): { xp: number; rea
     const profitBonus = Math.floor(XP_REWARDS.TRADE_PROFIT_BASE * trade.r_multiple);
     xp += profitBonus;
     reasons.push(`Profitable Trade (+${profitBonus} XP)`);
+  }
+
+  // EXECUTION QUALITY BONUS (NEW)
+  if (trade.execution_score !== undefined && trade.execution_score !== null) {
+    if (trade.execution_score === 100) {
+      xp += XP_REWARDS.PERFECT_EXECUTION;
+      reasons.push(`Perfect Execution (+${XP_REWARDS.PERFECT_EXECUTION} XP) 🎯`);
+    } else if (trade.execution_score >= 75) {
+      xp += XP_REWARDS.EXCELLENT_EXECUTION;
+      reasons.push(`Excellent Execution (+${XP_REWARDS.EXCELLENT_EXECUTION} XP) ⭐`);
+    } else if (trade.execution_score >= 50) {
+      xp += XP_REWARDS.GOOD_EXECUTION;
+      reasons.push(`Good Execution (+${XP_REWARDS.GOOD_EXECUTION} XP)`);
+    }
+    // No penalty for low scores - awareness is enough
   }
 
   return { xp, reasons };

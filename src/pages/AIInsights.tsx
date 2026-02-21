@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Sparkles, TrendingUp, Calendar, Clock, Target, Brain, Lightbulb, ArrowRight, Lock, TrendingDown, Shield, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Sparkles, TrendingUp, Calendar, Clock, Target, Brain, Lightbulb, ArrowRight, Lock, TrendingDown, Shield, AlertTriangle, CheckCircle2, Award, FileCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import NaturalLanguageInsights from "@/components/NaturalLanguageInsights";
@@ -15,6 +15,12 @@ import {
   getRiskRewardContext,
   getDrawdownContext 
 } from "@/lib/tradingStatistics";
+import { 
+  calculateExecutionMetrics, 
+  analyzeProcessVsOutcome, 
+  getExecutionQualityMessage,
+  getProcessVsOutcomeInsight 
+} from "@/lib/executionQuality";
 import { generateDemoTrades } from "@/data/demo-data";
 
 export default function AIInsights() {
@@ -33,6 +39,12 @@ export default function AIInsights() {
   const winRateContext = getWinRateContext(stats);
   const rrContext = getRiskRewardContext(stats);
   const ddContext = getDrawdownContext(stats);
+
+  // Calculate execution quality metrics
+  const executionMetrics = calculateExecutionMetrics();
+  const processVsOutcome = analyzeProcessVsOutcome();
+  const executionMessage = getExecutionQualityMessage(executionMetrics);
+  const pvoInsight = getProcessVsOutcomeInsight(processVsOutcome);
 
   useEffect(() => {
     // Load demo trades in DEMO mode, otherwise load from localStorage
@@ -215,6 +227,166 @@ export default function AIInsights() {
                       )}
                       CONTEXT:
                     </p>
+
+              {/* EXECUTION QUALITY SECTION - NEW */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="rounded-2xl bg-gradient-to-br from-primary/5 to-accent/5 p-8 shadow-card border-2 border-primary/20"
+              >
+                <div className="flex items-center gap-3 mb-6">
+                  <Award className="h-6 w-6 text-primary" />
+                  <div>
+                    <h2 className="text-2xl font-bold text-foreground">Execution Quality</h2>
+                    <p className="text-sm text-muted-foreground">Process over outcome - the professional trader's mindset</p>
+                  </div>
+                </div>
+
+                {executionMetrics.tradesWithReview >= 10 ? (
+                  <>
+                    {/* Main Stats */}
+                    <div className="grid gap-4 sm:grid-cols-3 mb-6">
+                      <div className="rounded-lg bg-card p-4 border border-border">
+                        <p className="text-sm text-muted-foreground mb-1">Execution Rate</p>
+                        <p className={`text-3xl font-bold ${executionMessage.color}`}>
+                          {executionMetrics.executionRate.toFixed(0)}%
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {Math.round(executionMetrics.tradesWithReview * executionMetrics.executionRate / 100)} of {executionMetrics.tradesWithReview} trades following plan
+                        </p>
+                      </div>
+
+                      <div className="rounded-lg bg-card p-4 border border-border">
+                        <p className="text-sm text-muted-foreground mb-1">Avg Score</p>
+                        <p className="text-3xl font-bold text-foreground">
+                          {executionMetrics.avgExecutionScore.toFixed(0)}%
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Across all reviewed trades
+                        </p>
+                      </div>
+
+                      <div className="rounded-lg bg-card p-4 border border-border">
+                        <p className="text-sm text-muted-foreground mb-1">Perfect Executions</p>
+                        <p className="text-3xl font-bold text-foreground">
+                          {executionMetrics.perfectExecutions}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          100% plan adherence
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Mentoring Message */}
+                    <div className="rounded-lg bg-card p-5 border-l-4 border-primary mb-6">
+                      <p className="font-semibold text-foreground mb-2 flex items-center gap-2">
+                        <Brain className="h-5 w-5 text-primary" />
+                        {executionMessage.message}
+                      </p>
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        💡 {executionMessage.tip}
+                      </p>
+                    </div>
+
+                    {/* Individual Criteria */}
+                    <div className="grid gap-3 sm:grid-cols-2 mb-6">
+                      <div className="rounded-lg bg-card p-4 border border-border">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium">Entry Criteria</span>
+                          <span className="text-sm font-bold text-foreground">{executionMetrics.followedEntry.toFixed(0)}%</span>
+                        </div>
+                        <div className="w-full bg-muted rounded-full h-2">
+                          <div className="bg-primary h-2 rounded-full" style={{ width: `${executionMetrics.followedEntry}%` }} />
+                        </div>
+                      </div>
+
+                      <div className="rounded-lg bg-card p-4 border border-border">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium">Exit Criteria</span>
+                          <span className="text-sm font-bold text-foreground">{executionMetrics.followedExit.toFixed(0)}%</span>
+                        </div>
+                        <div className="w-full bg-muted rounded-full h-2">
+                          <div className="bg-primary h-2 rounded-full" style={{ width: `${executionMetrics.followedExit}%` }} />
+                        </div>
+                      </div>
+
+                      <div className="rounded-lg bg-card p-4 border border-border">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium">Risk Management</span>
+                          <span className="text-sm font-bold text-foreground">{executionMetrics.riskAppropriate.toFixed(0)}%</span>
+                        </div>
+                        <div className="w-full bg-muted rounded-full h-2">
+                          <div className="bg-primary h-2 rounded-full" style={{ width: `${executionMetrics.riskAppropriate}%` }} />
+                        </div>
+                      </div>
+
+                      <div className="rounded-lg bg-card p-4 border border-border">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium">Emotional Control</span>
+                          <span className="text-sm font-bold text-foreground">{executionMetrics.emotionallyNeutral.toFixed(0)}%</span>
+                        </div>
+                        <div className="w-full bg-muted rounded-full h-2">
+                          <div className="bg-primary h-2 rounded-full" style={{ width: `${executionMetrics.emotionallyNeutral}%` }} />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Process vs Outcome Analysis */}
+                    {(processVsOutcome.perfectWins + processVsOutcome.perfectLosses + processVsOutcome.brokenWins + processVsOutcome.brokenLosses) > 0 && (
+                      <div className="rounded-lg bg-gradient-to-r from-green-500/10 to-blue-500/10 p-5 border border-green-500/20">
+                        <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
+                          <FileCheck className="h-5 w-5 text-primary" />
+                          Process vs Outcome
+                        </h3>
+                        
+                        <div className="grid gap-3 sm:grid-cols-2 mb-4">
+                          <div className="rounded-lg bg-green-500/10 p-3 border border-green-500/30">
+                            <p className="text-xs text-muted-foreground mb-1">Perfect Execution + Win</p>
+                            <p className="text-2xl font-bold text-green-500">{processVsOutcome.perfectWins}</p>
+                            <p className="text-xs text-muted-foreground">✅ Best case scenario</p>
+                          </div>
+
+                          <div className="rounded-lg bg-blue-500/10 p-3 border border-blue-500/30">
+                            <p className="text-xs text-muted-foreground mb-1">Perfect Execution + Loss</p>
+                            <p className="text-2xl font-bold text-blue-500">{processVsOutcome.perfectLosses}</p>
+                            <p className="text-xs text-muted-foreground">✅ Still a WIN (process-wise)</p>
+                          </div>
+
+                          <div className="rounded-lg bg-yellow-500/10 p-3 border border-yellow-500/30">
+                            <p className="text-xs text-muted-foreground mb-1">Broken Rules + Win</p>
+                            <p className="text-2xl font-bold text-yellow-500">{processVsOutcome.brokenWins}</p>
+                            <p className="text-xs text-muted-foreground">⚠️ Luck, not skill</p>
+                          </div>
+
+                          <div className="rounded-lg bg-red-500/10 p-3 border border-red-500/30">
+                            <p className="text-xs text-muted-foreground mb-1">Broken Rules + Loss</p>
+                            <p className="text-2xl font-bold text-red-500">{processVsOutcome.brokenLosses}</p>
+                            <p className="text-xs text-muted-foreground">❌ Worst case</p>
+                          </div>
+                        </div>
+
+                        <div className="rounded-lg bg-card p-4 border border-border">
+                          <p className="font-semibold text-foreground mb-1">{pvoInsight.message}</p>
+                          <p className="text-sm text-muted-foreground">{pvoInsight.tip}</p>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="text-center py-8">
+                    <FileCheck className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50" />
+                    <p className="text-lg font-semibold text-foreground mb-2">Start Reviewing Your Trades</p>
+                    <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                      After closing a trade, you'll be asked to rate your execution quality. 
+                      This separates your identity from results and focuses on what you can control: your process.
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-4">
+                      {executionMetrics.tradesWithReview} of {executionMetrics.totalTrades} trades reviewed so far
+                    </p>
+                  </div>
+                )}
+              </motion.div>
                     <p className="text-sm text-foreground leading-relaxed">
                       {ddContext.message}
                     </p>

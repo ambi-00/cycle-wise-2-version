@@ -44,6 +44,7 @@ export default function NewStrategy() {
   const [rules, setRules] = useState<string[]>([]);
   const [entryTriggers, setEntryTriggers] = useState<string[]>([]);
   const [exitRules, setExitRules] = useState<string[]>([]);
+  const [exitCriteria, setExitCriteria] = useState<string[]>([]); // NEW: Dropdown exit criteria
   
   // Risk Management
   const [riskPerTrade, setRiskPerTrade] = useState("1");
@@ -56,6 +57,7 @@ export default function NewStrategy() {
   const [newRule, setNewRule] = useState("");
   const [newEntryTrigger, setNewEntryTrigger] = useState("");
   const [newExitRule, setNewExitRule] = useState("");
+  const [newExitCriteria, setNewExitCriteria] = useState(""); // NEW
 
   // Example Trade Dialog
   const [showExampleDialog, setShowExampleDialog] = useState(false);
@@ -126,6 +128,17 @@ export default function NewStrategy() {
 
   const removeExitRule = (index: number) => {
     setExitRules(exitRules.filter((_, i) => i !== index));
+  };
+
+  const addExitCriteria = () => {
+    if (newExitCriteria.trim()) {
+      setExitCriteria([...exitCriteria, newExitCriteria.trim()]);
+      setNewExitCriteria("");
+    }
+  };
+
+  const removeExitCriteria = (index: number) => {
+    setExitCriteria(exitCriteria.filter((_, i) => i !== index));
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -204,6 +217,7 @@ export default function NewStrategy() {
       confirmations,
       entryTriggers,
       exitRules,
+      exitCriteria, // NEW: Exit criteria dropdown options
       generalRules: rules,
       riskPerTrade: parseFloat(riskPerTrade),
       stopLossType,
@@ -419,6 +433,52 @@ export default function NewStrategy() {
               {entryTriggers.length === 0 && (
                 <p className="text-center text-sm text-muted-foreground py-4">
                   No entry triggers added yet
+                </p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Exit Criteria - NEW */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Exit/TP Criteria</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Define your specific exit/take-profit criteria. You'll select from these when closing trades.
+            </p>
+            <div className="flex gap-2">
+              <Input
+                placeholder="e.g., Last High/Low, Inducement, Support/Resistance, Fixed TP"
+                value={newExitCriteria}
+                onChange={(e) => setNewExitCriteria(e.target.value)}
+                onKeyPress={(e) => e.key === "Enter" && addExitCriteria()}
+              />
+              <Button onClick={addExitCriteria}>
+                <Plus className="h-4 w-4" />
+                Add
+              </Button>
+            </div>
+            <div className="space-y-2">
+              {exitCriteria.map((criteria, i) => (
+                <div
+                  key={i}
+                  className="flex items-center justify-between rounded-lg bg-primary/10 p-3"
+                >
+                  <span className="text-sm text-foreground">{criteria}</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeExitCriteria(i)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+              {exitCriteria.length === 0 && (
+                <p className="text-center text-sm text-muted-foreground py-4">
+                  No exit criteria added yet. Common examples: Last High/Low, Inducement Level, 2:1 RR, Time-based Exit
                 </p>
               )}
             </div>
