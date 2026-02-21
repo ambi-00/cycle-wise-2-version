@@ -3,14 +3,43 @@
  * Consolidates all localStorage iteration patterns into reusable functions
  */
 
+import { generateDemoTrades } from "@/data/demo-data";
+
 /**
- * Load ALL trades from localStorage
+ * Check if we're in DEMO mode
+ */
+function isInDemoMode(): boolean {
+  try {
+    // Check localStorage for app mode (set by Settings page)
+    const profiles = localStorage.getItem('sb-localhost-auth-token') || localStorage.getItem('sb-xgqbpfgbccfghxajmrde-auth-token');
+    if (profiles) {
+      // In a real scenario, we'd check Supabase. For now, check a dedicated key.
+      const demoMode = localStorage.getItem('cw_app_mode');
+      return demoMode === 'DEMO';
+    }
+    return false;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Load ALL trades from localStorage OR demo data
  * Used by: Dashboard, AIInsights, NaturalLanguageInsights, QuickStartChecklist, getWinLossStreak, etc.
  * 
  * @param filterByDate Optional: load only trades from a specific date (YYYY-MM-DD)
  * @returns Array of trade objects
  */
 export function loadTradesFromLocalStorage(filterByDate?: string): any[] {
+  // In DEMO mode, return demo trades
+  if (isInDemoMode()) {
+    const demoTrades = generateDemoTrades();
+    if (filterByDate) {
+      return demoTrades.filter((t: any) => t.date === filterByDate);
+    }
+    return demoTrades;
+  }
+
   try {
     if (filterByDate) {
       // Single date lookup - faster

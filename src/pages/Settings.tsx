@@ -58,6 +58,10 @@ export default function Settings() {
       if (error) throw error;
 
       setSelectedMode(mode);
+      
+      // Store mode in localStorage for immediate access
+      localStorage.setItem('cw_app_mode', mode);
+      
       toast({
         title: "Mode Updated",
         description: `App mode changed to ${mode}`,
