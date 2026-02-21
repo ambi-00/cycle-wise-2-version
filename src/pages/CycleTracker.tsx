@@ -818,6 +818,7 @@ export default function CycleTracker() {
                 )}
 
                   {/* Actions for today: mark as period start, toggle period day */}
+                  {todayDayData && (
                   <div className="mt-4 flex gap-2">
                     <Button
                       onClick={() => {
@@ -849,12 +850,13 @@ export default function CycleTracker() {
 
                     {/* Clear Period Start removed — setting a different start will recompute period */}
                   </div>
+                  )}
 
                 <div className="mt-6 space-y-4">
                   <div>
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">Mood</span>
-                      <span className="font-medium text-foreground">{todayDayData?.mood}/10</span>
+                      <span className="font-medium text-foreground">{todayDayData?.mood || 0}/10</span>
                     </div>
                     <div className="mt-2 h-2 rounded-full bg-muted">
                       <div 
@@ -867,7 +869,7 @@ export default function CycleTracker() {
                   <div>
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">Energy</span>
-                      <span className="font-medium text-foreground">{todayDayData?.energy}/10</span>
+                      <span className="font-medium text-foreground">{todayDayData?.energy || 0}/10</span>
                     </div>
                     <div className="mt-2 h-2 rounded-full bg-muted">
                       <div 
