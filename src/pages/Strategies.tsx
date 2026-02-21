@@ -155,9 +155,9 @@ export default function Strategies() {
                 </div>
               </div>
 
-              {/* Confirmations */}
+              {/* Entry Checklist */}
               <div className="mt-6">
-                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Confirmation Checklist</p>
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Entry Checklist</p>
                 <div className="mt-3 space-y-2">
                   {strategy.confirmations.slice(0, 3).map((conf, i) => (
                     <div key={`conf-${strategy.id}-${i}`} className="flex items-center gap-2 text-sm text-foreground">

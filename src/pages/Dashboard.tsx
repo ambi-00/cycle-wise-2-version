@@ -506,22 +506,20 @@ export default function Dashboard() {
             </div>
 
             {/* Always show AI insights - real patterns or "No trades yet" */}
-            {!(appMode === 'FILMING' && storedTrades.length === 0) && (
-              <Suspense fallback={<div className="rounded-2xl bg-card p-5 shadow-card h-24" />}>
-                <AIInsightCard
-                  insight={
-                    strategySummary && strategySummary.length > 0
-                      ? strategySummary
-                          .slice(0, 3)
-                          .map((s: any) => `${s.name}: ${Math.round((s.wins / s.count) * 100) || 0}% (${s.count})`)
-                          .join(" • ")
-                      : "No trades yet. Start logging trades to discover patterns."
-                  }
-                  category="pattern"
-                  actionLabel="View Full Analysis"
-                />
-              </Suspense>
-            )}
+            <Suspense fallback={<div className="rounded-2xl bg-card p-5 shadow-card h-24" />}>
+              <AIInsightCard
+                insight={
+                  strategySummary && strategySummary.length > 0
+                    ? strategySummary
+                        .slice(0, 3)
+                        .map((s: any) => `${s.name}: ${Math.round((s.wins / s.count) * 100) || 0}% (${s.count})`)
+                        .join(" • ")
+                    : "No trades yet. Start logging trades to discover patterns."
+                }
+                category="pattern"
+                actionLabel="View Full Analysis"
+              />
+            </Suspense>
 
             {/* Always show recent trades table - shows empty or mock data */}
             <Suspense fallback={<div className="rounded-2xl bg-card p-5 shadow-card" />}>
