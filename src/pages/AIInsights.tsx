@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Sparkles, TrendingUp, Calendar, Clock, Target, Brain, Lightbulb, ArrowRight, Lock } from "lucide-react";
+import { Sparkles, TrendingUp, Calendar, Clock, Target, Brain, Lightbulb, ArrowRight, Lock, TrendingDown, Shield, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import NaturalLanguageInsights from "@/components/NaturalLanguageInsights";
@@ -9,6 +9,12 @@ import { useSubscription } from "@/hooks/use-subscription";
 import { usePaymentSuccess } from "@/hooks/use-payment-success";
 import { loadTradesFromLocalStorage } from "@/lib/tradeLoaders";
 import { useAppMode } from "@/hooks/use-app-mode";
+import { 
+  calculateTradeStatistics, 
+  getWinRateContext, 
+  getRiskRewardContext,
+  getDrawdownContext 
+} from "@/lib/tradingStatistics";
 
 export default function AIInsights() {
   const navigate = useNavigate();
@@ -20,6 +26,12 @@ export default function AIInsights() {
   
   // In FILMING mode, hide demo insights - show only real data
   const showDemoInsights = appMode !== 'FILMING';
+
+  // Calculate real trading statistics
+  const stats = calculateTradeStatistics(trades);
+  const winRateContext = getWinRateContext(stats);
+  const rrContext = getRiskRewardContext(stats);
+  const ddContext = getDrawdownContext(stats);
 
   useEffect(() => {
     const allTrades = loadTradesFromLocalStorage();
@@ -63,6 +75,146 @@ export default function AIInsights() {
             <h1 className="font-serif text-2xl font-bold text-foreground lg:text-3xl">AI Insights</h1>
             <p className="mt-1 text-muted-foreground">Personalized analysis powered by your trading data</p>
           </div>
+
+          {/* Statistical Confidence Builder - Real data section */}
+          {hasData && stats.totalTrades >= 20 && (
+            <div className="mb-8 space-y-4">
+              <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
+                <Shield className="h-5 w-5 text-primary" />
+                Your Trading Reality
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Statistical perspective to build confidence and reduce fear
+              </p>
+
+              {/* Win Rate Context */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="rounded-2xl bg-card p-6 shadow-card border-l-4 border-primary"
+              >
+                <h3 className="font-semibold text-lg mb-2 flex items-center gap-2">
+                  <Target className="h-5 w-5" />
+                  Win Rate Context (Last {stats.totalTrades} Trades)
+                </h3>
+                <div className="grid gap-4 sm:grid-cols-2 mt-4">
+                  <div>
+                    <p className="text-3xl font-bold text-foreground">{stats.winRate.toFixed(1)}%</p>
+                    <p className="text-sm text-muted-foreground">
+                      {stats.totalTrades - Math.round(stats.totalTrades * stats.winRate / 100)} wins / {Math.round(stats.totalTrades * stats.winRate / 100)} losses
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Current Streak</p>
+                    <p className="text-lg font-semibold flex items-center gap-2">
+                      {stats.currentStreak.type === 'win' ? (
+                        <CheckCircle2 className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <TrendingDown className="h-4 w-4 text-red-500" />
+                      )}
+                      {stats.currentStreak.count} {stats.currentStreak.type}s
+                    </p>
+                  </div>
+                </div>
+
+                <div className={`mt-4 p-4 rounded-lg ${winRateContext.color === 'green' ? 'bg-green-500/10' : winRateContext.color === 'yellow' ? 'bg-yellow-500/10' : 'bg-red-500/10'}`}>
+                  <p className="text-sm font-semibold mb-2 flex items-center gap-2">
+                    {winRateContext.isNormal ? (
+                      <CheckCircle2 className="h-4 w-4 text-green-500" />
+                    ) : (
+                      <AlertTriangle className="h-4 w-4 text-yellow-500" />
+                    )}
+                    WHAT THIS REALLY MEANS:
+                  </p>
+                  <p className="text-sm text-foreground leading-relaxed">
+                    • {Math.round(stats.expectedLossesPerTen)} losses per 10 trades are STATISTICALLY NORMAL<br />
+                    • Expected losses per 10 trades: {stats.expectedLossesPerTen}<br />
+                    • Longest loss streak: {stats.longestLossStreak} trades<br />
+                    • Statistical expectation: {Math.ceil(stats.expectedLossesPerTen * 0.7)} losses possible<br />
+                    → {winRateContext.message}
+                  </p>
+                </div>
+              </motion.div>
+
+              {/* Risk/Reward Context */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="rounded-2xl bg-card p-6 shadow-card border-l-4 border-accent"
+              >
+                <h3 className="font-semibold text-lg mb-2 flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5" />
+                  Average Win vs Loss
+                </h3>
+                <div className="grid gap-4 sm:grid-cols-3 mt-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Avg Win</p>
+                    <p className="text-2xl font-bold text-green-500">€{stats.avgWin.toFixed(0)}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Avg Loss</p>
+                    <p className="text-2xl font-bold text-red-500">€{stats.avgLoss.toFixed(0)}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Risk:Reward</p>
+                    <p className="text-2xl font-bold text-primary">{stats.riskRewardRatio.toFixed(2)}:1</p>
+                  </div>
+                </div>
+
+                <div className={`mt-4 p-4 rounded-lg ${rrContext.color === 'green' ? 'bg-green-500/10' : rrContext.color === 'yellow' ? 'bg-yellow-500/10' : 'bg-red-500/10'}`}>
+                  <p className="text-sm font-semibold mb-2 flex items-center gap-2">
+                    <Sparkles className={`h-4 w-4 ${rrContext.color === 'green' ? 'text-green-500' : rrContext.color === 'yellow' ? 'text-yellow-500' : 'text-red-500'}`} />
+                    WHAT THIS MEANS:
+                  </p>
+                  <p className="text-sm text-foreground leading-relaxed">
+                    {rrContext.message}
+                  </p>
+                </div>
+              </motion.div>
+
+              {/* Drawdown Analysis */}
+              {stats.maxDrawdown > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className="rounded-2xl bg-card p-6 shadow-card border-l-4 border-secondary"
+                >
+                  <h3 className="font-semibold text-lg mb-2 flex items-center gap-2">
+                    <TrendingDown className="h-5 w-5" />
+                    Drawdown Analysis
+                  </h3>
+                  <div className="grid gap-4 sm:grid-cols-2 mt-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1">Largest Drawdown</p>
+                      <p className="text-2xl font-bold text-foreground">€{stats.maxDrawdown.toFixed(0)}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1">Current Drawdown</p>
+                      <p className="text-2xl font-bold text-foreground">€{stats.currentDrawdown.toFixed(0)}</p>
+                    </div>
+                  </div>
+
+                  <div className={`mt-4 p-4 rounded-lg ${ddContext.color === 'green' ? 'bg-green-500/10' : ddContext.color === 'yellow' ? 'bg-yellow-500/10' : 'bg-red-500/10'}`}>
+                    <p className="text-sm font-semibold mb-2 flex items-center gap-2">
+                      {ddContext.status === 'safe' ? (
+                        <CheckCircle2 className="h-4 w-4 text-green-500" />
+                      ) : ddContext.status === 'warning' ? (
+                        <AlertTriangle className="h-4 w-4 text-yellow-500" />
+                      ) : (
+                        <AlertTriangle className="h-4 w-4 text-red-500" />
+                      )}
+                      CONTEXT:
+                    </p>
+                    <p className="text-sm text-foreground leading-relaxed">
+                      {ddContext.message}
+                    </p>
+                  </div>
+                </motion.div>
+              )}
+            </div>
+          )}
 
           {/* Summary Cards - hide in FILMING mode */}
           {showDemoInsights && (
