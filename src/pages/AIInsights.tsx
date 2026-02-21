@@ -37,7 +37,7 @@ export default function AIInsights() {
     return (
       <main className="pb-24 pt-20 lg:pl-64 lg:pt-8">
         <div className="relative">
-          {subscription.tier !== 'pro' && (
+          {!subLoading && subscription.tier !== 'pro' && (
             <div className="fixed inset-y-0 right-0 left-0 lg:left-64 z-50 flex items-center justify-center p-6 bg-black/20 backdrop-blur-sm">
               <Card className="max-w-md w-full">
                 <CardContent className="p-8 text-center">
@@ -454,7 +454,7 @@ export default function AIInsights() {
   return (
     <main className="pb-24 pt-20 lg:pl-64 lg:pt-8">
       <div className="relative">
-        {!hasFeature('ai_insights_weekly') && (
+        {!subLoading && !hasFeature('ai_insights_weekly') && (
           <div className="fixed inset-y-0 right-0 left-0 lg:left-64 z-50 flex items-center justify-center p-6 bg-black/20 backdrop-blur-sm">
             <Card className="max-w-md w-full">
               <CardContent className="p-8 text-center">
