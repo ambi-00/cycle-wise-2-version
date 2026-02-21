@@ -41,9 +41,10 @@ const loadStoredTrades = (dateFilter: string) => {
     }
     // fill missing cycle info for older entries
     try {
-      const last = localStorage.getItem('cw_lastPeriodStart');
-      const avg = Number(localStorage.getItem('cw_avgCycleLength') || 28);
-      const per = Number(localStorage.getItem('cw_periodLength') || 5);
+      const cycleSettings = loadCycleSettings();
+      const last = cycleSettings.lastPeriodStart;
+      const avg = cycleSettings.avgCycleLength;
+      const per = cycleSettings.periodLength;
       const msPerDay = 1000 * 60 * 60 * 24;
       if (last) {
         for (const t of trades) {

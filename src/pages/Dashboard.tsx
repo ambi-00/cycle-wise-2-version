@@ -4,6 +4,7 @@ import { CyclePhaseIndicator } from "@/components/CyclePhaseIndicator";
 import { SafetyModeToggle } from "@/components/SafetyModeToggle";
 import { PerformanceCard } from "@/components/PerformanceCard";
 import { DailyHealthCheckIn } from "@/components/DailyHealthCheckIn";
+import { loadCycleSettings, getCurrentCycleInfo, hasCompletedTodayCheckIn } from "@/lib/demoDataLoaders";
 import { useWeeklyInsightGeneration } from "@/hooks/use-weekly-insights";
 import { useXPNotifications } from "@/hooks/use-xp-notifications";
 import MigrationDialog from "@/components/MigrationDialog";
@@ -172,10 +173,10 @@ export default function Dashboard() {
 
   // Check if daily health check-in needs to be shown (but only AFTER tour is complete)
   useEffect(() => {
-    const today = new Date().toISOString().split('T')[0];
-    const lastCheckinKey = `cw_daily_checkin_${today}`;
-    const hasCheckedInToday = localStorage.getItem(lastCheckinKey);
     const hasDoneTour = localStorage.getItem("cw_tour_dashboard");
+    
+    // Check if already completed today (DEMO or USER mode)
+    const hasCheckedInToday = hasCompletedTodayCheckIn();
 
     if (!hasCheckedInToday && hasDoneTour) {
       setTimeout(() => setShowHealthCheckIn(true), 1000);
@@ -206,67 +207,17 @@ export default function Dashboard() {
     };
     loadUserName();
 
-    try {
-      const a = localStorage.getItem("cw_avgCycleLength");
-      const p = localStorage.getItem("cw_periodLength");
-      if (a) setAvgCycleLength(Number(a));
-      if (p) setPeriodLength(Number(p));
-    } catch (e) {
-      // ignore
-    }
+    // Load cycle settings (DEMO or USER mode)
+    const cycleSettings = loadCycleSettings();
+    setAvgCycleLength(cycleSettings.avgCycleLength);
+    setPeriodLength(cycleSettings.periodLength);
+    setLastPeriodStart(cycleSettings.lastPeriodStart);
 
-    // --- CycleTracker-Logik: letzten geloggten Periodenstart aus Journal finden ---
-    const msPerDay = 1000 * 60 * 60 * 24;
-    let detectedStart: string | null = null;
-    const logged: string[] = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key?.startsWith('cw_journal_')) {
-        try {
-          const journal = JSON.parse(localStorage.getItem(key) || '{}');
-          if (journal.hasPeriod) {
-            const dateStr = key.replace('cw_journal_', '');
-            logged.push(dateStr);
-          }
-        } catch { /* ignore */ }
-      }
-    }
-    if (logged.length > 0) {
-      const sorted = [...logged].sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
-      let currentPeriodStart = sorted[0];
-      for (let i = 0; i < sorted.length - 1; i++) {
-        const current = new Date(sorted[i]).getTime();
-        const next = new Date(sorted[i + 1]).getTime();
-        const diff = current - next;
-        if (diff <= msPerDay * 1.5) {
-          currentPeriodStart = sorted[i + 1];
-        } else {
-          break;
-        }
-      }
-      detectedStart = currentPeriodStart;
-    } else {
-      detectedStart = localStorage.getItem("cw_lastPeriodStart");
-    }
-    setLastPeriodStart(detectedStart);
-
-    if (detectedStart) {
-      const today = new Date();
-      const last = new Date(detectedStart);
-      const avg = Number(localStorage.getItem("cw_avgCycleLength") || 28);
-      const per = Number(localStorage.getItem("cw_periodLength") || 5);
-      const diff = Math.floor((today.getTime() - last.getTime()) / msPerDay);
-      const cycleDay = (((diff % avg) + avg) % avg) + 1;
-      setCurrentCycleDay(cycleDay);
-
-      const follicularEnd = Math.min(per + 7, avg);
-      const ovulationEnd = Math.min(per + 11, avg);
-      let phase: "menstruation" | "follicular" | "ovulation" | "luteal" = "menstruation";
-      if (cycleDay <= per) phase = "menstruation";
-      else if (cycleDay <= follicularEnd) phase = "follicular";
-      else if (cycleDay <= ovulationEnd) phase = "ovulation";
-      else phase = "luteal";
-      setCurrentPhase(phase);
+    // Get current cycle info
+    const cycleInfo = getCurrentCycleInfo();
+    if (cycleInfo) {
+      setCurrentCycleDay(cycleInfo.cycleDay);
+      setCurrentPhase(cycleInfo.phase);
     }
 
     // load stored trades and watch storage events

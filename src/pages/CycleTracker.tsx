@@ -18,6 +18,7 @@ import { useSubscription } from "@/hooks/use-subscription";
 import { FeatureGuard } from "@/components/FeatureGuard";
 import { usePaymentSuccess } from "@/hooks/use-payment-success";
 import { generateCalendarData, DayData } from "@/lib/cycleHelpers";
+import { loadCycleSettings, loadPeriodDates } from "@/lib/demoDataLoaders";
 
 type DayData = {
   day: number;
@@ -270,36 +271,27 @@ export default function CycleTracker() {
   // load saved settings from localStorage on mount
   useEffect(() => {
     try {
-      const a = localStorage.getItem('cw_avgCycleLength');
-      const l = localStorage.getItem('cw_lastPeriodStart');
+      // Load cycle settings (DEMO or USER mode)
+      const cycleSettings = loadCycleSettings();
+      setAvgCycleLength(cycleSettings.avgCycleLength);
+      setPeriodLength(cycleSettings.periodLength);
+      if (cycleSettings.lastPeriodStart) {
+        setLastPeriodStart(cycleSettings.lastPeriodStart);
+      }
+      
+      // Load logged period dates (DEMO or USER mode)
+      const logged = loadPeriodDates();
+      setLoggedPeriodDays(logged);
+      
+      // Load other settings from localStorage (only in USER mode)
       const p = localStorage.getItem('cw_pmsDays');
       const v = localStorage.getItem('cw_variationDays');
-      const per = localStorage.getItem('cw_periodLength');
-    const pd = localStorage.getItem('cw_periodDays');
-      if (a) setAvgCycleLength(Number(a));
-      if (l) setLastPeriodStart(l);
+      const pd = localStorage.getItem('cw_periodDays');
       if (p) setPmsDays(Number(p));
       if (v) setVariationDays(Number(v));
-      if (per) setPeriodLength(Number(per));
       if (pd) {
         try { setPeriodDays(JSON.parse(pd)); } catch { setPeriodDays([]); }
       }
-      
-      // Load logged period days from journal entries
-      const logged: string[] = [];
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key?.startsWith('cw_journal_')) {
-          try {
-            const journal = JSON.parse(localStorage.getItem(key) || '{}');
-            if (journal.hasPeriod) {
-              const dateStr = key.replace('cw_journal_', '');
-              logged.push(dateStr);
-            }
-          } catch { /* ignore */ }
-        }
-      }
-      setLoggedPeriodDays(logged);
       
       // Auto-update lastPeriodStart based on logged period days
       const detectedStart = findLastPeriodStartFromLogs(logged);
@@ -315,19 +307,7 @@ export default function CycleTracker() {
   // Reload logged period days when returning to this page (e.g. after logging period on Day page)
   useEffect(() => {
     const reloadLoggedPeriods = () => {
-      const logged: string[] = [];
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key?.startsWith('cw_journal_')) {
-          try {
-            const journal = JSON.parse(localStorage.getItem(key) || '{}');
-            if (journal.hasPeriod) {
-              const dateStr = key.replace('cw_journal_', '');
-              logged.push(dateStr);
-            }
-          } catch { /* ignore */ }
-        }
-      }
+      const logged = loadPeriodDates();
       setLoggedPeriodDays(logged);
       
       // Auto-update lastPeriodStart

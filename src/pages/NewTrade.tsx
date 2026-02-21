@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Info } from 'lucide-react';
+import { loadCycleSettings } from '@/lib/demoDataLoaders';
 import { saveTrade, updateTrade, uploadTradeImage, type TradeInsert } from '@/lib/supabaseHelpers';
 import { useToast } from '@/hooks/use-toast';
 import { useSubscription } from '@/hooks/use-subscription';
@@ -455,9 +456,10 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
       let cyclePhase: string | null = null;
       try {
         const msPerDay = 1000 * 60 * 60 * 24;
-        const last = localStorage.getItem('cw_lastPeriodStart');
-        const avg = Number(localStorage.getItem('cw_avgCycleLength') || 28);
-        const per = Number(localStorage.getItem('cw_periodLength') || 5);
+        const cycleSettings = loadCycleSettings();
+        const last = cycleSettings.lastPeriodStart;
+        const avg = cycleSettings.avgCycleLength;
+        const per = cycleSettings.periodLength;
         if (last) {
           const d = new Date(isoDate);
           const l = new Date(last);

@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Plus, Droplets, Brain, Heart, Frown, Smile, Meh, Zap, Moon, Activity, HeartPulse, ChevronLeft, ChevronRight } from "lucide-react";
+import { loadCycleSettings } from "@/lib/demoDataLoaders";
 
 export default function Day() {
   const { day } = useParams<{ day: string }>();
@@ -148,14 +149,13 @@ export default function Day() {
 
   useEffect(() => {
     try {
-      const l = localStorage.getItem('cw_lastPeriodStart');
+      const cycleSettings = loadCycleSettings();
+      setLastPeriodStart(cycleSettings.lastPeriodStart);
+      setAvgCycleLength(cycleSettings.avgCycleLength);
+      setPeriodLength(cycleSettings.periodLength);
+      
       const pd = localStorage.getItem('cw_periodDays');
-      const a = localStorage.getItem('cw_avgCycleLength');
-      const per = localStorage.getItem('cw_periodLength');
-      if (l) setLastPeriodStart(l || null);
       if (pd) setPeriodDays(JSON.parse(pd));
-      if (a) setAvgCycleLength(Number(a));
-      if (per) setPeriodLength(Number(per));
     } catch (e) {
       // ignore
     }
