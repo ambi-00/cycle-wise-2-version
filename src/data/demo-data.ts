@@ -1,5 +1,6 @@
-// Demo account data - realistic trading journey from unprofitable to profitable
+// Demo account data - realistic 7-month trading journey from unprofitable to profitable
 // This data is used when app_mode is set to 'DEMO'
+// Generates 1-5 trades per trading day (Mon-Fri) with realistic progression
 
 export interface DemoTrade {
   id: string;
@@ -17,131 +18,108 @@ export interface DemoTrade {
   cycle_phase?: 'menstrual' | 'follicular' | 'ovulatory' | 'luteal';
 }
 
-// Month 1-2: Struggling phase (70% loss rate)
-const generateEarlyLosses = (): DemoTrade[] => {
-  const trades: DemoTrade[] = [];
-  const startDate = new Date('2025-09-01');
-  
-  // September - lots of mistakes
-  for (let i = 0; i < 25; i++) {
-    const isWin = Math.random() < 0.30; // 30% win rate
-    const entryDate = new Date(startDate);
-    entryDate.setDate(entryDate.getDate() + Math.floor(i * 1.2));
-    
-    const exitDate = new Date(entryDate);
-    exitDate.setHours(exitDate.getHours() + Math.floor(Math.random() * 12) + 2);
-    
-    const symbol = ['EURUSD', 'GBPUSD', 'USDJPY', 'GOLD', 'BTCUSD'][Math.floor(Math.random() * 5)];
-    const direction = Math.random() < 0.5 ? 'LONG' : 'SHORT';
-    
-    let profitLoss: number;
-    if (isWin) {
-      profitLoss = Math.random() * 150 + 50; // Small wins $50-200
-    } else {
-      profitLoss = -(Math.random() * 300 + 100); // Big losses $100-400
-    }
-    
-    trades.push({
-      id: `demo-trade-${i + 1}`,
-      entry_date: entryDate.toISOString(),
-      exit_date: exitDate.toISOString(),
-      symbol,
-      direction,
-      entry_price: 1.0800 + Math.random() * 0.02,
-      exit_price: 1.0800 + Math.random() * 0.02,
-      position_size: 0.5 + Math.random() * 1.5,
-      profit_loss: profitLoss,
-      profit_loss_percent: profitLoss / 5000 * 100,
-      strategy: ['Breakout', 'Trend Follow', 'Range Trade', 'News Trade'][Math.floor(Math.random() * 4)],
-      notes: isWin ? 'Lucky break' : 'Ignored stop loss / Overleveraged / FOMO entry',
-      cycle_phase: ['menstrual', 'follicular', 'ovulatory', 'luteal'][Math.floor(Math.random() * 4)] as any,
-    });
-  }
-  
-  return trades;
+const SYMBOLS = ['EURUSD', 'GBPUSD', 'USDJPY', 'AUDUSD', 'USDCAD', 'GOLD', 'BTCUSD', 'ETHUSD'];
+const STRATEGIES = ['Breakout', 'Trend Following', 'Support/Resistance', 'Mean Reversion', 'Order Block', 'Supply/Demand'];
+
+// Helper: Check if date is a trading day (Mon-Fri)
+const isTradingDay = (date: Date): boolean => {
+  const day = date.getDay();
+  return day >= 1 && day <= 5; // Monday to Friday
 };
 
-// Month 3-4: Learning phase (50% win rate, break-even)
-const generateLearningPhase = (): DemoTrade[] => {
-  const trades: DemoTrade[] = [];
-  const startDate = new Date('2025-11-01');
+// Helper: Generate trading days for a given month
+const getTradingDays = (year: number, month: number): Date[] => {
+  const days: Date[] = [];
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
   
-  for (let i = 0; i < 30; i++) {
-    const isWin = Math.random() < 0.50; // 50% win rate
-    const entryDate = new Date(startDate);
-    entryDate.setDate(entryDate.getDate() + Math.floor(i * 2));
-    
-    const exitDate = new Date(entryDate);
-    exitDate.setHours(exitDate.getHours() + Math.floor(Math.random() * 8) + 1);
-    
-    const symbol = ['EURUSD', 'GBPUSD', 'GOLD'][Math.floor(Math.random() * 3)];
-    const direction = Math.random() < 0.5 ? 'LONG' : 'SHORT';
-    
-    let profitLoss: number;
-    if (isWin) {
-      profitLoss = Math.random() * 200 + 100; // Better wins $100-300
-    } else {
-      profitLoss = -(Math.random() * 200 + 100); // Controlled losses $100-300
+  for (let day = 1; day <= daysInMonth; day++) {
+    const date = new Date(year, month, day);
+    if (isTradingDay(date)) {
+      days.push(date);
     }
-    
-    trades.push({
-      id: `demo-trade-${26 + i}`,
-      entry_date: entryDate.toISOString(),
-      exit_date: exitDate.toISOString(),
-      symbol,
-      direction,
-      entry_price: 1.0800 + Math.random() * 0.02,
-      exit_price: 1.0800 + Math.random() * 0.02,
-      position_size: 0.5 + Math.random() * 1.0,
-      profit_loss: profitLoss,
-      profit_loss_percent: profitLoss / 5000 * 100,
-      strategy: ['Support/Resistance', 'Trend Follow', 'Mean Reversion'][Math.floor(Math.random() * 3)],
-      notes: isWin ? 'Followed plan' : 'Respected stop loss',
-      cycle_phase: ['follicular', 'ovulatory'][Math.floor(Math.random() * 2)] as any,
-    });
   }
-  
-  return trades;
+  return days;
 };
 
-// Month 5-6: Profitable phase (65% win rate)
-const generateProfitablePhase = (): DemoTrade[] => {
+// Generate trades for a specific phase with win rate and risk profile
+const generateTradesForPhase = (
+  startMonth: number,
+  startYear: number,
+  monthCount: number,
+  winRate: number,
+  avgWin: number,
+  avgLoss: number,
+  tradesPerDayMin: number,
+  tradesPerDayMax: number,
+  startId: number
+): DemoTrade[] => {
   const trades: DemoTrade[] = [];
-  const startDate = new Date('2026-01-01');
+  let tradeId = startId;
   
-  for (let i = 0; i < 35; i++) {
-    const isWin = Math.random() < 0.65; // 65% win rate
-    const entryDate = new Date(startDate);
-    entryDate.setDate(entryDate.getDate() + Math.floor(i * 1.7));
+  for (let monthOffset = 0; monthOffset < monthCount; monthOffset++) {
+    const month = (startMonth + monthOffset) % 12;
+    const year = startYear + Math.floor((startMonth + monthOffset) / 12);
+    const tradingDays = getTradingDays(year, month);
     
-    const exitDate = new Date(entryDate);
-    exitDate.setHours(exitDate.getHours() + Math.floor(Math.random() * 6) + 1);
-    
-    const symbol = ['EURUSD', 'GOLD'][Math.floor(Math.random() * 2)]; // Focus on 2 pairs
-    const direction = Math.random() < 0.5 ? 'LONG' : 'SHORT';
-    
-    let profitLoss: number;
-    if (isWin) {
-      profitLoss = Math.random() * 300 + 150; // Solid wins $150-450
-    } else {
-      profitLoss = -(Math.random() * 150 + 50); // Small losses $50-200
+    for (const day of tradingDays) {
+      // Random number of trades per day (1-5)
+      const numTrades = Math.floor(Math.random() * (tradesPerDayMax - tradesPerDayMin + 1)) + tradesPerDayMin;
+      
+      for (let i = 0; i < numTrades; i++) {
+        const isWin = Math.random() < winRate;
+        
+        // Random entry time during trading hours (8:00-20:00)
+        const entryDate = new Date(day);
+        entryDate.setHours(8 + Math.floor(Math.random() * 12), Math.floor(Math.random() * 60));
+        
+        // Exit time: 1-8 hours later
+        const exitDate = new Date(entryDate);
+        exitDate.setHours(exitDate.getHours() + Math.floor(Math.random() * 7) + 1);
+        
+        const symbol = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
+        const direction = Math.random() < 0.5 ? 'LONG' : 'SHORT';
+        const strategy = STRATEGIES[Math.floor(Math.random() * STRATEGIES.length)];
+        
+        // Calculate P&L with some variance
+        let profitLoss: number;
+        if (isWin) {
+          const variance = 0.5; // +/- 50% variance
+          profitLoss = avgWin * (1 + (Math.random() - 0.5) * variance);
+        } else {
+          const variance = 0.5;
+          profitLoss = -avgLoss * (1 + (Math.random() - 0.5) * variance);
+        }
+        
+        // Notes based on performance
+        let notes = '';
+        if (isWin && profitLoss > avgWin * 1.3) {
+          notes = 'Great execution, caught a strong move';
+        } else if (isWin) {
+          notes = 'Solid trade, followed the plan';
+        } else if (profitLoss < -avgLoss * 1.3) {
+          notes = 'Missed stop loss, let it run too far';
+        } else {
+          notes = 'Cut losses quickly, good discipline';
+        }
+        
+        trades.push({
+          id: `demo-trade-${tradeId}`,
+          entry_date: entryDate.toISOString(),
+          exit_date: exitDate.toISOString(),
+          symbol,
+          direction,
+          entry_price: 1.0800 + Math.random() * 0.02,
+          exit_price: 1.0800 + Math.random() * 0.02,
+          position_size: 0.1 + Math.random() * 0.4,
+          profit_loss: Math.round(profitLoss * 100) / 100,
+          profit_loss_percent: profitLoss / 10000,
+          strategy,
+          notes,
+        });
+        
+        tradeId++;
+      }
     }
-    
-    trades.push({
-      id: `demo-trade-${56 + i}`,
-      entry_date: entryDate.toISOString(),
-      exit_date: exitDate.toISOString(),
-      symbol,
-      direction,
-      entry_price: 1.0800 + Math.random() * 0.02,
-      exit_price: 1.0800 + Math.random() * 0.02,
-      position_size: 0.5 + Math.random() * 0.8,
-      profit_loss: profitLoss,
-      profit_loss_percent: profitLoss / 5000 * 100,
-      strategy: ['Trend Follow', 'Support/Resistance'][Math.floor(Math.random() * 2)],
-      notes: isWin ? 'Perfect execution' : 'Quick exit, saved capital',
-      cycle_phase: ['follicular', 'ovulatory'][Math.floor(Math.random() * 2)] as any,
-    });
   }
   
   return trades;
