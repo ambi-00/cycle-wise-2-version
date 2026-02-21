@@ -147,13 +147,58 @@ const generateProfitablePhase = (): DemoTrade[] => {
   return trades;
 };
 
-// Generate all demo trades
+// Generate all demo trades - 7 months journey
 export const generateDemoTrades = (): DemoTrade[] => {
-  return [
-    ...generateEarlyLosses(),      // Sep-Oct: -$3,500
-    ...generateLearningPhase(),    // Nov-Dec: ~$0 (break-even)
-    ...generateProfitablePhase(),  // Jan-Feb: +$5,200
-  ].sort((a, b) => new Date(a.entry_date).getTime() - new Date(b.entry_date).getTime());
+  const allTrades: DemoTrade[] = [];
+  
+  // Phase 1: Months 1-2 (Aug-Sep 2025) - Struggling (35% WR, bad R:R)
+  // 1-3 trades per day, losing money
+  allTrades.push(...generateTradesForPhase(
+    7, 2025, 2,  // Aug-Sep 2025
+    0.35,        // 35% win rate
+    150,         // avg win $150
+    250,         // avg loss $250 (bad R:R)
+    1, 3,        // 1-3 trades/day
+    1
+  ));
+  
+  // Phase 2: Months 3-4 (Oct-Nov 2025) - Learning (45% WR, improving R:R)
+  // 2-4 trades per day, getting closer to break-even
+  const phase1Count = allTrades.length;
+  allTrades.push(...generateTradesForPhase(
+    9, 2025, 2,  // Oct-Nov 2025
+    0.45,        // 45% win rate
+    200,         // avg win $200
+    220,         // avg loss $220 (better R:R)
+    2, 4,        // 2-4 trades/day
+    phase1Count + 1
+  ));
+  
+  // Phase 3: Month 5 (Dec 2025) - Break-even (52% WR, good R:R)
+  // 2-4 trades per day, finally consistent
+  const phase2Count = allTrades.length;
+  allTrades.push(...generateTradesForPhase(
+    11, 2025, 1,  // Dec 2025
+    0.52,         // 52% win rate
+    250,          // avg win $250
+    200,          // avg loss $200 (R:R > 1)
+    2, 4,         // 2-4 trades/day
+    phase2Count + 1
+  ));
+  
+  // Phase 4: Months 6-7 (Jan-Feb 2026) - Profitable (60% WR, strong R:R)
+  // 2-5 trades per day, making good money
+  const phase3Count = allTrades.length;
+  allTrades.push(...generateTradesForPhase(
+    0, 2026, 2,  // Jan-Feb 2026
+    0.60,        // 60% win rate
+    300,         // avg win $300
+    150,         // avg loss $150 (R:R = 2:1)
+    2, 5,        // 2-5 trades/day
+    phase3Count + 1
+  ));
+  
+  return allTrades.sort((a, b) => new Date(a.entry_date).getTime() - new Date(b.entry_date).getTime());
 };
 
 // Demo profile stats
