@@ -126,7 +126,7 @@ const loadAllStoredTrades = () => {
 
 export default function Dashboard() {
   const features = useFeatureFlags();
-  const { appMode } = useAppMode();
+  const { appMode, isLoading: appModeLoading } = useAppMode();
   const [safetyModeEnabled, setSafetyModeEnabled] = useState(() => {
     return localStorage.getItem('cw_safety_mode_enabled') === 'true';
   });
@@ -503,7 +503,7 @@ export default function Dashboard() {
             />
 
             {/* In FILMING mode with no real trades, don't show performance cards */}
-            {!(appMode === 'FILMING' && totalTrades === 0) && (
+            {!(appMode === 'FILMING' && totalTrades === 0 && !appModeLoading) && (
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <PerformanceCard title="Monthly P&L" value={totalPnl} change={12.5} type="currency" />
                 <PerformanceCard title="Win Rate" value={totalTrades ? Math.round((totalWins / totalTrades) * 100) : 0} change={5} type="percentage" icon="percent" />
@@ -528,7 +528,7 @@ export default function Dashboard() {
             </Suspense>
 
             {/* In FILMING mode with no real trades, don't show the recent trades section */}
-            {!(appMode === 'FILMING' && storedTrades.length === 0) && (
+            {!(appMode === 'FILMING' && storedTrades.length === 0 && !appModeLoading) && (
               <Suspense fallback={<div className="rounded-2xl bg-card p-5 shadow-card" />}>
                 <RecentTradesTable
                   trades={(() => {
