@@ -33,11 +33,36 @@ function isInDemoMode(): boolean {
 export function loadTradesFromLocalStorage(filterByDate?: string): any[] {
   // In DEMO mode, return demo trades
   if (isInDemoMode()) {
+    console.log('📊 DEMO MODE ACTIVE - Loading demo trades');
     const demoTrades = generateDemoTrades();
+    
+    // Convert demo trade format to app trade format
+    const convertedTrades = demoTrades.map((t: any) => ({
+      id: t.id,
+      date: t.entry_date.split('T')[0], // Convert ISO to YYYY-MM-DD
+      entryDate: t.entry_date,
+      exitDate: t.exit_date,
+      symbol: t.symbol,
+      direction: t.direction,
+      entryPrice: t.entry_price,
+      exitPrice: t.exit_price,
+      positionSize: t.position_size,
+      profitLoss: t.profit_loss,
+      profitLossPercent: t.profit_loss_percent,
+      strategy: t.strategy,
+      notes: t.notes || '',
+      screenshot: null,
+      tags: [],
+      cyclePhase: t.cycle_phase,
+      createdAt: new Date(t.entry_date).getTime(),
+    }));
+    
+    console.log('📊 Demo trades converted:', convertedTrades.length);
+    
     if (filterByDate) {
-      return demoTrades.filter((t: any) => t.date === filterByDate);
+      return convertedTrades.filter((t: any) => t.date === filterByDate);
     }
-    return demoTrades;
+    return convertedTrades;
   }
 
   try {
