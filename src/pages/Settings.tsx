@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { User, Bell, Shield, Download, Trash2, Calendar, Sun, Moon, Building2, LogOut } from "lucide-react";
+import { User, Bell, Shield, Download, Trash2, Calendar, Sun, Moon, Building2, LogOut, Video, Users, Database } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,11 +8,16 @@ import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import ThemeCustomizer from "@/components/ThemeCustomizer";
 import { supabase } from "@/integrations/supabase/client";
+import { useAppMode } from "@/hooks/use-app-mode";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Settings() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const { appMode, isLoading: modeLoading, userId } = useAppMode();
+  const [selectedMode, setSelectedMode] = useState<'USER' | 'FILMING' | 'DEMO'>('USER');
   const [tradingPlatformUrl, setTradingPlatformUrl] = useState(() => {
     return localStorage.getItem('cw_trading_platform_url') || '';
   });
@@ -20,6 +25,12 @@ export default function Settings() {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (appMode) {
+      setSelectedMode(appMode);
+    }
+  }, [appMode]);
 
   useEffect(() => {
     if (tradingPlatformUrl) {
@@ -33,6 +44,35 @@ export default function Settings() {
 
   const toggleTheme = (val: boolean) => {
     setTheme(val ? "dark" : "light");
+  };
+
+  const handleModeChange = async (mode: 'USER' | 'FILMING' | 'DEMO') => {
+    if (!userId) return;
+    
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ app_mode: mode })
+        .eq('id', userId);
+
+      if (error) throw error;
+
+      setSelectedMode(mode);
+      toast({
+        title: "Mode Updated",
+        description: `App mode changed to ${mode}`,
+      });
+      
+      // Refresh page to apply changes
+      setTimeout(() => window.location.reload(), 500);
+    } catch (error) {
+      console.error('Error updating app mode:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update app mode",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleLogout = async () => {
@@ -54,6 +94,90 @@ export default function Settings() {
         </div>
 
         {/* Profile moved to dedicated Profile page (top-right avatar) */}
+
+        {/* App Mode Switcher - REMOVE BEFORE LAUNCH */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+          className="mb-8 rounded-2xl bg-card p-6 shadow-card border-2 border-yellow-500/30"
+        >
+          <div className="flex items-center gap-3 mb-4">
+            <div className="rounded-xl bg-yellow-500/20 p-2.5">
+              <Video className="h-5 w-5 text-yellow-600" />
+            </div>
+            <div>
+              <h2 className="font-semibold text-foreground">App Mode (Development Only)</h2>
+              <p className="text-xs text-yellow-600 font-medium">⚠️ Remove this section before launch</p>
+            </div>
+          </div>
+          
+          <p className="text-sm text-muted-foreground mb-4">
+            Switch between different app modes for content creation and demos.
+          </p>
+
+          <div className="space-y-3">
+            <button
+              onClick={() => handleModeChange('USER')}
+              disabled={modeLoading}
+              className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
+                selectedMode === 'USER'
+                  ? 'border-primary bg-primary/10'
+                  : 'border-border hover:border-primary/50 hover:bg-muted'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <Users className="h-5 w-5 text-primary" />
+                <div>
+                  <p className="font-medium text-foreground">USER Mode</p>
+                  <p className="text-xs text-muted-foreground">Full features - Community, Gamification, Leaderboard</p>
+                </div>
+              </div>
+            </button>
+
+            <button
+              onClick={() => handleModeChange('FILMING')}
+              disabled={modeLoading}
+              className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
+                selectedMode === 'FILMING'
+                  ? 'border-primary bg-primary/10'
+                  : 'border-border hover:border-primary/50 hover:bg-muted'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <Video className="h-5 w-5 text-primary" />
+                <div>
+                  <p className="font-medium text-foreground">FILMING Mode</p>
+                  <p className="text-xs text-muted-foreground">Clean UI for videos - No branding, gamification, or social features</p>
+                </div>
+              </div>
+            </button>
+
+            <button
+              onClick={() => handleModeChange('DEMO')}
+              disabled={modeLoading}
+              className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
+                selectedMode === 'DEMO'
+                  ? 'border-primary bg-primary/10'
+                  : 'border-border hover:border-primary/50 hover:bg-muted'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <Database className="h-5 w-5 text-primary" />
+                <div>
+                  <p className="font-medium text-foreground">DEMO Mode</p>
+                  <p className="text-xs text-muted-foreground">Realistic fake data - Journey from unprofitable to profitable</p>
+                </div>
+              </div>
+            </button>
+          </div>
+
+          <div className="mt-4 p-3 bg-yellow-500/10 rounded-lg border border-yellow-500/30">
+            <p className="text-xs text-yellow-700 dark:text-yellow-500">
+              <strong>Note:</strong> Page will reload after changing mode. Current mode: <span className="font-mono font-bold">{selectedMode}</span>
+            </p>
+          </div>
+        </motion.section>
 
         <motion.section
           initial={{ opacity: 0, y: 20 }}

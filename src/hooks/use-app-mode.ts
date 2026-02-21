@@ -6,6 +6,7 @@ export type AppMode = 'USER' | 'FILMING' | 'DEMO';
 interface AppModeState {
   appMode: AppMode;
   isLoading: boolean;
+  userId?: string;
 }
 
 /**
@@ -18,6 +19,7 @@ interface AppModeState {
 export function useAppMode(): AppModeState {
   const [appMode, setAppMode] = useState<AppMode>('USER');
   const [isLoading, setIsLoading] = useState(true);
+  const [userId, setUserId] = useState<string>();
 
   useEffect(() => {
     const loadAppMode = async () => {
@@ -32,6 +34,8 @@ export function useAppMode(): AppModeState {
           setIsLoading(false);
           return;
         }
+
+        setUserId(user.id);
 
         const { data: profile, error } = await supabase
           .from('profiles')
@@ -60,7 +64,7 @@ export function useAppMode(): AppModeState {
     loadAppMode();
   }, []);
 
-  return { appMode, isLoading };
+  return { appMode, isLoading, userId };
 }
 
 /**
@@ -93,5 +97,31 @@ export function useFeatureFlags() {
     showDashboard: true,
     showAnalytics: true,
     showCalendar: true,
+    
+    // Data source
+    useDemoData: appMode === 'DEMO',
+  };
+}
+
+/**
+ * Hook to get demo trades if in DEMO mode
+ */
+export function useDemoTrades() {
+  const { appMode } = useAppMode();
+  
+  if (appMode === 'DEMO') {
+    // Lazy import to avoid loading demo data in other modes
+    const { generateDemoTrades, getDemoStats } = require('@/data/demo-data');
+    return {
+      trades: generateDemoTrades(),
+      stats: getDemoStats(),
+      isDemoMode: true,
+    };
+  }
+  
+  return {
+    trades: [],
+    stats: null,
+    isDemoMode: false,
   };
 }
