@@ -387,7 +387,7 @@ export default function CycleTracker() {
     return colors[phase as keyof typeof colors];
   };
 
-  const { subscription, loading: subLoading } = useSubscription();
+  const { subscription, loading: subLoading, hasFeature } = useSubscription();
   const { appMode, isLoading: appModeLoading } = useAppMode();
 
   // Show blank while subscription OR app mode loads (no flicker)
@@ -395,8 +395,8 @@ export default function CycleTracker() {
     return <div className="min-h-screen bg-background" />;
   }
 
-  // FILMING mode should have full access (auto-PRO)
-  const hasPremium = appMode === 'FILMING' || appMode === 'DEMO' || subscription.tier === 'premium' || subscription.tier === 'pro';
+  // Use hasFeature from hook - respects FILMING/DEMO modes and tier access
+  const hasPremium = hasFeature('cycle_tracking');
 
   return (
     <main className="pb-24 pt-20 lg:pl-64 lg:pt-8">
