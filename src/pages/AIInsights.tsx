@@ -8,13 +8,18 @@ import { useNavigate } from "react-router-dom";
 import { useSubscription } from "@/hooks/use-subscription";
 import { usePaymentSuccess } from "@/hooks/use-payment-success";
 import { loadTradesFromLocalStorage } from "@/lib/tradeLoaders";
+import { useAppMode } from "@/hooks/use-app-mode";
 
 export default function AIInsights() {
   const navigate = useNavigate();
   const { subscription, hasFeature, loading: subLoading } = useSubscription();
+  const { appMode } = useAppMode();
   const [trades, setTrades] = useState<any[]>([]);
   const [hasData, setHasData] = useState(false);
   usePaymentSuccess();
+  
+  // In FILMING mode, hide demo insights - show only real data
+  const showDemoInsights = appMode !== 'FILMING';
 
   useEffect(() => {
     const allTrades = loadTradesFromLocalStorage();
@@ -59,7 +64,8 @@ export default function AIInsights() {
             <p className="mt-1 text-muted-foreground">Personalized analysis powered by your trading data</p>
           </div>
 
-          {/* Summary Cards */}
+          {/* Summary Cards - hide in FILMING mode */}
+          {showDemoInsights && (
           <div className="mb-8 grid gap-4 sm:grid-cols-3">
             {[
               { label: "Insights Generated", value: "147", icon: Sparkles },
@@ -85,8 +91,10 @@ export default function AIInsights() {
               </motion.div>
             ))}
           </div>
+          )}
 
-          {/* Demo Insights Cards */}
+          {/* Demo Insights Cards - hide in FILMING mode */}
+          {showDemoInsights && (
           <div className="space-y-6">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -399,6 +407,17 @@ export default function AIInsights() {
               </div>
             </motion.div>
           </div>
+        )}
+
+        {!showDemoInsights && (
+          <div className="rounded-2xl bg-card p-12 shadow-card text-center">
+            <Brain className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+            <h3 className="font-semibold text-lg mb-2">AI Insights</h3>
+            <p className="text-muted-foreground">
+              Real insights will be generated from your trading data
+            </p>
+          </div>
+        )}
 
           <motion.div
             initial={{ opacity: 0, y: 20 }}
