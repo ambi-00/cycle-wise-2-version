@@ -130,7 +130,7 @@ export default function Settings() {
                 <Users className="h-5 w-5 text-primary" />
                 <div>
                   <p className="font-medium text-foreground">USER Mode</p>
-                  <p className="text-xs text-muted-foreground">Full features - Community, Gamification, Leaderboard</p>
+                  <p className="text-xs text-muted-foreground">Full features with your real data</p>
                 </div>
               </div>
             </button>
@@ -148,7 +148,7 @@ export default function Settings() {
                 <Video className="h-5 w-5 text-primary" />
                 <div>
                   <p className="font-medium text-foreground">FILMING Mode</p>
-                  <p className="text-xs text-muted-foreground">Clean UI for videos - No branding, gamification, or social features</p>
+                  <p className="text-xs text-muted-foreground">Clean UI with your real data - No branding, gamification, or social features</p>
                 </div>
               </div>
             </button>
@@ -166,7 +166,7 @@ export default function Settings() {
                 <Database className="h-5 w-5 text-primary" />
                 <div>
                   <p className="font-medium text-foreground">DEMO Mode</p>
-                  <p className="text-xs text-muted-foreground">Realistic fake data - Journey from unprofitable to profitable</p>
+                  <p className="text-xs text-muted-foreground">Full features with realistic fake data - Journey from unprofitable to profitable</p>
                 </div>
               </div>
             </button>

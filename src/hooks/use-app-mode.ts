@@ -77,15 +77,15 @@ export function useFeatureFlags() {
 
   return {
     // Gamification (XP, Streaks, Achievements)
-    showGamification: appMode === 'USER',
+    showGamification: appMode !== 'FILMING',
     
     // Social/Community Features
-    showLeaderboard: appMode === 'USER',
-    showChallenges: appMode === 'USER',
+    showLeaderboard: appMode !== 'FILMING',
+    showChallenges: appMode !== 'FILMING',
     
     // Prop Firm
     showPropFirmAccounts: true, // Always show accounts
-    showPropFirmComparison: appMode === 'USER', // Only comparison in USER mode
+    showPropFirmComparison: appMode !== 'FILMING', // Hide only in FILMING mode
     
     // AI Features
     showAIInsights: true, // Always show (selling point!)
