@@ -13,7 +13,7 @@ import { useAppMode } from "@/hooks/use-app-mode";
 export default function AIInsights() {
   const navigate = useNavigate();
   const { subscription, hasFeature, loading: subLoading } = useSubscription();
-  const { appMode } = useAppMode();
+  const { appMode, isLoading: appModeLoading } = useAppMode();
   const [trades, setTrades] = useState<any[]>([]);
   const [hasData, setHasData] = useState(false);
   usePaymentSuccess();
@@ -27,8 +27,8 @@ export default function AIInsights() {
     setHasData(allTrades.length > 0);
   }, []);
 
-  // Show blank while subscription loads (no flicker)
-  if (subLoading) {
+  // Show blank while subscription or app mode loads (no flicker)
+  if (subLoading || appModeLoading) {
     return <div className="min-h-screen bg-background" />;
   }
 
