@@ -15,7 +15,7 @@ import { XPBar } from "@/components/XPBar";
 import { StreakDisplay } from "@/components/StreakDisplay";
 import { ProfileButton } from "@/components/ProfileButton";
 import { DashboardCustomizer } from "@/components/DashboardCustomizer";
-import { useFeatureFlags } from "@/hooks/use-app-mode";
+import { useFeatureFlags, useAppMode } from "@/hooks/use-app-mode";
 import {
   loadDashboardConfig,
   saveDashboardConfig,
@@ -126,6 +126,7 @@ const loadAllStoredTrades = () => {
 
 export default function Dashboard() {
   const features = useFeatureFlags();
+  const { appMode } = useAppMode();
   const [safetyModeEnabled, setSafetyModeEnabled] = useState(() => {
     return localStorage.getItem('cw_safety_mode_enabled') === 'true';
   });
@@ -320,6 +321,10 @@ export default function Dashboard() {
           />
         );
       case 'performance-cards':
+        // In FILMING mode with no real trades, don't show performance cards
+        if (appMode === 'FILMING' && totalTrades === 0) {
+          return null;
+        }
         return (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <PerformanceCard title="Monthly P&L" value={totalPnl} change={12.5} type="currency" />
@@ -346,6 +351,10 @@ export default function Dashboard() {
           </Suspense>
         ) : null;
       case 'recent-trades':
+        // In FILMING mode with no real trades, don't show recent trades widget
+        if (appMode === 'FILMING' && storedTrades.length === 0) {
+          return null;
+        }
         return (
           <Suspense fallback={<div className="rounded-2xl bg-card p-5 shadow-card" />}>
             <RecentTradesTable
@@ -362,6 +371,8 @@ export default function Dashboard() {
                 });
                 const displayed = (storedTrades || []).map(mapTrade);
                 if (displayed.length > 0) return displayed;
+                // In FILMING mode, don't show mock trades
+                if (appMode === 'FILMING') return [];
                 return mockTrades.map((m) => ({
                   id: m.id,
                   date: m.date,
