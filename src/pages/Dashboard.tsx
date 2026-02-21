@@ -329,7 +329,7 @@ export default function Dashboard() {
           </div>
         );
       case 'ai-insight':
-        return (
+        return features.showGamification ? (
           <Suspense fallback={<div className="rounded-2xl bg-card p-5 shadow-card h-24" />}>
             <AIInsightCard
               insight={
@@ -344,7 +344,7 @@ export default function Dashboard() {
               actionLabel="View Full Analysis"
             />
           </Suspense>
-        );
+        ) : null;
       case 'recent-trades':
         return (
           <Suspense fallback={<div className="rounded-2xl bg-card p-5 shadow-card" />}>

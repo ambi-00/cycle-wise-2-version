@@ -752,6 +752,7 @@ export default function AIInsights() {
           </div>
         )}
 
+        {appMode !== 'FILMING' && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -774,6 +775,7 @@ export default function AIInsights() {
               </div>
             </div>
           </motion.div>
+        )}
         </motion.div>
         </div>
         </div>
@@ -1127,6 +1129,7 @@ export default function AIInsights() {
         </div>
 
         {/* AI Coaching Summary */}
+        {appMode !== 'FILMING' && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -1154,6 +1157,7 @@ export default function AIInsights() {
             </div>
           </div>
         </motion.div>
+        )}
       </motion.div>
       </div>
       </div>
