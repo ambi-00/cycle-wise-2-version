@@ -81,9 +81,10 @@ export function useSubscription() {
       return;
     }
 
-    // Dev mode - provide premium features for development
+    // Dev mode - provide PRO features for development (no login needed)
     if (import.meta.env.VITE_SKIP_EMAIL_VERIFICATION === 'true') {
-      setSubscription({ tier: 'premium', status: 'active' });
+      console.log('📊 Subscription - Auto-set to PRO for dev mode (SKIP_EMAIL_VERIFICATION=true)');
+      setSubscription({ tier: 'pro', status: 'active' });
       setLoading(false);
       return;
     }
