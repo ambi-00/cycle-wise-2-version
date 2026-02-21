@@ -85,14 +85,14 @@ export default function AIInsights() {
           </div>
 
           {/* Statistical Confidence Builder - Real data section */}
-          {hasData && stats.totalTrades >= 10 && (
+          {hasData && stats.totalTrades >= 50 && (
             <div className="mb-8 space-y-4">
               <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
                 <Shield className="h-5 w-5 text-primary" />
                 Your Trading Reality
               </h2>
               <p className="text-sm text-muted-foreground">
-                Statistical perspective to build confidence and reduce fear
+                Statistical perspective to build confidence and reduce fear (requires 50+ trades)
               </p>
 
               {/* Win Rate Context */}
