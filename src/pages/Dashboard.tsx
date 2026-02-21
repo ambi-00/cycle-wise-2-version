@@ -519,8 +519,8 @@ export default function Dashboard() {
           </div>
         </motion.header>
 
-        {/* Quick Start Checklist */}
-        <QuickStartChecklist />
+        {/* Quick Start Checklist - only in USER mode */}
+        {features.showGamification && <QuickStartChecklist />}
 
         {/* XP Bar - only in USER mode */}
         {features.showGamification && (

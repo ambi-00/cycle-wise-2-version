@@ -47,16 +47,18 @@ export function Navigation() {
         animate={{ x: 0, opacity: 1 }}
         className="fixed left-0 top-0 z-40 hidden h-screen w-64 flex-col border-r border-border bg-sidebar p-6 lg:flex"
       >
-        {/* Branding */}
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/70">
-            <span className="text-lg font-bold text-primary-foreground">✨</span>
+        {/* Branding - only in USER mode */}
+        {features.showGamification && (
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/70">
+              <span className="text-lg font-bold text-primary-foreground">✨</span>
+            </div>
+            <div>
+              <h1 className="font-serif text-lg font-bold text-foreground">SheTrades</h1>
+              <p className="text-xs text-muted-foreground">Empowering Women in Trading</p>
+            </div>
           </div>
-          <div>
-            <h1 className="font-serif text-lg font-bold text-foreground">SheTrades</h1>
-            <p className="text-xs text-muted-foreground">Empowering Women in Trading</p>
-          </div>
-        </div>
+        )}
 
         {/* Navigation Items */}
         <div className="mt-6">
@@ -146,13 +148,15 @@ export function Navigation() {
         {/* Sync Status & Settings */}
         <div className="space-y-2">
           <SyncStatusIndicator />
-          <NavLink
-            to="/pricing"
-            className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-muted-foreground transition-all hover:bg-muted hover:text-foreground"
-          >
-            <CreditCard className="h-5 w-5" />
-            Pricing
-          </NavLink>
+          {features.showGamification && (
+            <NavLink
+              to="/pricing"
+              className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-muted-foreground transition-all hover:bg-muted hover:text-foreground"
+            >
+              <CreditCard className="h-5 w-5" />
+              Pricing
+            </NavLink>
+          )}
           <NavLink
             to="/settings"
             className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-muted-foreground transition-all hover:bg-muted hover:text-foreground"
@@ -165,12 +169,14 @@ export function Navigation() {
 
       {/* Mobile Header */}
       <div className="fixed left-0 right-0 top-0 z-40 flex items-center justify-between border-b border-border bg-sidebar/95 backdrop-blur-sm p-4 lg:hidden">
-        <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-primary/70">
-            <span className="text-sm font-bold text-primary-foreground">✨</span>
+        {features.showGamification && (
+          <div className="flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-primary/70">
+              <span className="text-sm font-bold text-primary-foreground">✨</span>
+            </div>
+            <span className="font-serif text-base font-bold text-foreground">SheTrades</span>
           </div>
-          <span className="font-serif text-base font-bold text-foreground">SheTrades</span>
-        </div>
+        )}
 
         <div className="flex items-center gap-2">
           <SyncStatusIndicator />
