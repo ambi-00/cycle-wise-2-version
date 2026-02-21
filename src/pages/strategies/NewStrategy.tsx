@@ -347,10 +347,10 @@ export default function NewStrategy() {
           </CardContent>
         </Card>
 
-        {/* Entry Checklist */}
+        {/* Confirmation Checklist */}
         <Card>
           <CardHeader>
-            <CardTitle>Entry Checklist</CardTitle>
+            <CardTitle>Confirmation Checklist</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground">
@@ -393,10 +393,10 @@ export default function NewStrategy() {
           </CardContent>
         </Card>
 
-        {/* SL Criteria */}
+        {/* Entry Triggers */}
         <Card>
           <CardHeader>
-            <CardTitle>SL Criteria</CardTitle>
+            <CardTitle>Entry Triggers</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground">
@@ -432,7 +432,7 @@ export default function NewStrategy() {
               ))}
               {entryTriggers.length === 0 && (
                 <p className="text-center text-sm text-muted-foreground py-4">
-                  No SL criteria added yet
+                  No entry triggers added yet
                 </p>
               )}
             </div>

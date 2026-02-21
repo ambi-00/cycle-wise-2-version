@@ -91,7 +91,7 @@ export default function StrategyList() {
               </div>
 
               <div className="mt-4">
-                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Entry Checklist</p>
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Confirmation Checklist</p>
                 <div className="mt-3 space-y-2">
                   {(s.confirmations || []).slice(0, 4).map((conf, i) => (
                     <div key={i} className="flex items-center gap-2 text-sm text-foreground">

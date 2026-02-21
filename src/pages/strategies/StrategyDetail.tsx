@@ -253,12 +253,12 @@ export default function StrategyDetail() {
         </div>
 
         <div className="grid gap-6 lg:grid-cols-2">
-          {/* Entry Checklist */}
+          {/* Confirmations */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <CheckCircle className="h-5 w-5 text-accent-foreground" />
-                Entry Checklist
+                Confirmation Checklist
               </CardTitle>
             </CardHeader>
             <CardContent>
