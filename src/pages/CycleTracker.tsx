@@ -708,12 +708,18 @@ export default function CycleTracker() {
 
             {/* Calendar grid */}
             <div className="grid grid-cols-7 gap-2">
-              {/* Empty cells for offset (assuming month starts on Wednesday) */}
-              {[...Array(2)].map((_, i) => (
-                <div key={`empty-${i}`} />
-              ))}
+              {/* Empty cells for offset - calculate based on first day of month */}
+              {(() => {
+                const firstDayOfMonth = new Date(calendarYear, calendarMonthIndex, 1);
+                // getDay() returns 0 (Sunday) to 6 (Saturday)
+                // We want Monday = 0, so adjust: (getDay() + 6) % 7
+                const dayOfWeek = (firstDayOfMonth.getDay() + 6) % 7;
+                return [...Array(dayOfWeek)].map((_, i) => (
+                  <div key={`empty-${i}`} />
+                ));
+              })()}
               
-              {calendarData.map((day) => {
+              {calendarData.filter(day => day !== null).map((day) => {
                 const isTodayCell = isSameDay(day.date, todayDate);
                 const dayIso = day.date.toISOString().slice(0,10);
                 const isPeriodDay = periodDays.includes(dayIso);
