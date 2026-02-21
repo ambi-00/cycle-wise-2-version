@@ -321,20 +321,17 @@ export default function Dashboard() {
           />
         );
       case 'performance-cards':
-        // Always show performance cards - display 0 if no trades
+        // Always show performance cards - display 0 if no trades, no fake change percentages
         return (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <PerformanceCard title="Monthly P&L" value={totalPnl} change={12.5} type="currency" />
-            <PerformanceCard title="Win Rate" value={totalTrades ? Math.round((totalWins / totalTrades) * 100) : 0} change={5} type="percentage" icon="percent" />
-            <PerformanceCard title="Avg R" value={avgR} change={8} type="ratio" icon="target" />
+            <PerformanceCard title="Monthly P&L" value={totalPnl} change={0} type="currency" />
+            <PerformanceCard title="Win Rate" value={totalTrades ? Math.round((totalWins / totalTrades) * 100) : 0} change={0} type="percentage" icon="percent" />
+            <PerformanceCard title="Avg R" value={avgR} change={0} type="ratio" icon="target" />
             <PerformanceCard title="Trades" value={totalTrades} type="count" />
           </div>
         );
       case 'ai-insight':
-        // Don't show patterns if in FILMING mode with no trades
-        if (appMode === 'FILMING' && storedTrades.length === 0) {
-          return null;
-        }
+        // Always show patterns - real data or "No trades yet" message
         return features.showGamification ? (
           <Suspense fallback={<div className="rounded-2xl bg-card p-5 shadow-card h-24" />}>
             <AIInsightCard
@@ -344,7 +341,7 @@ export default function Dashboard() {
                       .slice(0, 3)
                       .map((s: any) => `${s.name}: ${Math.round((s.wins / s.count) * 100) || 0}% (${s.count})`)
                       .join(" • ")
-                  : "Your win rate increases by 42% when you trade during your Follicular phase with volume confirmation."
+                  : "No trades yet. Start logging trades to discover patterns."
               }
               category="pattern"
               actionLabel="View Full Analysis"
@@ -500,15 +497,15 @@ export default function Dashboard() {
               }
             />
 
-            {/* Always show performance cards - shows 0 if no trades */}
+            {/* Always show performance cards - shows 0 if no trades, no fake change percentages */}
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <PerformanceCard title="Monthly P&L" value={totalPnl} change={12.5} type="currency" />
-              <PerformanceCard title="Win Rate" value={totalTrades ? Math.round((totalWins / totalTrades) * 100) : 0} change={5} type="percentage" icon="percent" />
-              <PerformanceCard title="Avg R" value={avgR} change={8} type="ratio" icon="target" />
+              <PerformanceCard title="Monthly P&L" value={totalPnl} change={0} type="currency" />
+              <PerformanceCard title="Win Rate" value={totalTrades ? Math.round((totalWins / totalTrades) * 100) : 0} change={0} type="percentage" icon="percent" />
+              <PerformanceCard title="Avg R" value={avgR} change={0} type="ratio" icon="target" />
               <PerformanceCard title="Trades" value={totalTrades} type="count" />
             </div>
 
-            {/* Only show AI insights if data exists or not in FILMING mode empty */}
+            {/* Always show AI insights - real patterns or "No trades yet" */}
             {!(appMode === 'FILMING' && storedTrades.length === 0) && (
               <Suspense fallback={<div className="rounded-2xl bg-card p-5 shadow-card h-24" />}>
                 <AIInsightCard
@@ -518,7 +515,7 @@ export default function Dashboard() {
                           .slice(0, 3)
                           .map((s: any) => `${s.name}: ${Math.round((s.wins / s.count) * 100) || 0}% (${s.count})`)
                           .join(" • ")
-                      : "Your win rate increases by 42% when you trade during your Follicular phase with volume confirmation. Consider adding this to your checklist."
+                      : "No trades yet. Start logging trades to discover patterns."
                   }
                   category="pattern"
                   actionLabel="View Full Analysis"
