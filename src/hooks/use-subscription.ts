@@ -59,6 +59,7 @@ const SCREENSHOT_LIMITS = {
 };
 
 export function useSubscription() {
+  const { appMode } = useAppMode();
   const [subscription, setSubscription] = useState<Subscription>({
     tier: 'free',
     status: 'active',
@@ -66,7 +67,15 @@ export function useSubscription() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Demo mode - provide premium features for development
+    // DEMO and FILMING modes - provide PRO features for videos/demos
+    if (appMode === 'DEMO' || appMode === 'FILMING') {
+      console.log('📊 Subscription - Auto-set to PRO for', appMode, 'mode');
+      setSubscription({ tier: 'pro', status: 'active' });
+      setLoading(false);
+      return;
+    }
+
+    // Dev mode - provide premium features for development
     if (import.meta.env.VITE_SKIP_EMAIL_VERIFICATION === 'true') {
       setSubscription({ tier: 'premium', status: 'active' });
       setLoading(false);
@@ -74,7 +83,7 @@ export function useSubscription() {
     }
     
     loadSubscription();
-  }, []);
+  }, [appMode]);
 
   async function loadSubscription() {
     try {
