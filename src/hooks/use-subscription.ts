@@ -110,11 +110,20 @@ export function useSubscription() {
         .single();
 
       if (error || !data) {
-        // No subscription found = free tier
-        console.log('📊 Subscription Debug - No data found, defaulting to free');
-        setSubscription({ tier: 'free', status: 'active' });
+        // No subscription found, fallback to profiles.tier
+        console.log('📊 Subscription Debug - No data in subscriptions table, checking profiles...');
+        
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('tier')
+          .eq('id', user.id)
+          .single();
+        
+        const tier = (profile?.tier as SubscriptionTier) || 'free';
+        console.log('📊 Subscription Debug - Loaded from profiles:', tier);
+        setSubscription({ tier, status: 'active' });
       } else {
-        console.log('📊 Subscription Debug - Loaded:', data.tier, data.status);
+        console.log('📊 Subscription Debug - Loaded from subscriptions:', data.tier, data.status);
         setSubscription({
           tier: data.tier as SubscriptionTier,
           status: data.status as 'active' | 'inactive' | 'cancelled',
