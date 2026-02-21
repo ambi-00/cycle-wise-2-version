@@ -15,6 +15,7 @@ import CyclePredictions from "@/components/CyclePredictions";
 import CycleTrackerTour from "@/components/CycleTrackerTour";
 import { Card, CardContent } from "@/components/ui/card";
 import { useSubscription } from "@/hooks/use-subscription";
+import { useAppMode } from "@/hooks/use-app-mode";
 import { FeatureGuard } from "@/components/FeatureGuard";
 import { usePaymentSuccess } from "@/hooks/use-payment-success";
 import { generateCalendarData, DayData } from "@/lib/cycleHelpers";
@@ -387,13 +388,15 @@ export default function CycleTracker() {
   };
 
   const { subscription, loading: subLoading } = useSubscription();
+  const { appMode, isLoading: appModeLoading } = useAppMode();
 
-  // Show blank while subscription loads (no flicker)
-  if (subLoading) {
+  // Show blank while subscription OR app mode loads (no flicker)
+  if (subLoading || appModeLoading) {
     return <div className="min-h-screen bg-background" />;
   }
 
-  const hasPremium = subscription.tier === 'premium' || subscription.tier === 'pro';
+  // FILMING mode should have full access (auto-PRO)
+  const hasPremium = appMode === 'FILMING' || appMode === 'DEMO' || subscription.tier === 'premium' || subscription.tier === 'pro';
 
   return (
     <main className="pb-24 pt-20 lg:pl-64 lg:pt-8">
