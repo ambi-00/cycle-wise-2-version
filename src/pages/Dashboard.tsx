@@ -331,6 +331,10 @@ export default function Dashboard() {
           </div>
         );
       case 'ai-insight':
+        // Don't show patterns if in FILMING mode with no trades
+        if (appMode === 'FILMING' && storedTrades.length === 0) {
+          return null;
+        }
         return features.showGamification ? (
           <Suspense fallback={<div className="rounded-2xl bg-card p-5 shadow-card h-24" />}>
             <AIInsightCard
@@ -504,20 +508,23 @@ export default function Dashboard() {
               <PerformanceCard title="Trades" value={totalTrades} type="count" />
             </div>
 
-            <Suspense fallback={<div className="rounded-2xl bg-card p-5 shadow-card h-24" />}>
-              <AIInsightCard
-                insight={
-                  strategySummary && strategySummary.length > 0
-                    ? strategySummary
-                        .slice(0, 3)
-                        .map((s: any) => `${s.name}: ${Math.round((s.wins / s.count) * 100) || 0}% (${s.count})`)
-                        .join(" • ")
-                    : "Your win rate increases by 42% when you trade during your Follicular phase with volume confirmation. Consider adding this to your checklist."
-                }
-                category="pattern"
-                actionLabel="View Full Analysis"
-              />
-            </Suspense>
+            {/* Only show AI insights if data exists or not in FILMING mode empty */}
+            {!(appMode === 'FILMING' && storedTrades.length === 0) && (
+              <Suspense fallback={<div className="rounded-2xl bg-card p-5 shadow-card h-24" />}>
+                <AIInsightCard
+                  insight={
+                    strategySummary && strategySummary.length > 0
+                      ? strategySummary
+                          .slice(0, 3)
+                          .map((s: any) => `${s.name}: ${Math.round((s.wins / s.count) * 100) || 0}% (${s.count})`)
+                          .join(" • ")
+                      : "Your win rate increases by 42% when you trade during your Follicular phase with volume confirmation. Consider adding this to your checklist."
+                  }
+                  category="pattern"
+                  actionLabel="View Full Analysis"
+                />
+              </Suspense>
+            )}
 
             {/* Always show recent trades table - shows empty or mock data */}
             <Suspense fallback={<div className="rounded-2xl bg-card p-5 shadow-card" />}>
