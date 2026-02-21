@@ -15,6 +15,7 @@ import {
   getRiskRewardContext,
   getDrawdownContext 
 } from "@/lib/tradingStatistics";
+import { generateDemoTrades } from "@/data/demo-data";
 
 export default function AIInsights() {
   const navigate = useNavigate();
@@ -34,10 +35,17 @@ export default function AIInsights() {
   const ddContext = getDrawdownContext(stats);
 
   useEffect(() => {
-    const allTrades = loadTradesFromLocalStorage();
-    setTrades(allTrades);
-    setHasData(allTrades.length > 0);
-  }, []);
+    // Load demo trades in DEMO mode, otherwise load from localStorage
+    if (appMode === 'DEMO') {
+      const demoTrades = generateDemoTrades();
+      setTrades(demoTrades);
+      setHasData(demoTrades.length > 0);
+    } else {
+      const allTrades = loadTradesFromLocalStorage();
+      setTrades(allTrades);
+      setHasData(allTrades.length > 0);
+    }
+  }, [appMode]);
 
   // Show blank while subscription or app mode loads (no flicker)
   if (subLoading || appModeLoading) {
