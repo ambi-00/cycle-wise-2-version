@@ -48,6 +48,7 @@ const PROP_FIRMS = [
   { id: 'fidelcrest', name: 'Fidelcrest', logo: '🛡️', color: 'bg-indigo-500', url: 'trader.fidelcrest.com', implemented: true },
   { id: 'trueforexfunds', name: 'True Forex Funds', logo: '💎', color: 'bg-pink-500', url: 'trueforexfunds.com', implemented: true },
   { id: 'fundedtradingplus', name: 'Funded Trading Plus', logo: '➕', color: 'bg-lime-500', url: 'portal.fundedtradingplus.com', implemented: true },
+  { id: 'myfxbook', name: 'MyFXBook', logo: '📊', color: 'bg-indigo-600', url: 'myfxbook.com', implemented: true },
   { id: 'goatfundedtrader', name: 'Goat Funded Trader', logo: '🐐', color: 'bg-stone-500', url: 'goatfundedtrader.com', implemented: true },
   { id: 'instantfunding', name: 'Instant Funding', logo: '⚡', color: 'bg-yellow-500', url: 'instantfunding.io', implemented: true },
   { id: 'ment', name: 'MENT Funding', logo: '🧠', color: 'bg-rose-500', url: 'mentfunding.com', implemented: true },
@@ -235,8 +236,14 @@ export function PropFirmConnect() {
   };
 
   const addAccount = async () => {
-    if (!selectedPropFirm || !accountNumber || !password || !actualServer) {
-      alert('Please fill in all required fields (Account Number, Password, Server)');
+    if (!selectedPropFirm || !accountNumber || !password) {
+      alert('Bitte fülle alle erforderlichen Felder aus');
+      return;
+    }
+
+    // MyFXBook doesn't require server/platform
+    if (selectedPropFirm !== 'myfxbook' && !actualServer) {
+      alert('Bitte fülle alle erforderlichen Felder aus (Server)');
       return;
     }
 
@@ -249,8 +256,8 @@ export function PropFirmConnect() {
         propFirm: selectedPropFirm,
         accountNumber,
         password: encryptedPassword, // Now encrypted
-        server: actualServer,
-        platform,
+        server: selectedPropFirm === 'myfxbook' ? '' : actualServer,
+        platform: selectedPropFirm === 'myfxbook' ? 'mt4' : platform,
         status: 'disconnected',
         lastSync: undefined,
       };
@@ -280,6 +287,36 @@ export function PropFirmConnect() {
     }
   };
 
+  // MyFXBook API function
+  const fetchMyFXBookData = async (accountNumber: string, apiKey: string) => {
+    try {
+      // MyFXBook API endpoint to get account data
+      const response = await fetch(
+        `https://www.myfxbook.com/api/get-data.json?token=${accountNumber}&session=${apiKey}`
+      );
+      
+      if (!response.ok) {
+        throw new Error('MyFXBook API request failed');
+      }
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.message || 'MyFXBook API error');
+      }
+
+      return {
+        balance: data.account?.balance || 0,
+        equity: data.account?.equity || 0,
+        profit: data.account?.profit || 0,
+        openPositions: data.account?.openPositions?.length || 0,
+      };
+    } catch (error) {
+      console.error('MyFXBook API error:', error);
+      throw error;
+    }
+  };
+
   const syncAccount = async (id: string) => {
     setIsSyncing(id);
     
@@ -291,76 +328,102 @@ export function PropFirmConnect() {
       a.id === id ? { ...a, status: 'syncing' as const } : a
     ));
 
-    const API_URL = import.meta.env.VITE_MT_API_URL || 'http://localhost:3001';
-
     try {
-      // Decrypt password before using
-      let decryptedPassword = account.password;
-      try {
-        decryptedPassword = await decryptData(account.password);
-      } catch (e) {
-        // If decryption fails, password might be already decrypted or corrupted
-        console.warn('Could not decrypt password, using as-is:', e);
-      }
+      // Special handling for MyFXBook
+      if (account.propFirm === 'myfxbook') {
+        let decryptedPassword = account.password;
+        try {
+          decryptedPassword = await decryptData(account.password);
+        } catch (e) {
+          console.warn('Could not decrypt password:', e);
+        }
 
-      // Step 1: Connect account if not connected yet
-      if (!account.metaApiId) {
-        const connectRes = await fetch(`${API_URL}/api/mt/connect`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            accountNumber: account.accountNumber,
-            password: decryptedPassword,
-            server: account.server,
-            platform: account.platform,
-            propFirm: account.propFirm,
-          }),
-        });
+        // accountNumber is the token, password is the session/API key for MyFXBook
+        const myfxbookData = await fetchMyFXBookData(account.accountNumber, decryptedPassword);
 
-        if (!connectRes.ok) throw new Error('Verbindung fehlgeschlagen');
-        
-        const connectData = await connectRes.json();
-        if (!connectData.success) throw new Error(connectData.error);
-
-        // Save metaApiId
-        account.metaApiId = connectData.accountId;
-      }
-
-      // Step 2: Fetch account data
-      const dataRes = await fetch(`${API_URL}/api/mt/account/${account.metaApiId}`);
-      const dataJson = await dataRes.json();
-
-      if (dataJson.success && dataJson.data && !dataJson.demo) {
-        // Real data from MT4/MT5
         const updated = accounts.map(a => 
           a.id === id ? { 
             ...a, 
-            metaApiId: account.metaApiId,
             status: 'connected' as const,
             lastSync: new Date().toISOString(),
-            balance: dataJson.data.balance,
-            equity: dataJson.data.equity,
-            dailyPnl: dataJson.data.profit,
-            trades: dataJson.data.todayTrades,
-            openTrades: dataJson.data.openPositions,
+            balance: myfxbookData.balance,
+            equity: myfxbookData.equity,
+            dailyPnl: myfxbookData.profit,
+            openTrades: myfxbookData.openPositions,
           } : a
         );
         saveAccounts(updated);
       } else {
-        // Demo mode or no data yet
-        const updated = accounts.map(a => 
-          a.id === id ? { 
-            ...a, 
-            metaApiId: account.metaApiId,
-            status: 'connected' as const,
-            lastSync: new Date().toISOString(),
-          } : a
-        );
-        saveAccounts(updated);
+        // MT4/MT5 handling for other prop firms
+        const API_URL = import.meta.env.VITE_MT_API_URL || 'http://localhost:3001';
+
+        // Decrypt password before using
+        let decryptedPassword = account.password;
+        try {
+          decryptedPassword = await decryptData(account.password);
+        } catch (e) {
+          console.warn('Could not decrypt password, using as-is:', e);
+        }
+
+        // Step 1: Connect account if not connected yet
+        if (!account.metaApiId) {
+          const connectRes = await fetch(`${API_URL}/api/mt/connect`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              accountNumber: account.accountNumber,
+              password: decryptedPassword,
+              server: account.server,
+              platform: account.platform,
+              propFirm: account.propFirm,
+            }),
+          });
+
+          if (!connectRes.ok) throw new Error('Verbindung fehlgeschlagen');
+          
+          const connectData = await connectRes.json();
+          if (!connectData.success) throw new Error(connectData.error);
+
+          // Save metaApiId
+          account.metaApiId = connectData.accountId;
+        }
+
+        // Step 2: Fetch account data
+        const dataRes = await fetch(`${API_URL}/api/mt/account/${account.metaApiId}`);
+        const dataJson = await dataRes.json();
+
+        if (dataJson.success && dataJson.data && !dataJson.demo) {
+          // Real data from MT4/MT5
+          const updated = accounts.map(a => 
+            a.id === id ? { 
+              ...a, 
+              metaApiId: account.metaApiId,
+              status: 'connected' as const,
+              lastSync: new Date().toISOString(),
+              balance: dataJson.data.balance,
+              equity: dataJson.data.equity,
+              dailyPnl: dataJson.data.profit,
+              trades: dataJson.data.todayTrades,
+              openTrades: dataJson.data.openPositions,
+            } : a
+          );
+          saveAccounts(updated);
+        } else {
+          // Demo mode or no data yet
+          const updated = accounts.map(a => 
+            a.id === id ? { 
+              ...a, 
+              metaApiId: account.metaApiId,
+              status: 'connected' as const,
+              lastSync: new Date().toISOString(),
+            } : a
+          );
+          saveAccounts(updated);
+        }
       }
 
     } catch (error) {
-      console.log('Backend nicht erreichbar:', error);
+      console.log('Sync failed:', error);
       // Still mark as "connected" (credentials saved)
       const updated = accounts.map(a => 
         a.id === id ? { 
@@ -606,44 +669,27 @@ export function PropFirmConnect() {
               )}
             </div>
 
-            {/* Platform Selection */}
+            {/* Account Number - Different label for MyFXBook */}
             <div>
-              <label className="text-sm font-medium">Plattform *</label>
-              <div className="mt-1.5 flex gap-2">
-                <Button
-                  type="button"
-                  variant={platform === 'mt4' ? 'default' : 'outline'}
-                  className="flex-1"
-                  onClick={() => setPlatform('mt4')}
-                >
-                  MetaTrader 4
-                </Button>
-                <Button
-                  type="button"
-                  variant={platform === 'mt5' ? 'default' : 'outline'}
-                  className="flex-1"
-                  onClick={() => setPlatform('mt5')}
-                >
-                  MetaTrader 5
-                </Button>
-              </div>
-            </div>
-
-            {/* Account Number */}
-            <div>
-              <label className="text-sm font-medium">Kontonummer *</label>
+              <label className="text-sm font-medium">
+                {selectedPropFirm === 'myfxbook' ? 'MyFXBook Account ID *' : 'Kontonummer *'}
+              </label>
               <Input 
                 value={accountNumber} 
                 onChange={(e) => setAccountNumber(e.target.value)}
-                placeholder="z.B. 12345678"
+                placeholder={selectedPropFirm === 'myfxbook' ? 'z.B. 123456' : 'z.B. 12345678'}
                 className="mt-1.5"
               />
-              <p className="text-xs text-muted-foreground mt-1">The login ID of your trading account</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {selectedPropFirm === 'myfxbook' ? 'Find your Account ID in MyFXBook settings' : 'The login ID of your trading account'}
+              </p>
             </div>
 
-            {/* Password */}
+            {/* Password - Different label for MyFXBook */}
             <div>
-              <label className="text-sm font-medium">Passwort (Investor) *</label>
+              <label className="text-sm font-medium">
+                {selectedPropFirm === 'myfxbook' ? 'MyFXBook API Key *' : 'Passwort (Investor) *'}
+              </label>
               <div className="relative mt-1.5">
                 <Input 
                   type={showPassword ? 'text' : 'password'}
@@ -659,30 +705,60 @@ export function PropFirmConnect() {
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
-              <p className="text-xs text-muted-foreground mt-1">Das Investor/Read-only Passwort (nicht dein Master-Passwort!)</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {selectedPropFirm === 'myfxbook' 
+                  ? 'Get your API Key from https://www.myfxbook.com/settings#accounts' 
+                  : 'Das Investor/Read-only Passwort (nicht dein Master-Passwort!)'}
+              </p>
             </div>
 
-            {/* Server */}
-            <div>
-              <label className="text-sm font-medium">Server *</label>
-              {selectedPropFirm && PROP_FIRM_SERVERS[selectedPropFirm] ? (
-                <>
-                  <Select value={server} onValueChange={(val) => { setServer(val); if (val !== 'custom') setCustomServer(''); }}>
-                    <SelectTrigger className="mt-1.5">
-                      <SelectValue placeholder="Choose your server" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {PROP_FIRM_SERVERS[selectedPropFirm].map((srv) => (
-                        <SelectItem key={srv} value={srv}>
-                          {srv}
-                        </SelectItem>
-                      ))}
-                      <SelectItem value="custom">⌨️ Enter another server...</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {server === 'custom' && (
-                    <Input 
-                      value={customServer}
+            {/* Platform Selection - only show for non-MyFXBook */}
+            {selectedPropFirm !== 'myfxbook' && (
+              <div>
+                <label className="text-sm font-medium">Plattform *</label>
+                <div className="mt-1.5 flex gap-2">
+                  <Button
+                    type="button"
+                    variant={platform === 'mt4' ? 'default' : 'outline'}
+                    className="flex-1"
+                    onClick={() => setPlatform('mt4')}
+                  >
+                    MetaTrader 4
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={platform === 'mt5' ? 'default' : 'outline'}
+                    className="flex-1"
+                    onClick={() => setPlatform('mt5')}
+                  >
+                    MetaTrader 5
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Server - only show for non-MyFXBook */}
+            {selectedPropFirm !== 'myfxbook' && (
+              <div>
+                <label className="text-sm font-medium">Server *</label>
+                {selectedPropFirm && PROP_FIRM_SERVERS[selectedPropFirm] ? (
+                  <>
+                    <Select value={server} onValueChange={(val) => { setServer(val); if (val !== 'custom') setCustomServer(''); }}>
+                      <SelectTrigger className="mt-1.5">
+                        <SelectValue placeholder="Choose your server" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {PROP_FIRM_SERVERS[selectedPropFirm].map((srv) => (
+                          <SelectItem key={srv} value={srv}>
+                            {srv}
+                          </SelectItem>
+                        ))}
+                        <SelectItem value="custom">⌨️ Enter another server...</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {server === 'custom' && (
+                      <Input 
+                        value={customServer}
                       onChange={(e) => setCustomServer(e.target.value)}
                       placeholder="Enter server name"
                       className="mt-2"
@@ -699,13 +775,18 @@ export function PropFirmConnect() {
                   disabled={!selectedPropFirm}
                 />
               )}
-              <p className="text-xs text-muted-foreground mt-1">You can find the server in your MT4/MT5 connection or email</p>
-            </div>
+                <p className="text-xs text-muted-foreground mt-1">You can find the server in your MT4/MT5 connection or email</p>
+              </div>
+            )}
 
             {/* Security Notice */}
             <div className="rounded-lg bg-accent/10 border border-accent/20 p-3 text-xs">
-              <p className="font-medium text-accent-foreground mb-1">🔒 Read-only access</p>
-              <p className="text-muted-foreground">With the investor password we can only <strong>read</strong> your trades - never execute, change or withdraw money. This is the secure way, just like at TraderWaves.</p>
+              <p className="font-medium text-accent-foreground mb-1">🔒 {selectedPropFirm === 'myfxbook' ? 'Read-only access' : 'Sichere Verbindung'}</p>
+              <p className="text-muted-foreground">
+                {selectedPropFirm === 'myfxbook' 
+                  ? 'Your API key provides read-only access to your account data. We never execute trades or withdraw money.'
+                  : 'With the investor password we can only read your trades - never execute, change or withdraw money. This is the secure way, just like at TraderWaves.'}
+              </p>
             </div>
 
             {/* Where to find credentials */}
