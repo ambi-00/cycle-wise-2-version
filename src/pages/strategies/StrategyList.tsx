@@ -37,6 +37,9 @@ export default function StrategyList() {
     const filtered = strategies.filter((s) => s.name !== name);
     setStrategies(filtered);
     localStorage.setItem('cw_strategies', JSON.stringify(filtered));
+    
+    // Dispatch custom event to notify other components
+    window.dispatchEvent(new Event('strategies-updated'));
   };
 
   return (

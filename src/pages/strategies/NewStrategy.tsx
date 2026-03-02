@@ -248,6 +248,9 @@ export default function NewStrategy() {
     existingStrategies.push(newStrategy);
     localStorage.setItem('cw_strategies', JSON.stringify(existingStrategies));
 
+    // Dispatch custom event to notify other components
+    window.dispatchEvent(new Event('strategies-updated'));
+
     toast({
       title: "Strategy created",
       description: "Your strategy has been saved successfully",

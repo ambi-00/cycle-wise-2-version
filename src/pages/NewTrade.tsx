@@ -146,12 +146,35 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
 
   // Load custom strategies from localStorage
   useEffect(() => {
-    try {
-      const userStrategies = JSON.parse(localStorage.getItem('cw_strategies') || '[]');
-      setCustomStrategies(userStrategies);
-    } catch (e) {
-      console.error('Failed to load custom strategies:', e);
-    }
+    const loadStrategies = () => {
+      try {
+        const userStrategies = JSON.parse(localStorage.getItem('cw_strategies') || '[]');
+        setCustomStrategies(userStrategies);
+      } catch (e) {
+        console.error('Failed to load custom strategies:', e);
+      }
+    };
+    
+    // Load initially
+    loadStrategies();
+    
+    // Listen for storage changes (when strategies are added/edited in another tab or component)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'cw_strategies') {
+        loadStrategies();
+      }
+    };
+    
+    // Also listen for custom event (for same-tab updates)
+    const handleCustomEvent = () => loadStrategies();
+    
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('strategies-updated', handleCustomEvent);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('strategies-updated', handleCustomEvent);
+    };
   }, []);
 
   const strategies = useMemo(() => {

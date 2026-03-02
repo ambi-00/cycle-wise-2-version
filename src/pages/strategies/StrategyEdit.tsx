@@ -58,6 +58,10 @@ export default function StrategyEdit() {
       };
       filtered.unshift(toSave);
       localStorage.setItem('cw_strategies', JSON.stringify(filtered));
+      
+      // Dispatch custom event to notify other components
+      window.dispatchEvent(new Event('strategies-updated'));
+      
       navigate('/strategies');
     } catch (e) {
       console.error(e);

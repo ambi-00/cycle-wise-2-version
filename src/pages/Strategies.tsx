@@ -53,9 +53,21 @@ export default function Strategies() {
 
   useEffect(() => {
     // Load user-created strategies from localStorage
-    const userStrategies = JSON.parse(localStorage.getItem('cw_strategies') || '[]');
-    // Combine mock strategies with user strategies
-    setStrategies([...mockStrategies, ...userStrategies]);
+    const loadStrategies = () => {
+      const userStrategies = JSON.parse(localStorage.getItem('cw_strategies') || '[]');
+      // Combine mock strategies with user strategies
+      setStrategies([...mockStrategies, ...userStrategies]);
+    };
+    
+    loadStrategies();
+    
+    // Listen for strategy updates
+    const handleStrategyUpdate = () => loadStrategies();
+    window.addEventListener('strategies-updated', handleStrategyUpdate);
+    
+    return () => {
+      window.removeEventListener('strategies-updated', handleStrategyUpdate);
+    };
   }, []);
 
   // Show blank while subscription loads (no flicker)
