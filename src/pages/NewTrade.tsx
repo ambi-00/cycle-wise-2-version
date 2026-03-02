@@ -142,9 +142,36 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
   const [midTradeUrl, setMidTradeUrl] = useState('');
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [confirmDialog, setConfirmDialog] = useState<{ show: boolean; message: string; onConfirm: () => void } | null>(null);
+  const [customStrategies, setCustomStrategies] = useState<any[]>([]);
 
-  const strategies = useMemo(() => DEFAULT_STRATEGIES.map((s) => s.name), []);
-  const strategyRequirements = useMemo(() => Object.fromEntries(DEFAULT_STRATEGIES.map((s) => [s.name, s.minConfirmations])), [] as any);
+  // Load custom strategies from localStorage
+  useEffect(() => {
+    try {
+      const userStrategies = JSON.parse(localStorage.getItem('cw_strategies') || '[]');
+      setCustomStrategies(userStrategies);
+    } catch (e) {
+      console.error('Failed to load custom strategies:', e);
+    }
+  }, []);
+
+  const strategies = useMemo(() => {
+    // Combine default strategies with custom user strategies
+    const defaultNames = DEFAULT_STRATEGIES.map((s) => s.name);
+    const customNames = customStrategies.map((s: any) => s.name).filter((name: string) => name);
+    return [...defaultNames, ...customNames];
+  }, [customStrategies]);
+
+  const strategyRequirements = useMemo(() => {
+    const requirements = Object.fromEntries(DEFAULT_STRATEGIES.map((s) => [s.name, s.minConfirmations]));
+    // Add custom strategies with their confirmations
+    customStrategies.forEach((s: any) => {
+      if (s.name && s.confirmations) {
+        requirements[s.name] = s.confirmations.length || 0;
+      }
+    });
+    return requirements;
+  }, [customStrategies]);
+  
   const minRequired = strategyRequirements[strategy] || 0;
 
   // Load custom reasons from localStorage
