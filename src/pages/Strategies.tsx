@@ -127,7 +127,7 @@ export default function Strategies() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              onClick={() => navigate(`/strategies/edit/${encodeURIComponent(strategy.name)}`)}
+              onClick={() => navigate(`/strategies/${encodeURIComponent(strategy.name)}`)}
               className="group cursor-pointer rounded-2xl bg-card p-6 shadow-card transition-all hover:shadow-glow hover:scale-[1.02]"
             >
               <div className="flex items-start justify-between">
@@ -191,7 +191,7 @@ export default function Strategies() {
                   className="flex-1"
                   onClick={(e) => {
                     e.stopPropagation();
-                    navigate(`/strategies/edit/${encodeURIComponent(strategy.name)}`);
+                    navigate(`/strategies/${encodeURIComponent(strategy.name)}`);
                   }}
                 >
                   <BarChart3 className="h-4 w-4" />

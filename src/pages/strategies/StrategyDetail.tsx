@@ -1,100 +1,115 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, TrendingUp, CheckCircle, Edit, Trash2, BarChart3, Plus, Upload, X, ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { 
+  ArrowLeft, 
+  Edit, 
+  TrendingUp, 
+  Target, 
+  BarChart3, 
+  CheckCircle2,
+  Clock,
+  Layers,
+  Shield,
+  Trophy,
+  AlertCircle,
+  TrendingDown
+} from "lucide-react";
 
-const mockStrategies = [
+type Strategy = {
+  id: string;
+  name: string;
+  description?: string;
+  markets: string[];
+  timeframes: string[];
+  confirmations: string[];
+  entryTriggers?: string[];
+  slCriteria?: string[];
+  exitRules?: string[];
+  exitCriteria?: string[];
+  generalRules?: string[];
+  rules?: string[];
+  riskPerTrade?: number;
+  stopLossType?: string;
+  takeProfitType?: string;
+  riskRewardRatio?: number;
+  winRate: number;
+  avgR: number;
+  tradesCount: number;
+  score: number;
+  profitFactor?: number;
+  maxDrawdown?: number;
+  createdAt?: string;
+};
+
+const mockStrategies: Strategy[] = [
   {
     id: "1",
     name: "ICT Silver Bullet",
-    description: "High-probability setups focusing on institutional order flow and liquidity grabs during kill zones",
+    description: "High-probability setups during key trading sessions using institutional order flow concepts and liquidity grabs.",
     markets: ["Forex", "Indices"],
     timeframes: ["1H", "15M"],
     winRate: 72,
     avgR: 2.1,
     tradesCount: 45,
+    confirmations: ["Market structure shift", "FVG/OB mitigation", "Kill zone timing", "Volume confirmation", "Higher timeframe bias"],
+    entryTriggers: ["Break of structure", "Fair value gap entry", "Order block reaction"],
+    slCriteria: ["Below/above last swing point", "Beyond order block"],
+    exitRules: ["Target liquidity zones", "Partial profits at 1:2", "Trail stop after 1:3"],
+    generalRules: ["Only trade during NY/London sessions", "Avoid news events", "Maximum 2 trades per day"],
+    riskPerTrade: 1,
+    stopLossType: "Fixed pips",
+    takeProfitType: "Risk:Reward ratio",
+    riskRewardRatio: 3,
     profitFactor: 2.4,
     maxDrawdown: 8.5,
-    confirmations: [
-      "Market structure shift",
-      "FVG/OB mitigation",
-      "Kill zone timing (London/NY)",
-      "Volume confirmation",
-      "Higher timeframe bias",
-      "Liquidity sweep complete",
-      "Price in premium/discount"
-    ],
-    rules: [
-      "Only trade during London or New York kill zones (2am-5am or 7am-10am EST)",
-      "Must have clear market structure shift on higher timeframe",
-      "Wait for price to fill FVG or react at order block",
-      "Volume must confirm the move",
-      "Risk no more than 1% per trade"
-    ],
     score: 87,
   },
   {
     id: "2",
     name: "SMC Sweep & Grab",
-    description: "Smart Money Concepts strategy targeting liquidity sweeps followed by strong reversals",
+    description: "Smart Money Concepts strategy focusing on liquidity sweeps and order block reactions for institutional-level entries.",
     markets: ["Forex"],
     timeframes: ["4H", "1H"],
     winRate: 65,
     avgR: 1.8,
     tradesCount: 32,
+    confirmations: ["Liquidity sweep", "Order block reaction", "Break of structure", "Displacement candle"],
+    entryTriggers: ["Return to order block", "Liquidity grab completion", "Change of character"],
+    slCriteria: ["Beyond order block", "Below liquidity sweep"],
+    exitRules: ["Target opposite liquidity", "Scale out at key levels"],
+    generalRules: ["Wait for sweep confirmation", "Higher timeframe alignment required"],
+    riskPerTrade: 1.5,
+    stopLossType: "Structure-based",
+    takeProfitType: "Liquidity targets",
+    riskRewardRatio: 2,
     profitFactor: 2.1,
     maxDrawdown: 12.3,
-    confirmations: [
-      "Liquidity sweep (stop hunt)",
-      "Order block reaction",
-      "Break of structure",
-      "Displacement candle",
-      "Change of character confirmed",
-      "Market maker pattern identified"
-    ],
-    rules: [
-      "Identify clear liquidity pools on charts",
-      "Wait for sweep and immediate reversal",
-      "Entry only after break of structure",
-      "Stop loss below/above swept liquidity",
-      "Target previous high/low or FVG"
-    ],
     score: 74,
   },
   {
     id: "3",
-    name: "Supply & Demand Zones",
-    description: "Classic supply and demand strategy focusing on fresh zones with strong reactions",
+    name: "Supply & Demand",
+    description: "Classical supply and demand zone trading with strict zone quality filters and confirmation requirements.",
     markets: ["Crypto", "Indices"],
     timeframes: ["Daily", "4H"],
     winRate: 58,
     avgR: 1.5,
     tradesCount: 28,
+    confirmations: ["Fresh zone", "Trend alignment", "Multiple rejections", "Volume spike"],
+    entryTriggers: ["Zone test", "Rejection candle", "Volume confirmation"],
+    slCriteria: ["Beyond zone", "Fixed percentage"],
+    exitRules: ["Opposite zone", "Profit targets"],
+    generalRules: ["Only fresh zones", "Trend alignment required"],
+    riskPerTrade: 2,
+    stopLossType: "Zone-based",
+    takeProfitType: "Target zones",
+    riskRewardRatio: 2.5,
     profitFactor: 1.8,
     maxDrawdown: 15.7,
-    confirmations: [
-      "Fresh zone (untested)",
-      "Trend alignment",
-      "Multiple timeframe confirmation",
-      "Volume spike at origin",
-      "Strong departure from zone",
-      "Clean zone without overlap"
-    ],
-    rules: [
-      "Only trade fresh, untested zones",
-      "Must align with higher timeframe trend",
-      "Enter on first touch of zone",
-      "Set stop loss beyond the zone",
-      "Take profit at next major level"
-    ],
     score: 62,
   },
 ];
@@ -102,66 +117,79 @@ const mockStrategies = [
 export default function StrategyDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { toast } = useToast();
-  const strategy = mockStrategies.find(s => s.id === id);
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const newFiles = Array.from(e.target.files);
-      setExampleTrade(prev => ({
-        ...prev,
-        screenshots: [...prev.screenshots, ...newFiles]
-      }));
+  const [strategy, setStrategy] = useState<Strategy | null>(null);
+  const [notFound, setNotFound] = useState(false);
+  const [isMockStrategy, setIsMockStrategy] = useState(false);
+
+  useEffect(() => {
+    if (!id) {
+      setNotFound(true);
+      return;
     }
-  };
 
-  const removeScreenshot = (index: number) => {
-    setExampleTrade(prev => ({
-      ...prev,
-      screenshots: prev.screenshots.filter((_, i) => i !== index)
-    }));
-  };
+    // First check mock strategies by ID or name
+    const mockStrategy = mockStrategies.find((s) => s.id === id || s.name === decodeURIComponent(id));
+    if (mockStrategy) {
+      setStrategy(mockStrategy);
+      setIsMockStrategy(true);
+      setNotFound(false);
+      return;
+    }
 
-  const handleSaveExample = () => {
-    // TODO: Save to Supabase
-    toast({
-      title: "Example trade added",
-      description: "Your example trade has been saved to this strategy",
-    });
-    setShowExampleDialog(false);
-    setExampleTrade({
-      pair: "",
-      direction: "",
-      entryPrice: "",
-      exitPrice: "",
-      stopLoss: "",
-      takeProfit: "",
-      riskReward: "",
-      outcome: "",
-      notes: "",
-      screenshots: [],
-    });
-  };
+    // Then check user strategies by name
+    try {
+      const raw = localStorage.getItem('cw_strategies');
+      if (!raw) {
+        setNotFound(true);
+        return;
+      }
+      const parsed = JSON.parse(raw);
+      const list: Strategy[] = Array.isArray(parsed) ? parsed : [];
+      const found = list.find((s) => s.name === decodeURIComponent(id));
+      
+      if (found) {
+        setStrategy(found);
+        setIsMockStrategy(false);
+        setNotFound(false);
+      } else {
+        setNotFound(true);
+      }
+    } catch (e) {
+      console.error('Error loading strategy:', e);
+      setNotFound(true);
+    }
+  }, [id]);
 
-  
-  const [showExampleDialog, setShowExampleDialog] = useState(false);
-  const [exampleTrade, setExampleTrade] = useState({
-    pair: "",
-    direction: "",
-    entryPrice: "",
-    exitPrice: "",
-    stopLoss: "",
-    takeProfit: "",
-    riskReward: "",
-    outcome: "",
-    notes: "",
-    screenshots: [] as File[],
-  });
+  if (notFound) {
+    return (
+      <main className="pb-24 pt-20 lg:pl-64 lg:pt-8">
+        <div className="mx-auto max-w-7xl p-4 lg:p-8">
+          <Card>
+            <CardContent className="p-12 text-center">
+              <AlertCircle className="h-16 w-16 text-destructive mx-auto mb-4" />
+              <h2 className="text-2xl font-bold mb-2 text-destructive">Strategy Not Found</h2>
+              <p className="text-muted-foreground mb-6">
+                The strategy "{id ? decodeURIComponent(id) : ''}" could not be found.
+              </p>
+              <Button onClick={() => navigate('/strategies')}>
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Strategies
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </main>
+    );
+  }
 
   if (!strategy) {
     return (
       <main className="pb-24 pt-20 lg:pl-64 lg:pt-8">
         <div className="mx-auto max-w-7xl p-4 lg:p-8">
-          <p>Strategy not found</p>
+          <div className="animate-pulse space-y-6">
+            <div className="h-32 bg-muted rounded-2xl" />
+            <div className="h-64 bg-muted rounded-2xl" />
+          </div>
         </div>
       </main>
     );
@@ -169,352 +197,354 @@ export default function StrategyDetail() {
 
   return (
     <main className="pb-24 pt-20 lg:pl-64 lg:pt-8">
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="mx-auto max-w-7xl p-4 lg:p-8"
-      >
-        {/* Back Button */}
-        <Button
-          variant="ghost"
-          onClick={() => navigate("/strategies")}
-          className="mb-6"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Strategies
-        </Button>
-
+      <div className="mx-auto max-w-7xl p-4 lg:p-8">
         {/* Header */}
-        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="flex-1">
-            <div className="flex items-center gap-3">
-              <h1 className="font-serif text-3xl font-bold text-foreground">{strategy.name}</h1>
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary/20 to-secondary">
-                <span className="text-lg font-bold text-primary">{strategy.score}</span>
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8"
+        >
+          <Button
+            variant="ghost"
+            onClick={() => navigate('/strategies')}
+            className="mb-4"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Strategies
+          </Button>
+
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div className="flex-1 min-w-[300px]">
+              <div className="flex items-center gap-3 mb-2 flex-wrap">
+                <h1 className="font-serif text-3xl font-bold text-foreground">{strategy.name}</h1>
+                {isMockStrategy && (
+                  <Badge variant="secondary" className="text-xs">
+                    Demo Strategy
+                  </Badge>
+                )}
               </div>
+              {strategy.description && (
+                <p className="text-muted-foreground max-w-3xl mt-2">{strategy.description}</p>
+              )}
             </div>
-            <p className="mt-3 text-muted-foreground leading-relaxed">{strategy.description}</p>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {strategy.markets.map(market => (
-                <span key={market} className="rounded-lg bg-secondary px-3 py-1 text-sm font-medium text-secondary-foreground">
-                  {market}
-                </span>
-              ))}
-              {strategy.timeframes.map(tf => (
-                <span key={tf} className="rounded-lg bg-muted px-3 py-1 text-sm font-medium text-muted-foreground">
-                  {tf}
-                </span>
-              ))}
-            </div>
+
+            {!isMockStrategy && (
+              <Button
+                onClick={() => navigate(`/strategies/edit/${encodeURIComponent(strategy.name)}`)}
+                className="shrink-0"
+              >
+                <Edit className="h-4 w-4 mr-2" />
+                Edit Strategy
+              </Button>
+            )}
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline">
-              <Edit className="h-4 w-4" />
-              Edit
-            </Button>
-            <Button variant="outline">
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
+        </motion.div>
 
         {/* Performance Stats */}
-        <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-          <Card>
-            <CardContent className="p-6 text-center">
-              <p className="text-sm text-muted-foreground">Win Rate</p>
-              <p className="mt-2 text-3xl font-bold text-foreground">{strategy.winRate}%</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6 text-center">
-              <p className="text-sm text-muted-foreground">Avg R</p>
-              <p className="mt-2 text-3xl font-bold text-foreground">{strategy.avgR}R</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6 text-center">
-              <p className="text-sm text-muted-foreground">Total Trades</p>
-              <p className="mt-2 text-3xl font-bold text-foreground">{strategy.tradesCount}</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6 text-center">
-              <p className="text-sm text-muted-foreground">Profit Factor</p>
-              <p className="mt-2 text-3xl font-bold text-foreground">{strategy.profitFactor}</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6 text-center">
-              <p className="text-sm text-muted-foreground">Max DD</p>
-              <p className="mt-2 text-3xl font-bold text-destructive">{strategy.maxDrawdown}%</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="grid gap-6 lg:grid-cols-2">
-          {/* Confirmations */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <CheckCircle className="h-5 w-5 text-accent-foreground" />
-                Confirmation Checklist
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {strategy.confirmations.map((conf, i) => (
-                  <div key={i} className="flex items-start gap-3 rounded-lg bg-muted/30 p-3">
-                    <CheckCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-accent-foreground" />
-                    <span className="text-sm text-foreground">{conf}</span>
-                  </div>
-                ))}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-8"
+        >
+          <Card className="bg-gradient-to-br from-green-500/10 to-green-600/10 border-green-500/20 shadow-card">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground mb-1">Win Rate</p>
+                  <p className="text-3xl font-bold text-foreground">{strategy.winRate}%</p>
+                </div>
+                <TrendingUp className="h-10 w-10 text-green-500 opacity-70" />
               </div>
             </CardContent>
           </Card>
 
-        {/* Add Example Trade Button */}
-        <div className="mt-8 flex justify-center">
-          <Dialog open={showExampleDialog} onOpenChange={setShowExampleDialog}>
-            <DialogTrigger asChild>
-              <Button size="lg" className="gap-2">
-                <Plus className="h-5 w-5" />
-                Add Example Trade
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>Add Example Trade</DialogTitle>
-              </DialogHeader>
-              
-              <div className="space-y-6 py-4">
-                {/* Trade Details */}
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div>
-                    <Label htmlFor="pair">Trading Pair</Label>
-                    <Input
-                      id="pair"
-                      placeholder="e.g., EUR/USD"
-                      value={exampleTrade.pair}
-                      onChange={(e) => setExampleTrade({...exampleTrade, pair: e.target.value})}
-                      className="mt-1.5"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="direction">Direction</Label>
-                    <Select value={exampleTrade.direction} onValueChange={(value) => setExampleTrade({...exampleTrade, direction: value})}>
-                      <SelectTrigger className="mt-1.5">
-                        <SelectValue placeholder="Select direction" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="long">Long</SelectItem>
-                        <SelectItem value="short">Short</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                {/* Entry/Exit/SL/TP */}
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div>
-                    <Label htmlFor="entry">Entry Price</Label>
-                    <Input
-                      id="entry"
-                      type="number"
-                      step="0.00001"
-                      placeholder="1.08500"
-                      value={exampleTrade.entryPrice}
-                      onChange={(e) => setExampleTrade({...exampleTrade, entryPrice: e.target.value})}
-                      className="mt-1.5"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="exit">Exit Price</Label>
-                    <Input
-                      id="exit"
-                      type="number"
-                      step="0.00001"
-                      placeholder="1.08900"
-                      value={exampleTrade.exitPrice}
-                      onChange={(e) => setExampleTrade({...exampleTrade, exitPrice: e.target.value})}
-                      className="mt-1.5"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="sl">Stop Loss</Label>
-                    <Input
-                      id="sl"
-                      type="number"
-                      step="0.00001"
-                      placeholder="1.08300"
-                      value={exampleTrade.stopLoss}
-                      onChange={(e) => setExampleTrade({...exampleTrade, stopLoss: e.target.value})}
-                      className="mt-1.5"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="tp">Take Profit</Label>
-                    <Input
-                      id="tp"
-                      type="number"
-                      step="0.00001"
-                      placeholder="1.09000"
-                      value={exampleTrade.takeProfit}
-                      onChange={(e) => setExampleTrade({...exampleTrade, takeProfit: e.target.value})}
-                      className="mt-1.5"
-                    />
-                  </div>
-                </div>
-
-                {/* R:R and Outcome */}
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div>
-                    <Label htmlFor="rr">Risk:Reward Ratio</Label>
-                    <Input
-                      id="rr"
-                      placeholder="e.g., 1:2"
-                      value={exampleTrade.riskReward}
-                      onChange={(e) => setExampleTrade({...exampleTrade, riskReward: e.target.value})}
-                      className="mt-1.5"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="outcome">Outcome</Label>
-                    <Select value={exampleTrade.outcome} onValueChange={(value) => setExampleTrade({...exampleTrade, outcome: value})}>
-                      <SelectTrigger className="mt-1.5">
-                        <SelectValue placeholder="Select outcome" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="win">Win</SelectItem>
-                        <SelectItem value="loss">Loss</SelectItem>
-                        <SelectItem value="breakeven">Break Even</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                {/* Notes */}
+          <Card className="bg-gradient-to-br from-blue-500/10 to-blue-600/10 border-blue-500/20 shadow-card">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
                 <div>
-                  <Label htmlFor="notes">Trade Notes & Analysis</Label>
-                  <Textarea
-                    id="notes"
-                    placeholder="Describe what you saw, why you entered, what confirmations were present..."
-                    value={exampleTrade.notes}
-                    onChange={(e) => setExampleTrade({...exampleTrade, notes: e.target.value})}
-                    rows={5}
-                    className="mt-1.5"
-                  />
+                  <p className="text-sm text-muted-foreground mb-1">Avg R-Multiple</p>
+                  <p className="text-3xl font-bold text-foreground">{strategy.avgR}R</p>
                 </div>
+                <Target className="h-10 w-10 text-blue-500 opacity-70" />
+              </div>
+            </CardContent>
+          </Card>
 
-                {/* Screenshots Upload */}
+          <Card className="bg-gradient-to-br from-purple-500/10 to-purple-600/10 border-purple-500/20 shadow-card">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
                 <div>
-                  <Label>TradingView Screenshots</Label>
-                  <div className="mt-2 rounded-lg border-2 border-dashed border-muted p-6 text-center">
-                    <input
-                      type="file"
-                      id="screenshots"
-                      multiple
-                      accept="image/*"
-                      onChange={handleFileUpload}
-                      className="hidden"
-                    />
-                    <label htmlFor="screenshots" className="cursor-pointer">
-                      <Upload className="mx-auto h-12 w-12 text-muted-foreground" />
-                      <p className="mt-2 text-sm text-muted-foreground">
-                        Click to upload screenshots or drag and drop
-                      </p>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        PNG, JPG up to 10MB each
-                      </p>
-                    </label>
-                  </div>
+                  <p className="text-sm text-muted-foreground mb-1">Total Trades</p>
+                  <p className="text-3xl font-bold text-foreground">{strategy.tradesCount}</p>
+                </div>
+                <BarChart3 className="h-10 w-10 text-purple-500 opacity-70" />
+              </div>
+            </CardContent>
+          </Card>
 
-                  {/* Screenshot Previews */}
-                  {exampleTrade.screenshots.length > 0 && (
-                    <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                      {exampleTrade.screenshots.map((file, index) => (
-                        <div key={index} className="relative rounded-lg border bg-muted/30 p-3">
-                          <div className="flex items-center gap-3">
-                            <ImageIcon className="h-8 w-8 text-muted-foreground" />
-                            <div className="flex-1 min-w-0">
-                              <p className="truncate text-sm font-medium text-foreground">{file.name}</p>
-                              <p className="text-xs text-muted-foreground">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => removeScreenshot(index)}
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
+          <Card className="bg-gradient-to-br from-amber-500/10 to-amber-600/10 border-amber-500/20 shadow-card">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground mb-1">Strategy Score</p>
+                  <p className="text-3xl font-bold text-foreground">{strategy.score}</p>
+                </div>
+                <Trophy className="h-10 w-10 text-amber-500 opacity-70" />
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* Additional Stats Row */}
+        {(strategy.profitFactor || strategy.maxDrawdown) && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className="grid gap-4 sm:grid-cols-2 mb-8"
+          >
+            {strategy.profitFactor && (
+              <Card className="shadow-card">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1">Profit Factor</p>
+                      <p className="text-2xl font-bold text-foreground">{strategy.profitFactor}</p>
+                    </div>
+                    <TrendingUp className="h-8 w-8 text-primary opacity-70" />
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {strategy.maxDrawdown && (
+              <Card className="shadow-card">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1">Max Drawdown</p>
+                      <p className="text-2xl font-bold text-foreground">{strategy.maxDrawdown}%</p>
+                    </div>
+                    <TrendingDown className="h-8 w-8 text-destructive opacity-70" />
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </motion.div>
+        )}
+
+        <div className="grid gap-6 lg:grid-cols-3">
+          {/* Left Column */}
+          <div className="space-y-6 lg:col-span-2">
+            {/* Markets & Timeframes */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              <Card className="shadow-card">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Layers className="h-5 w-5 text-primary" />
+                    <h3 className="font-semibold text-lg">Markets & Timeframes</h3>
+                  </div>
+                  <div className="space-y-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-2">Markets</p>
+                      <div className="flex flex-wrap gap-2">
+                        {strategy.markets.map((market, idx) => (
+                          <Badge key={idx} variant="secondary" className="text-sm px-3 py-1">
+                            {market}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-2">Timeframes</p>
+                      <div className="flex flex-wrap gap-2">
+                        {strategy.timeframes.map((tf, idx) => (
+                          <Badge key={idx} variant="outline" className="text-sm px-3 py-1">
+                            <Clock className="h-3 w-3 mr-1" />
+                            {tf}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            {/* Entry Confirmations */}
+            {strategy.confirmations && strategy.confirmations.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+              >
+                <Card className="shadow-card">
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-2 mb-4">
+                      <CheckCircle2 className="h-5 w-5 text-accent-foreground" />
+                      <h3 className="font-semibold text-lg">Entry Confirmations</h3>
+                    </div>
+                    <div className="space-y-2">
+                      {strategy.confirmations.map((conf, idx) => (
+                        <div key={idx} className="flex items-start gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+                          <div className="mt-0.5">
+                            <div className="h-2 w-2 rounded-full bg-accent-foreground" />
                           </div>
+                          <p className="text-sm text-foreground flex-1">{conf}</p>
                         </div>
                       ))}
                     </div>
-                  )}
-                </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
 
-                {/* Action Buttons */}
-                <div className="flex justify-end gap-2 pt-4">
-                  <Button variant="outline" onClick={() => setShowExampleDialog(false)}>
-                    Cancel
-                  </Button>
-                  <Button onClick={handleSaveExample}>
-                    Save Example Trade
-                  </Button>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
-        </div>
-
-          {/* Rules */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-primary" />
-                Trading Rules
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {strategy.rules.map((rule, i) => (
-                  <div key={i} className="flex items-start gap-3 rounded-lg bg-primary/5 p-3">
-                    <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
-                      {i + 1}
-                    </span>
-                    <span className="text-sm text-foreground">{rule}</span>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* View Analytics */}
-        <Card className="mt-6 bg-gradient-to-br from-primary/10 to-secondary/10">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-xl font-semibold flex items-center gap-2">
-                  <BarChart3 className="h-5 w-5 text-primary" />
-                  Performance Analytics
-                </h3>
-                <p className="text-sm text-muted-foreground mt-2">
-                  View detailed analytics for this strategy - Win/Loss breakdown, time analysis, common mistakes, and improvement suggestions
-                </p>
-              </div>
-              <Button 
-                size="lg"
-                onClick={() => navigate(`/strategies/${id}/analytics`)}
+            {/* Entry Triggers */}
+            {strategy.entryTriggers && strategy.entryTriggers.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
               >
-                <BarChart3 className="h-4 w-4" />
-                View Analytics
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </motion.div>
+                <Card className="shadow-card">
+                  <CardContent className="p-6">
+                    <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
+                      <TrendingUp className="h-5 w-5 text-green-500" />
+                      Entry Triggers
+                    </h3>
+                    <ul className="space-y-2">
+                      {strategy.entryTriggers.map((trigger, idx) => (
+                        <li key={idx} className="flex items-center gap-2 text-sm p-2 rounded-lg hover:bg-muted/30 transition-colors">
+                          <div className="h-1.5 w-1.5 rounded-full bg-green-500" />
+                          <span>{trigger}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
+
+            {/* General Rules */}
+            {((strategy.generalRules && strategy.generalRules.length > 0) || (strategy.rules && strategy.rules.length > 0)) && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
+              >
+                <Card className="shadow-card">
+                  <CardContent className="p-6">
+                    <h3 className="font-semibold text-lg mb-4">General Rules</h3>
+                    <ul className="space-y-3">
+                      {(strategy.generalRules || strategy.rules || []).map((rule, idx) => (
+                        <li key={idx} className="text-sm text-muted-foreground pl-4 border-l-2 border-primary/30 py-1">
+                          {rule}
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
+          </div>
+
+          {/* Right Column */}
+          <div className="space-y-6">
+            {/* Risk Management */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+            >
+              <Card className="shadow-card">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Shield className="h-5 w-5 text-primary" />
+                    <h3 className="font-semibold text-lg">Risk Management</h3>
+                  </div>
+                  <div className="space-y-4">
+                    {strategy.riskPerTrade && (
+                      <div className="p-3 rounded-lg bg-muted/30">
+                        <p className="text-xs text-muted-foreground mb-1">Risk Per Trade</p>
+                        <p className="text-xl font-semibold text-foreground">{strategy.riskPerTrade}%</p>
+                      </div>
+                    )}
+                    {strategy.riskRewardRatio && (
+                      <div className="p-3 rounded-lg bg-muted/30">
+                        <p className="text-xs text-muted-foreground mb-1">Risk:Reward Ratio</p>
+                        <p className="text-xl font-semibold text-foreground">1:{strategy.riskRewardRatio}</p>
+                      </div>
+                    )}
+                    {strategy.stopLossType && (
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-2">Stop Loss Type</p>
+                        <Badge variant="outline" className="text-sm">{strategy.stopLossType}</Badge>
+                      </div>
+                    )}
+                    {strategy.takeProfitType && (
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-2">Take Profit Type</p>
+                        <Badge variant="outline" className="text-sm">{strategy.takeProfitType}</Badge>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            {/* SL Criteria */}
+            {strategy.slCriteria && strategy.slCriteria.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+              >
+                <Card className="shadow-card">
+                  <CardContent className="p-6">
+                    <h3 className="font-semibold text-lg mb-4">Stop Loss Criteria</h3>
+                    <ul className="space-y-2">
+                      {strategy.slCriteria.map((criteria, idx) => (
+                        <li key={idx} className="text-sm text-muted-foreground flex items-start gap-2">
+                          <span className="text-destructive mt-1">•</span>
+                          <span className="flex-1">{criteria}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
+
+            {/* Exit Rules */}
+            {strategy.exitRules && strategy.exitRules.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
+              >
+                <Card className="shadow-card">
+                  <CardContent className="p-6">
+                    <h3 className="font-semibold text-lg mb-4">Exit Rules</h3>
+                    <ul className="space-y-2">
+                      {strategy.exitRules.map((rule, idx) => (
+                        <li key={idx} className="text-sm text-muted-foreground flex items-start gap-2">
+                          <span className="text-primary mt-1">•</span>
+                          <span className="flex-1">{rule}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
+          </div>
+        </div>
+      </div>
     </main>
   );
 }
