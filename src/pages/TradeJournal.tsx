@@ -295,6 +295,19 @@ export default function TradeJournal() {
     };
   }, [dateFilter]);
 
+  // Auto-scroll to trades table when date filter is active
+  useEffect(() => {
+    if (dateFilter && trades.length > 0) {
+      // Small delay to ensure DOM is ready
+      setTimeout(() => {
+        const tradesSection = document.querySelector('.trades-table-section');
+        if (tradesSection) {
+          tradesSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 100);
+    }
+  }, [dateFilter, trades.length]);
+
   // Load MT Trades from Supabase
   useEffect(() => {
     const loadMTTrades = async () => {
@@ -589,13 +602,21 @@ export default function TradeJournal() {
             />
           </div>
           {dateFilter && (
-            <div className="flex items-center gap-3">
-              <div className="rounded-md bg-card p-2">
-                <p className="text-sm text-muted-foreground">Showing trades for</p>
-                <p className="font-medium">{dateFilter}</p>
+            <div className="flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-500">
+              <div className="rounded-lg bg-primary/10 border-2 border-primary/30 p-3 shadow-lg">
+                <p className="text-xs text-muted-foreground uppercase tracking-wide font-semibold">Filtered by date</p>
+                <p className="text-lg font-bold text-primary mt-0.5">{new Date(dateFilter).toLocaleDateString('de-DE', { 
+                  weekday: 'short', 
+                  year: 'numeric', 
+                  month: 'short', 
+                  day: 'numeric' 
+                })}</p>
               </div>
               <Link to="/journal">
-                <Button variant="outline" size="sm">Clear date</Button>
+                <Button variant="outline" size="sm" className="gap-2">
+                  <X className="h-4 w-4" />
+                  Clear filter
+                </Button>
               </Link>
             </div>
           )}
@@ -735,8 +756,17 @@ export default function TradeJournal() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="rounded-2xl bg-card shadow-card overflow-hidden"
+          className="trades-table-section rounded-2xl bg-card shadow-card overflow-hidden"
         >
+          <div className="bg-muted/30 px-6 py-4 border-b">
+            <h3 className="font-serif text-xl font-semibold text-foreground">
+              {dateFilter ? `Trades on ${new Date(dateFilter).toLocaleDateString('de-DE', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}` : 'All Trades'}
+            </h3>
+            <p className="text-sm text-muted-foreground mt-1">
+              {filteredTrades.length} {filteredTrades.length === 1 ? 'trade' : 'trades'} found
+              {dateFilter && <span className="ml-1 font-semibold text-primary">• Date filter active</span>}
+            </p>
+          </div>
           {filteredTrades.length === 0 ? (
             <div className="text-center p-12">
               <div className="mx-auto w-fit rounded-full bg-primary/10 p-6">
