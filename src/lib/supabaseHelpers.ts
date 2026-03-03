@@ -63,20 +63,20 @@ export interface TradeInsert {
 
 /**
  * Save a new trade (with Offline-First support)
+ * Works in all modes: USER (Supabase), DEMO (localStorage), FILMING (localStorage)
  */
 export async function saveTrade(trade: TradeInsert) {
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Not authenticated');
-
+  
   const tradeData = {
-    user_id: user.id,
+    user_id: user?.id || 'local-user',
     id: crypto.randomUUID(), // Generate ID upfront for offline support
     ...trade,
     created_at: new Date().toISOString(),
   };
 
-  // Save with offline-first strategy
-  if (navigator.onLine) {
+  // Save with offline-first strategy (only if user is authenticated)
+  if (navigator.onLine && user) {
     try {
       const { data, error } = await supabase
         .from('trades')
@@ -125,22 +125,25 @@ export async function saveTrade(trade: TradeInsert) {
     }
   }
 
-  // Offline: Save to localStorage and sync queue
+  // Offline or no auth: Save to localStorage only
   const localKey = `cw_journal_${trade.date}`;
   const existing = JSON.parse(localStorage.getItem(localKey) || '{"trades":[]}');
   existing.trades.push(tradeData);
   localStorage.setItem(localKey, JSON.stringify(existing));
 
-  // Add to sync queue (XP will be calculated when synced)
-  await syncSave({
-    type: 'trade',
-    data: tradeData,
-    localStorageKey: localKey,
-    supabaseTable: 'trades',
-    operation: 'insert',
-    getId: (d) => d.id,
-  });
+  // Add to sync queue only if user is authenticated (XP will be calculated when synced)
+  if (user) {
+    await syncSave({
+      type: 'trade',
+      data: tradeData,
+      localStorageKey: localKey,
+      supabaseTable: 'trades',
+      operation: 'insert',
+      getId: (d) => d.id,
+    });
+  }
 
+  console.log('✅ Trade saved to localStorage:', tradeData.id, 'for date:', trade.date);
   return tradeData;
 }
 
