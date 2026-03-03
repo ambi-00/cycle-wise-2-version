@@ -57,11 +57,12 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
   const navigate = useNavigate();
   const dateParam = searchParams.get('date');
   const idParam = searchParams.get('id');
-  const isoDate = dateProp || dateParam || new Date().toISOString().slice(0, 10);
+  const initialDate = dateProp || dateParam || new Date().toISOString().slice(0, 10);
   
   console.log('NewTrade mounted with dateParam:', dateParam, 'idParam:', idParam);
 
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [tradeDate, setTradeDate] = useState(initialDate); // Editable trade date
 
   const [instrument, setInstrument] = useState('');
   const [direction, setDirection] = useState<'long' | 'short'>('long');
@@ -298,14 +299,14 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
 
   // Load existing trade data
   useEffect(() => {
-    console.log('Load effect running, idParam:', idParam, 'isoDate:', isoDate);
+    console.log('Load effect running, idParam:', idParam, 'tradeDate:', tradeDate);
     if (!idParam || initialLoadDone.current) {
       console.log('Skipping load - no idParam or already loaded');
       return;
     }
     
     try {
-      const key = `cw_journal_${isoDate}`;
+      const key = `cw_journal_${tradeDate}`;
       console.log('Looking for trade in:', key);
       const raw = localStorage.getItem(key);
       console.log('Raw data found:', !!raw);
@@ -325,6 +326,7 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
       initialLoadDone.current = true;
       setIsEditing(true);
       setEditingId(found.id);
+      setTradeDate(found.date || tradeDate); // Set trade date from found trade
       setInstrument(found.instrument || '');
       setDirection(found.direction || 'long');
       setEntryPrice(found.entry ?? '');
@@ -390,7 +392,7 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
     } catch (e) {
       console.error('Error loading trade:', e);
     }
-  }, [idParam, isoDate]);
+  }, [idParam, tradeDate]);
 
   // Handle strategy change - only for NEW trades, not when editing
   useEffect(() => {
@@ -508,7 +510,7 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
         return;
       }
 
-      // derive cycle info for this isoDate from stored cycle settings
+      // derive cycle info for this tradeDate from stored cycle settings
       let cycleDay: number | null = null;
       let cyclePhase: string | null = null;
       try {
@@ -518,7 +520,7 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
         const avg = cycleSettings.avgCycleLength;
         const per = cycleSettings.periodLength;
         if (last) {
-          const d = new Date(isoDate);
+          const d = new Date(tradeDate);
           const l = new Date(last);
           const diff = Math.floor((d.getTime() - l.getTime()) / msPerDay);
           const cd = (((diff % avg) + avg) % avg) + 1;
@@ -582,7 +584,7 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
       }
 
       const tradeData: TradeInsert = {
-        date: isoDate,
+        date: tradeDate,
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         instrument: instrument || 'Unknown',
         direction,
@@ -687,7 +689,6 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
             <div className="space-y-1">
               <div className="flex items-baseline gap-5">
                 <h1 className="text-3xl font-serif font-bold tracking-tight text-foreground">New Trade</h1>
-                <span className="text-lg text-muted-foreground font-medium">{isoDate}</span>
               </div>
               <p className="text-sm text-muted-foreground mt-1">Document your trade preparation and results</p>
             </div>
@@ -698,6 +699,28 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
           </CardHeader>
 
           <CardContent>
+            {/* Date Selector - Prominent placement */}
+            <div className="mb-6 p-4 rounded-2xl border bg-muted/20 shadow-soft">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="rounded-xl bg-primary/10 p-2">
+                    <span className="text-xl">📅</span>
+                  </div>
+                  <div>
+                    <label className="text-sm font-semibold text-foreground block">Trade Date</label>
+                    <p className="text-xs text-muted-foreground">Wähle das Datum für diesen Trade</p>
+                  </div>
+                </div>
+                <Input
+                  type="date"
+                  value={tradeDate}
+                  onChange={(e) => setTradeDate(e.target.value)}
+                  max={new Date().toISOString().slice(0, 10)}
+                  className="w-auto text-base font-medium"
+                />
+              </div>
+            </div>
+
             <div className="my-5 flex gap-3 justify-center flex-wrap">
               <button type="button" className={`rounded-full px-4 py-2 text-sm font-medium shadow-soft ${viewMode === 'before' ? 'bg-gradient-to-r from-primary to-primary/70 text-primary-foreground' : 'bg-muted/10 text-muted-foreground'}`} onClick={() => setViewMode('before')}>📋 Before Trade</button>
               <button type="button" className={`rounded-full px-4 py-2 text-sm font-medium shadow-soft ${viewMode === 'during' ? 'bg-gradient-to-r from-primary to-primary/70 text-primary-foreground' : 'bg-muted/10 text-muted-foreground'}`} onClick={() => setViewMode('during')}>⚡ During Trade</button>
