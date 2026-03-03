@@ -127,7 +127,7 @@ export default function Strategies() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              onClick={() => navigate(`/strategies/${strategy.id}`)}
+              onClick={() => navigate(`/strategies/edit/${encodeURIComponent(strategy.name)}`)}
               className="group cursor-pointer rounded-2xl bg-card p-6 shadow-card transition-all hover:shadow-glow hover:scale-[1.02]"
             >
               <div className="flex items-start justify-between">
@@ -191,7 +191,7 @@ export default function Strategies() {
                   className="flex-1"
                   onClick={(e) => {
                     e.stopPropagation();
-                    navigate(`/strategies/${strategy.id}`);
+                    navigate(`/strategies/edit/${encodeURIComponent(strategy.name)}`);
                   }}
                 >
                   <BarChart3 className="h-4 w-4" />
@@ -203,7 +203,16 @@ export default function Strategies() {
                   onClick={(e) => {
                     e.stopPropagation();
                     if (confirm(`Are you sure you want to delete "${strategy.name}"?`)) {
-                      setStrategies(strategies.filter(s => s.id !== strategy.id));
+                      const updatedStrategies = strategies.filter(s => s.name !== strategy.name);
+                      setStrategies(updatedStrategies);
+                      
+                      // Update localStorage
+                      const userStrategies = updatedStrategies.filter(s => !mockStrategies.find(m => m.id === s.id));
+                      localStorage.setItem('cw_strategies', JSON.stringify(userStrategies));
+                      
+                      // Dispatch event
+                      window.dispatchEvent(new Event('strategies-updated'));
+                      
                       toast({
                         title: "Strategy deleted",
                         description: `"${strategy.name}" has been removed.`,

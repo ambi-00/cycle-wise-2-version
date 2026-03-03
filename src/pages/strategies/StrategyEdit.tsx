@@ -21,19 +21,30 @@ export default function StrategyEdit() {
   const { name } = useParams();
   const navigate = useNavigate();
   const [strategy, setStrategy] = useState<StrategyDef>({ name: '', minConfirmations: 0, confirmations: [], markets: [], timeframes: [], winRate: 0, avgR: 0, tradesCount: 0, score: 0 });
+  const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
     try {
       const raw = localStorage.getItem('cw_strategies');
-      if (!raw) return;
+      if (!raw) {
+        setNotFound(true);
+        return;
+      }
       const parsed = JSON.parse(raw);
       const list: StrategyDef[] = Array.isArray(parsed) ? parsed.map((p: any) => (typeof p === 'string' ? { name: p } : p)) : [];
       if (name) {
-        const found = list.find((s) => s.name === decodeURIComponent(name));
-        if (found) setStrategy(found);
+        const decodedName = decodeURIComponent(name);
+        const found = list.find((s) => s.name === decodedName);
+        if (found) {
+          setStrategy(found);
+          setNotFound(false);
+        } else {
+          setNotFound(true);
+        }
       }
     } catch (e) {
-      // ignore
+      console.error('Error loading strategy:', e);
+      setNotFound(true);
     }
   }, [name]);
 
@@ -67,6 +78,26 @@ export default function StrategyEdit() {
       console.error(e);
     }
   };
+
+  if (notFound) {
+    return (
+      <main className="pb-24 pt-20 lg:pl-64 lg:pt-8">
+        <div className="mx-auto max-w-4xl p-4 lg:p-8">
+          <Card>
+            <div className="p-6 text-center">
+              <h2 className="text-xl font-semibold mb-2 text-destructive">Strategy Not Found</h2>
+              <p className="text-muted-foreground mb-4">
+                The strategy "{name ? decodeURIComponent(name) : ''}" could not be found.
+              </p>
+              <Button onClick={() => navigate('/strategies')}>
+                Back to Strategies
+              </Button>
+            </div>
+          </Card>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="pb-24 pt-20 lg:pl-64 lg:pt-8">
