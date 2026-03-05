@@ -1,10 +1,11 @@
 import { useState, useEffect, useMemo, lazy, Suspense } from "react";
 import { motion } from "framer-motion";
 import { CyclePhaseIndicator } from "@/components/CyclePhaseIndicator";
+import { PeriodPrediction } from "@/components/PeriodPrediction";
 import { SafetyModeToggle } from "@/components/SafetyModeToggle";
 import { PerformanceCard } from "@/components/PerformanceCard";
 import { DailyHealthCheckIn } from "@/components/DailyHealthCheckIn";
-import { loadCycleSettings, getCurrentCycleInfo, hasCompletedTodayCheckIn } from "@/lib/demoDataLoaders";
+import { loadCycleSettings, getCurrentCycleInfo, hasCompletedTodayCheckIn, loadPeriodDates } from "@/lib/demoDataLoaders";
 import { loadTradesFromLocalStorage } from "@/lib/tradeLoaders";
 import { useWeeklyInsightGeneration } from "@/hooks/use-weekly-insights";
 import { useXPNotifications } from "@/hooks/use-xp-notifications";
@@ -156,6 +157,7 @@ export default function Dashboard() {
   const [currentCycleDay, setCurrentCycleDay] = useState<number | null>(null);
   const [currentPhase, setCurrentPhase] = useState<"menstruation" | "follicular" | "ovulation" | "luteal">("follicular");
   const [todayCycleDay, setTodayCycleDay] = useState<number>(new Date().getDate());
+  const [isPeriodLogged, setIsPeriodLogged] = useState<boolean>(false); // Is today's period logged?
   const [storedTrades, setStoredTrades] = useState<any[]>([]);
   const navigate = useNavigate();
 
@@ -210,6 +212,11 @@ export default function Dashboard() {
       setCurrentCycleDay(cycleInfo.cycleDay);
       setCurrentPhase(cycleInfo.phase);
     }
+
+    // Check if today has a logged period
+    const todayIso = new Date().toISOString().slice(0, 10);
+    const periodDates = loadPeriodDates();
+    setIsPeriodLogged(periodDates.includes(todayIso));
 
     // load stored trades and watch storage events
     const load = () => setStoredTrades(loadAllStoredTrades());
@@ -489,6 +496,8 @@ export default function Dashboard() {
             <CyclePhaseIndicator
               phase={currentPhase}
               day={currentCycleDay || 1}
+              cycleLength={avgCycleLength}
+              isPeriodLogged={isPeriodLogged}
               recommendation={
                 currentPhase === "menstruation" ? "Energy may be lower. Consider smaller position sizes or taking a break."
                 : currentPhase === "follicular" ? "Rising energy and focus. Good time for analytical trading."
@@ -559,6 +568,8 @@ export default function Dashboard() {
           </motion.div>
 
           <motion.div variants={itemVariants} className="space-y-6">
+            <PeriodPrediction />
+            
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}

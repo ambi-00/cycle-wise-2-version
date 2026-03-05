@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Plus, Droplets, Brain, Heart, Frown, Smile, Meh, Zap, Moon, Activity, HeartPulse, ChevronLeft, ChevronRight } from "lucide-react";
-import { loadCycleSettings } from "@/lib/demoDataLoaders";
+import { loadCycleSettings, loadPeriodDates } from "@/lib/demoDataLoaders";
 
 export default function Day() {
   const { day } = useParams<{ day: string }>();
@@ -46,6 +46,7 @@ export default function Day() {
   // Load settings for accurate phase calculation
   const [avgCycleLength, setAvgCycleLength] = useState<number>(28);
   const [periodLength, setPeriodLength] = useState<number>(5);
+  const [isPeriodLogged, setIsPeriodLogged] = useState<boolean>(false); // Is this day's period logged?
 
 
   // Calculate phase for this day (same logic as CycleTracker)
@@ -156,10 +157,14 @@ export default function Day() {
       
       const pd = localStorage.getItem('cw_periodDays');
       if (pd) setPeriodDays(JSON.parse(pd));
+      
+      // Check if this day has a logged period
+      const periodDates = loadPeriodDates();
+      setIsPeriodLogged(periodDates.includes(isoDate));
     } catch (e) {
       // ignore
     }
-  }, []);
+  }, [isoDate]);
 
   // load journal for this isoDate
   useEffect(() => {
@@ -266,6 +271,8 @@ export default function Day() {
             <CyclePhaseIndicator
               phase={phase}
               day={dayNum}
+              cycleLength={avgCycleLength}
+              isPeriodLogged={isPeriodLogged}
               recommendation={
                 phase === "menstruation"
                   ? (journal.hasPeriod

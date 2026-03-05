@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Plus, Filter, Download, Upload, TrendingUp, TrendingDown, Search, CheckCircle, AlertCircle, Lightbulb, X, Zap } from "lucide-react";
+import { Plus, Filter, Download, Upload, TrendingUp, TrendingDown, Search, CheckCircle, AlertCircle, Lightbulb, X, Zap, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useEffect, useState, lazy, Suspense, useRef } from "react";
@@ -603,6 +603,21 @@ export default function TradeJournal() {
           </div>
           {dateFilter && (
             <div className="flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-500">
+              {/* Previous Day Button */}
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => {
+                  const currentDate = new Date(dateFilter);
+                  currentDate.setDate(currentDate.getDate() - 1);
+                  const newDate = currentDate.toISOString().slice(0, 10);
+                  navigate(`/journal?date=${newDate}`);
+                }}
+                title="Vorheriger Tag"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+
               <div className="rounded-lg bg-primary/10 border-2 border-primary/30 p-3 shadow-lg">
                 <p className="text-xs text-muted-foreground uppercase tracking-wide font-semibold">Filtered by date</p>
                 <p className="text-lg font-bold text-primary mt-0.5">{new Date(dateFilter).toLocaleDateString('de-DE', { 
@@ -612,6 +627,27 @@ export default function TradeJournal() {
                   day: 'numeric' 
                 })}</p>
               </div>
+
+              {/* Next Day Button */}
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => {
+                  const currentDate = new Date(dateFilter);
+                  currentDate.setDate(currentDate.getDate() + 1);
+                  const today = new Date().toISOString().slice(0, 10);
+                  const newDate = currentDate.toISOString().slice(0, 10);
+                  // Don't allow future dates
+                  if (newDate <= today) {
+                    navigate(`/journal?date=${newDate}`);
+                  }
+                }}
+                disabled={dateFilter >= new Date().toISOString().slice(0, 10)}
+                title="Nächster Tag"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+
               <Link to="/journal">
                 <Button variant="outline" size="sm" className="gap-2">
                   <X className="h-4 w-4" />
