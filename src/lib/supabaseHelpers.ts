@@ -322,7 +322,8 @@ function cacheTradesToLocalStorage(trades: any[]) {
     const enrichedTrade = {
       ...trade,
       symbol: trade.instrument, // Add symbol alias for backward compat
-      r_multiple: trade.closed_rrr || trade.planned_rrr || 0 // Map closed_rrr to r_multiple for display
+      r_multiple: trade.closed_rrr || trade.planned_rrr || 0, // Map closed_rrr to r_multiple for display
+      cyclePhase: trade.cycle_phase || trade.cyclePhase || trade.phase // Map cycle_phase to cyclePhase for UI
     };
     byDate[trade.date].push(enrichedTrade);
   });
