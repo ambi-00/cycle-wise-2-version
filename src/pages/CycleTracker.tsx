@@ -1198,13 +1198,16 @@ export default function CycleTracker() {
                     <svg viewBox="0 0 200 200" className="h-full w-full -rotate-90">
                       {/* Helper function to get phase color for a specific day */}
                       {(() => {
-                        // Get today's cycle day from calendar data
-                        const todayDayOfMonth = todayDate.getDate();
-                        const isCurrentMonth = displayedDate.getFullYear() === todayDate.getFullYear() && 
-                                                displayedDate.getMonth() === todayDate.getMonth();
-                        const todayDayData = isCurrentMonth ? calendarData[todayDayOfMonth - 1] : null;
-                        const currentDay = todayDayData?.cycleDay || null;
-                        
+                        // Parse lastPeriodStart as LOCAL date (same as cycleStartDate below)
+                        // to avoid UTC offset causing the wrong dot to be highlighted
+                        const [_csy2, _csm2, _csd2] = lastPeriodStart.split('-').map(Number);
+                        const _refDate = new Date(_csy2, _csm2 - 1, _csd2);
+                        const _msDay = 1000 * 60 * 60 * 24;
+                        const _diff = Math.floor((todayDate.getTime() - _refDate.getTime()) / _msDay);
+                        const currentDay = _diff >= 0
+                          ? (_diff % avgCycleLength) + 1
+                          : null;
+
                         const getPhaseColor = (day: number) => {
                           if (day <= periodLength) return 'hsl(0 70% 70%)'; // menstruation
                           if (day <= periodLength + 7) return 'hsl(45 80% 65%)'; // follicular
