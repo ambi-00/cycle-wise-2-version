@@ -15,12 +15,17 @@ ADD COLUMN IF NOT EXISTS execution_score INTEGER,
 ADD COLUMN IF NOT EXISTS execution_notes TEXT,
 ADD COLUMN IF NOT EXISTS exit_criteria_used TEXT;
 
--- Add image fields for chart screenshots (before and after trade on different timeframes)
+-- Rename existing image columns to match the code (add _tf suffix for "timeframe")
+-- The old column names were image_before_small, image_before_large, etc.
+-- The code uses image_before_small_tf, image_before_large_tf, etc.
 ALTER TABLE trades
-ADD COLUMN IF NOT EXISTS image_before_small_tf TEXT,
-ADD COLUMN IF NOT EXISTS image_before_large_tf TEXT,
-ADD COLUMN IF NOT EXISTS image_after_small_tf TEXT,
-ADD COLUMN IF NOT EXISTS image_after_large_tf TEXT;
+RENAME COLUMN image_before_small TO image_before_small_tf;
+ALTER TABLE trades
+RENAME COLUMN image_before_large TO image_before_large_tf;
+ALTER TABLE trades
+RENAME COLUMN image_after_small TO image_after_small_tf;
+ALTER TABLE trades
+RENAME COLUMN image_after_large TO image_after_large_tf;
 
 -- Add comments for documentation
 COMMENT ON COLUMN trades.checklist IS 'Pre-trade checklist items as JSONB array [{"text": "...", "done": true/false}]';
