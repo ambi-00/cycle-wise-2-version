@@ -22,7 +22,11 @@ const loadStoredTrades = (dateFilter: string) => {
       const raw = localStorage.getItem(`cw_journal_${dateFilter}`);
       if (!raw) return [];
       const data = JSON.parse(raw);
-      return (data.trades || []).map((t: any) => ({ ...t }));
+      // Map cycle_phase (from Supabase) to cyclePhase (camelCase for UI)
+      return (data.trades || []).map((t: any) => ({ 
+        ...t,
+        cyclePhase: t.cyclePhase || t.cycle_phase || t.phase
+      }));
     }
 
     const trades: any[] = [];
@@ -33,7 +37,11 @@ const loadStoredTrades = (dateFilter: string) => {
           const raw = localStorage.getItem(key);
           if (!raw) continue;
           const data = JSON.parse(raw);
-          (data.trades || []).forEach((t: any) => trades.push(t));
+          // Map cycle_phase (from Supabase) to cyclePhase (camelCase for UI)
+          (data.trades || []).forEach((t: any) => trades.push({ 
+            ...t,
+            cyclePhase: t.cyclePhase || t.cycle_phase || t.phase
+          }));
         } catch (e) {
           // ignore parse errors
         }
