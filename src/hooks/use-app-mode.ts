@@ -45,13 +45,14 @@ export function useAppMode(): AppModeState {
 
         console.log('🎬 App Mode Debug - Profile:', profile);
         console.log('🎬 App Mode Debug - Error:', error);
-        console.log('🎬 App Mode Debug - Mode:', profile?.app_mode);
+        const p = profile as any;
+        console.log('🎬 App Mode Debug - Mode:', p?.app_mode);
 
-        if (profile?.app_mode) {
-          setAppMode(profile.app_mode as AppMode);
+        if (p?.app_mode) {
+          setAppMode(p.app_mode as AppMode);
           // Store in localStorage for tradeLoaders
-          localStorage.setItem('cw_app_mode', profile.app_mode);
-          console.log('🎬 App Mode SET TO:', profile.app_mode);
+          localStorage.setItem('cw_app_mode', p.app_mode);
+          console.log('🎬 App Mode SET TO:', p.app_mode);
         } else {
           console.log('🎬 App Mode: No app_mode in profile, defaulting to USER');
           localStorage.setItem('cw_app_mode', 'USER');

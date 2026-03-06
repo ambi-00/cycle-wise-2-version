@@ -440,7 +440,7 @@ export default function Dashboard() {
       case 'prop-firm-summary':
         return (
           <Suspense fallback={<div className="rounded-2xl bg-card p-5 shadow-card h-32" />}>
-            <PropFirmSummary totalExpenses={2450} totalPayouts={8920} netProfit={6470} roi={264} />
+            <PropFirmSummary />
           </Suspense>
         );
       case 'leaderboard-preview':
@@ -617,7 +617,7 @@ export default function Dashboard() {
             </motion.div>
 
             <Suspense fallback={<div className="rounded-2xl bg-card p-5 shadow-card h-32" />}>
-              <PropFirmSummary totalExpenses={2450} totalPayouts={8920} netProfit={6470} roi={264} />
+              <PropFirmSummary />
             </Suspense>
 
             {features.showLeaderboard && (

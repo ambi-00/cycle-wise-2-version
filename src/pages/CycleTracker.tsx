@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { ChevronLeft, ChevronRight, Shield, Plus, Lock } from "lucide-react";
+import { ChevronLeft, ChevronRight, Shield, Plus, Lock, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +20,7 @@ import { usePaymentSuccess } from "@/hooks/use-payment-success";
 import { generateCalendarData, DayData } from "@/lib/cycleHelpers";
 import { localDateStr } from "@/lib/utils";
 import { loadCycleSettings, loadPeriodDates } from "@/lib/demoDataLoaders";
+import { loadTradesFromLocalStorage } from "@/lib/tradeLoaders";
 
 type DayData = {
   day: number;
@@ -41,6 +42,228 @@ const cyclePhases = [
   { name: "Ovulation", days: "13-16", color: "bg-cycle-ovulation/30 border-cycle-ovulation", description: "Peak energy and social drive.", icon: Info },
   { name: "Luteal", days: "17-28", color: "bg-cycle-luteal/30 border-cycle-luteal", description: "Pre-menstrual phase, possible irritability.", icon: Info },
 ];
+
+// ─── Cycle Phase Intelligence ─────────────────────────────────────────────────
+type PhaseKey = "menstruation" | "follicular" | "ovulation" | "luteal";
+
+const CYCLE_PHASE_INFO: Record<
+  PhaseKey,
+  {
+    emoji: string;
+    name: string;
+    days: string;
+    borderColor: string;
+    bgColor: string;
+    badgeColor: string;
+    hormone: string;
+    mental: string;
+    trading: string;
+    tip: string;
+  }
+> = {
+  menstruation: {
+    emoji: "🌑",
+    name: "Menstruation",
+    days: "Days 1–5",
+    borderColor: "border-red-400",
+    bgColor: "bg-red-500/5",
+    badgeColor: "bg-red-500/10 text-red-500",
+    hormone: "Estrogen & progesterone are at their lowest levels",
+    mental: "Introspection, detail-focus, lower physical energy, heightened self-awareness. Emotionally you may feel more sensitive or withdrawn.",
+    trading: "Risk tolerance often decreases naturally — this can protect you from impulsive trades. Analytical clarity can be sharp, but emotional resilience is lower. Ideal for reviewing trades and preparing watchlists.",
+    tip: "Pre-plan setups during this phase. Prioritise quality over quantity, and use this time to journal past trades.",
+  },
+  follicular: {
+    emoji: "🌱",
+    name: "Follicular",
+    days: "Days 6–13",
+    borderColor: "border-emerald-400",
+    bgColor: "bg-emerald-500/5",
+    badgeColor: "bg-emerald-500/10 text-emerald-600",
+    hormone: "Estrogen is rising steadily",
+    mental: "Energy and optimism increase, sharper focus, better memory and creativity. Confidence builds gradually. You feel more curious and motivated.",
+    trading: "Cognitively your best phase. Great for learning new strategies, backtesting, and making important decisions. Decision-making quality is high.",
+    tip: "Leverage this phase — dig into statistics, study new setups, and set your trading intentions for the cycle ahead.",
+  },
+  ovulation: {
+    emoji: "🌕",
+    name: "Ovulation",
+    days: "Days 14–16",
+    borderColor: "border-amber-400",
+    bgColor: "bg-amber-500/5",
+    badgeColor: "bg-amber-500/10 text-amber-600",
+    hormone: "Estrogen peaks + LH surge",
+    mental: "Peak confidence, high energy, competitive drive, heightened communication. You feel at your most capable — and you often are.",
+    trading: "Risk tolerance is highest. Your confidence can work in your favour — but watch for overconfidence, oversizing, and overtrading.",
+    tip: "Stick strictly to your risk rules. Pre-set your max daily loss limit before trading to guard against overconfidence.",
+  },
+  luteal: {
+    emoji: "🌘",
+    name: "Luteal",
+    days: "Days 17–28",
+    borderColor: "border-violet-400",
+    bgColor: "bg-violet-500/5",
+    badgeColor: "bg-violet-500/10 text-violet-600",
+    hormone: "Progesterone rises then falls with estrogen",
+    mental: "Early luteal can feel calm and focused. Late luteal often brings anxiety, irritability, lower serotonin, and emotional sensitivity. Decision fatigue increases.",
+    trading: "Higher emotional reactivity is possible in late luteal. Fear of loss and revenge-trading risk both elevate. However, some traders perform better early in this phase due to natural caution.",
+    tip: "Consider reducing position sizes in late luteal (days 22–28). Journal your emotional state before each trade.",
+  },
+};
+
+interface PhaseStats {
+  phase: PhaseKey;
+  count: number;
+  winRate: number;
+  avgR: number;
+  hasData: boolean;
+}
+
+function normalizePhase(raw?: string): PhaseKey | null {
+  if (!raw) return null;
+  const lower = raw.toLowerCase();
+  if (lower.includes("menstr")) return "menstruation";
+  if (lower.includes("follic")) return "follicular";
+  if (lower.includes("ovul")) return "ovulation";
+  if (lower.includes("lut")) return "luteal";
+  return null;
+}
+
+function computePhaseStats(trades: any[]): PhaseStats[] {
+  const phaseKeys: PhaseKey[] = ["menstruation", "follicular", "ovulation", "luteal"];
+  const acc: Record<PhaseKey, { wins: number; losses: number; totalR: number }> = {
+    menstruation: { wins: 0, losses: 0, totalR: 0 },
+    follicular:   { wins: 0, losses: 0, totalR: 0 },
+    ovulation:    { wins: 0, losses: 0, totalR: 0 },
+    luteal:       { wins: 0, losses: 0, totalR: 0 },
+  };
+  const closed = trades.filter((t) => t.status === "closed" && (t.result === "win" || t.result === "loss"));
+  closed.forEach((t) => {
+    const pk = normalizePhase(t.cyclePhase || t.cycle_phase);
+    if (!pk) return;
+    const r = t.r_multiple !== undefined ? t.r_multiple : (t.rMultiple ?? 0);
+    acc[pk].totalR += typeof r === "number" ? r : 0;
+    if (t.result === "win") acc[pk].wins++;
+    else acc[pk].losses++;
+  });
+  return phaseKeys.map((pk) => {
+    const { wins, losses, totalR } = acc[pk];
+    const count = wins + losses;
+    return {
+      phase:   pk,
+      count,
+      winRate: count > 0 ? (wins / count) * 100 : 0,
+      avgR:    count > 0 ? totalR / count : 0,
+      hasData: count >= 3,
+    };
+  });
+}
+
+function PhaseCard({
+  phaseKey,
+  stats,
+  isCurrent,
+  delay = 0,
+}: {
+  phaseKey: PhaseKey;
+  stats?: PhaseStats;
+  isCurrent: boolean;
+  delay?: number;
+}) {
+  const info = CYCLE_PHASE_INFO[phaseKey];
+  const [expanded, setExpanded] = useState(isCurrent);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay }}
+      className={`rounded-2xl border-2 ${info.bgColor} ${info.borderColor} p-5 shadow-soft cursor-pointer`}
+      onClick={() => setExpanded((e) => !e)}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <span className="text-2xl">{info.emoji}</span>
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="font-semibold text-foreground">{info.name}</h3>
+              <span className={`text-xs rounded-full px-2 py-0.5 font-medium ${info.badgeColor}`}>
+                {info.days}
+              </span>
+              {isCurrent && (
+                <span className="text-xs rounded-full px-2 py-0.5 font-medium bg-primary/10 text-primary">
+                  Current
+                </span>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground mt-0.5">{info.hormone}</p>
+          </div>
+        </div>
+        {stats?.hasData ? (
+          <div className="text-right shrink-0">
+            <p className="text-lg font-bold text-foreground">{stats.winRate.toFixed(0)}%</p>
+            <p className="text-xs text-muted-foreground">{stats.count} trades</p>
+          </div>
+        ) : (
+          <span className="text-xs text-muted-foreground shrink-0 mt-1">No data yet</span>
+        )}
+      </div>
+
+      {expanded && (
+        <div className="mt-4 space-y-3">
+          <div className="rounded-lg bg-card/70 p-3 border border-border">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Mental & Emotional</p>
+            <p className="text-sm text-foreground leading-relaxed">{info.mental}</p>
+          </div>
+          <div className="rounded-lg bg-card/70 p-3 border border-border">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Trading Influence</p>
+            <p className="text-sm text-foreground leading-relaxed">{info.trading}</p>
+          </div>
+          {stats?.hasData ? (
+            <div className="rounded-lg bg-card/70 p-3 border border-border">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                Your Data ({stats.count} trades)
+              </p>
+              <div className="grid grid-cols-2 gap-3 mb-3">
+                <div>
+                  <p className="text-2xl font-bold text-foreground">{stats.winRate.toFixed(0)}%</p>
+                  <p className="text-xs text-muted-foreground">Win Rate</p>
+                </div>
+                <div>
+                  <p className={`text-2xl font-bold ${stats.avgR >= 0 ? "text-emerald-500" : "text-red-500"}`}>
+                    {stats.avgR >= 0 ? "+" : ""}{stats.avgR.toFixed(2)}R
+                  </p>
+                  <p className="text-xs text-muted-foreground">Avg R</p>
+                </div>
+              </div>
+              <div className="rounded-lg bg-primary/5 p-3 border border-primary/20">
+                <p className="text-sm leading-relaxed text-foreground">
+                  {stats.winRate >= 60 && stats.avgR >= 0.5 ? (
+                    <>✅ You're performing <strong>above average</strong> in this phase. Keep your usual approach.</>
+                  ) : stats.avgR < 0 || stats.winRate < 45 ? (
+                    <>⚠️ Your numbers dip here. Consider <strong>reducing position sizes</strong> during {info.name.toLowerCase()}.</>
+                  ) : (
+                    <>📊 Your performance here is <strong>consistent with your overall average</strong>.</>
+                  )}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-lg bg-card/70 p-3 border border-border">
+              <p className="text-sm text-muted-foreground">
+                💡 Log at least 3 trades with cycle phase data to see your personalised performance here.
+              </p>
+            </div>
+          )}
+          <div className="rounded-lg bg-card/70 p-3 border border-border">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">💡 Tip</p>
+            <p className="text-sm text-foreground leading-relaxed">{info.tip}</p>
+          </div>
+        </div>
+      )}
+    </motion.div>
+  );
+}
 
 // Calendar data generator using settings
 const generateCalendarData = (year: number, monthIndex: number, avgCycleLength: number, lastPeriodStartIso: string, periodLength: number, loggedPeriodDays: string[] = []): DayData[] => {
@@ -243,6 +466,12 @@ export default function CycleTracker() {
   const [periodDays, setPeriodDays] = useState<string[]>([]);
   const [loggedPeriodDays, setLoggedPeriodDays] = useState<string[]>([]);
   const [isDirty, setIsDirty] = useState<boolean>(false);
+  const [storedTrades, setStoredTrades] = useState<any[]>([]);
+
+  // Load trades once for Phase Intelligence
+  useEffect(() => {
+    setStoredTrades(loadTradesFromLocalStorage());
+  }, []);
 
   // Helper: Find the start of the most recent period from logged days
   const findLastPeriodStartFromLogs = (loggedDays: string[]): string | null => {
@@ -360,6 +589,17 @@ export default function CycleTracker() {
   const currentCycleDay = lastPeriodStart ? (((Math.floor((todayDate.getTime() - new Date(lastPeriodStart).getTime()) / msPerDay) % avgCycleLength) + avgCycleLength) % avgCycleLength) + 1 : null;
   const nextPeriodIn = currentCycleDay ? (avgCycleLength - currentCycleDay + 1) : null;
   const tradesLogged = calendarData.reduce((s, d) => s + (d.trades || 0), 0);
+
+  // Phase Intelligence derived values
+  const phaseStats = useMemo(() => computePhaseStats(storedTrades), [storedTrades]);
+  const currentPhaseKey: PhaseKey | null = currentCycleDay ? (() => {
+    const follicularEnd = Math.min(periodLength + 7, avgCycleLength);
+    const ovulationEnd  = Math.min(periodLength + 11, avgCycleLength);
+    if (currentCycleDay <= periodLength) return "menstruation";
+    if (currentCycleDay <= follicularEnd) return "follicular";
+    if (currentCycleDay <= ovulationEnd)  return "ovulation";
+    return "luteal";
+  })() : null;
 
   const isSameDay = (a?: Date, b?: Date) => {
     if (!a || !b) return false;
@@ -913,6 +1153,29 @@ export default function CycleTracker() {
             })()}
           </motion.div>
         </div>
+
+          {/* ── Current Phase Intelligence ── */}
+          {currentPhaseKey && (
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 }}
+              className="mt-6"
+            >
+              <div className="mb-3 flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-primary" />
+                <h2 className="font-serif text-base font-semibold text-foreground">
+                  Current Phase Intelligence
+                </h2>
+              </div>
+              <PhaseCard
+                phaseKey={currentPhaseKey}
+                stats={phaseStats.find((s) => s.phase === currentPhaseKey)}
+                isCurrent={true}
+                delay={0.2}
+              />
+            </motion.div>
+          )}
           </TabsContent>
 
           {/* Cycle View Tab */}
@@ -953,8 +1216,9 @@ export default function CycleTracker() {
                         const centerX = 100;
                         const centerY = 100;
                         
-                        // Calculate date for each cycle day
-                        const cycleStartDate = new Date(lastPeriodStart);
+                        // Calculate date for each cycle day – parse as LOCAL date (not UTC) to avoid timezone off-by-one
+                        const [_csy, _csm, _csd] = lastPeriodStart.split('-').map(Number);
+                        const cycleStartDate = new Date(_csy, _csm - 1, _csd);
                         
                         return Array.from({ length: avgCycleLength }, (_, i) => {
                           const day = i + 1;
@@ -1153,6 +1417,34 @@ export default function CycleTracker() {
                 </div>
               </motion.div>
             </div>
+
+            {/* ── All Phases Intelligence ── */}
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="mt-6"
+            >
+              <div className="mb-4 flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-primary" />
+                <h2 className="font-serif text-base font-semibold text-foreground">
+                  All Phases — tap to expand
+                </h2>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                {(["menstruation", "follicular", "ovulation", "luteal"] as PhaseKey[]).map(
+                  (pk, i) => (
+                    <PhaseCard
+                      key={pk}
+                      phaseKey={pk}
+                      stats={phaseStats.find((s) => s.phase === pk)}
+                      isCurrent={pk === currentPhaseKey}
+                      delay={0.1 + i * 0.08}
+                    />
+                  )
+                )}
+              </div>
+            </motion.div>
           </TabsContent>
         </Tabs>
 
