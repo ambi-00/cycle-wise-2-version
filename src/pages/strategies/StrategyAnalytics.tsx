@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useParams, useNavigate } from "react-router-dom";
 import { 
@@ -17,116 +17,175 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { loadAllTrades } from "@/lib/supabaseHelpers";
+import { supabase } from "@/integrations/supabase/client";
 
-// Mock data - replace with real data from Supabase
-const mockTrades = [
-  {
-    id: "1",
-    pair: "EURUSD",
-    direction: "Long",
-    outcome: "Win",
-    rValue: 2.5,
-    entryPrice: 1.0850,
-    exitPrice: 1.0950,
-    date: "2026-01-28",
-    time: "08:30",
-    dayOfWeek: "Tuesday",
-    mistakes: [],
-    confirmations: ["Market structure shift", "FVG mitigation", "Kill zone timing"],
-  },
-  {
-    id: "2",
-    pair: "GBPUSD",
-    direction: "Short",
-    outcome: "Loss",
-    rValue: -1.0,
-    entryPrice: 1.2650,
-    exitPrice: 1.2680,
-    date: "2026-01-29",
-    time: "14:15",
-    dayOfWeek: "Wednesday",
-    mistakes: ["Entered too early", "Ignored higher timeframe"],
-    confirmations: ["FVG mitigation"],
-  },
-  {
-    id: "3",
-    pair: "EURUSD",
-    direction: "Long",
-    outcome: "Win",
-    rValue: 3.2,
-    entryPrice: 1.0800,
-    exitPrice: 1.0920,
-    date: "2026-01-30",
-    time: "09:00",
-    dayOfWeek: "Thursday",
-    mistakes: [],
-    confirmations: ["Market structure shift", "FVG mitigation", "Kill zone timing", "Volume confirmation"],
-  },
-  {
-    id: "4",
-    pair: "USDJPY",
-    direction: "Short",
-    outcome: "Break Even",
-    rValue: 0,
-    entryPrice: 149.50,
-    exitPrice: 149.50,
-    date: "2026-01-31",
-    time: "11:30",
-    dayOfWeek: "Friday",
-    mistakes: ["Moved stop loss too early"],
-    confirmations: ["Market structure shift", "Kill zone timing"],
-  },
-  {
-    id: "5",
-    pair: "EURUSD",
-    direction: "Short",
-    outcome: "Win",
-    rValue: 1.8,
-    entryPrice: 1.0920,
-    exitPrice: 1.0865,
-    date: "2026-02-01",
-    time: "08:45",
-    dayOfWeek: "Saturday",
-    mistakes: [],
-    confirmations: ["Market structure shift", "FVG mitigation", "Higher timeframe bias"],
-  },
-];
+interface Trade {
+  id: string;
+  instrument?: string;
+  symbol?: string;
+  direction: string;
+  result: string;
+  closed_rrr?: number;
+  r_multiple?: number;
+  rMultiple?: number;
+  entry_price: number;
+  exit_price?: number;
+  created_at: string;
+  trade_datetime?: string;
+  mistakes?: string[];
+  confirmations?: string[];
+  strategy_id?: string;
+  strategy_name?: string;
+}
 
-const mockStrategy = {
-  id: "1",
-  name: "ICT Silver Bullet",
-  totalTrades: 5,
-  winRate: 60,
-  avgR: 1.3,
-};
+interface Strategy {
+  id: string;
+  name: string;
+  user_id: string;
+}
 
 export default function StrategyAnalytics() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [trades, setTrades] = useState<Trade[]>([]);
+  const [strategy, setStrategy] = useState<Strategy | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        
+        // Load strategy details
+        if (id) {
+          const { data: strategyData, error: strategyError } = await supabase
+            .from('strategies')
+            .select('*')
+            .eq('id', id)
+            .single();
+
+          if (strategyError) {
+            console.error("Error loading strategy:", strategyError);
+          } else {
+            setStrategy(strategyData);
+          }
+        }
+
+        // Load all trades and filter by strategy
+        const allTrades = await loadAllTrades();
+        const strategyTrades = allTrades.filter(t => t.strategy_id === id);
+        setTrades(strategyTrades);
+      } catch (error) {
+        console.error("Error loading analytics data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, [id]);
+
+  }, [id]);
+
+  // Helper function to get day of week from date
+  const getDayOfWeek = (dateString: string): string => {
+    const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    const date = new Date(dateString);
+    return days[date.getDay()];
+  };
+
+  // Helper function to get time from datetime
+  const getTime = (dateString?: string): string => {
+    if (!dateString) return "N/A";
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  };
+
+  // Map trades to analytics format
+  const analyticsTrades = trades.map(t => {
+    const rValue = t.r_multiple || t.rMultiple || t.closed_rrr || 0;
+    const tradeDate = t.trade_datetime || t.created_at;
+    
+    return {
+      id: t.id,
+      pair: t.symbol || t.instrument || "Unknown",
+      direction: t.direction || "Long",
+      outcome: t.result || "Break Even",
+      rValue: rValue,
+      entryPrice: t.entry_price || 0,
+      exitPrice: t.exit_price || t.entry_price || 0,
+      date: tradeDate ? new Date(tradeDate).toLocaleDateString() : "N/A",
+      time: getTime(tradeDate),
+      dayOfWeek: tradeDate ? getDayOfWeek(tradeDate) : "Unknown",
+      mistakes: Array.isArray(t.mistakes) ? t.mistakes : [],
+      confirmations: Array.isArray(t.confirmations) ? t.confirmations : [],
+    };
+  });
+
+  if (loading) {
+    return (
+      <main className="pb-24 pt-20 lg:pl-64 lg:pt-8">
+        <div className="mx-auto max-w-7xl p-4 lg:p-8">
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">Loading analytics...</p>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  if (analyticsTrades.length === 0) {
+    return (
+      <main className="pb-24 pt-20 lg:pl-64 lg:pt-8">
+        <div className="mx-auto max-w-7xl p-4 lg:p-8">
+          <div className="mb-8 flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate(`/strategies/${id}`)}
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <div>
+              <h1 className="text-3xl font-bold">Strategy Analytics</h1>
+              <p className="text-muted-foreground">{strategy?.name || "Unknown Strategy"}</p>
+            </div>
+          </div>
+          <Card>
+            <CardContent className="p-12 text-center">
+              <p className="text-muted-foreground">No trades found for this strategy yet.</p>
+              <p className="text-sm text-muted-foreground mt-2">Start trading to see analytics!</p>
+            </CardContent>
+          </Card>
+        </div>
+      </main>
+    );
+  }
 
   // Calculate analytics
-  const wins = mockTrades.filter(t => t.outcome === "Win").length;
-  const losses = mockTrades.filter(t => t.outcome === "Loss").length;
-  const breakEven = mockTrades.filter(t => t.outcome === "Break Even").length;
-  const winRate = ((wins / mockTrades.length) * 100).toFixed(1);
-  const totalR = mockTrades.reduce((sum, t) => sum + t.rValue, 0).toFixed(2);
-  const avgR = (mockTrades.reduce((sum, t) => sum + t.rValue, 0) / mockTrades.length).toFixed(2);
-  const bestTrade = mockTrades.reduce((best, t) => t.rValue > best.rValue ? t : best, mockTrades[0]);
-  const worstTrade = mockTrades.reduce((worst, t) => t.rValue < worst.rValue ? t : worst, mockTrades[0]);
+  const wins = analyticsTrades.filter(t => t.outcome === "Win").length;
+  const losses = analyticsTrades.filter(t => t.outcome === "Loss").length;
+  const breakEven = analyticsTrades.filter(t => t.outcome === "Break Even").length;
+  const winRate = analyticsTrades.length > 0 ? ((wins / analyticsTrades.length) * 100).toFixed(1) : "0";
+  const totalR = analyticsTrades.reduce((sum, t) => sum + t.rValue, 0).toFixed(2);
+  const avgR = analyticsTrades.length > 0 ? (analyticsTrades.reduce((sum, t) => sum + t.rValue, 0) / analyticsTrades.length).toFixed(2) : "0";
+  const bestTrade = analyticsTrades.reduce((best, t) => t.rValue > best.rValue ? t : best, analyticsTrades[0]);
+  const worstTrade = analyticsTrades.reduce((worst, t) => t.rValue < worst.rValue ? t : worst, analyticsTrades[0]);
 
   // Time analysis
-  const tradesByDay = mockTrades.reduce((acc, t) => {
+  const tradesByDay = analyticsTrades.reduce((acc, t) => {
     acc[t.dayOfWeek] = (acc[t.dayOfWeek] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
 
-  const winsByDay = mockTrades.filter(t => t.outcome === "Win").reduce((acc, t) => {
+  const winsByDay = analyticsTrades.filter(t => t.outcome === "Win").reduce((acc, t) => {
     acc[t.dayOfWeek] = (acc[t.dayOfWeek] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
 
   // Mistake analysis
-  const allMistakes = mockTrades.flatMap(t => t.mistakes);
+  const allMistakes = analyticsTrades.flatMap(t => t.mistakes);
   const mistakeCounts = allMistakes.reduce((acc, m) => {
     acc[m] = (acc[m] || 0) + 1;
     return acc;
@@ -138,7 +197,7 @@ export default function StrategyAnalytics() {
 
   // Confirmation analysis
   const confirmationSuccess = {} as Record<string, { total: number; wins: number }>;
-  mockTrades.forEach(trade => {
+  analyticsTrades.forEach(trade => {
     trade.confirmations.forEach(conf => {
       if (!confirmationSuccess[conf]) {
         confirmationSuccess[conf] = { total: 0, wins: 0 };
@@ -177,7 +236,7 @@ export default function StrategyAnalytics() {
             </Button>
             <div>
               <h1 className="text-3xl font-bold">Strategy Analytics</h1>
-              <p className="text-muted-foreground">{mockStrategy.name}</p>
+              <p className="text-muted-foreground">{strategy?.name || "Unknown Strategy"}</p>
             </div>
           </div>
         </div>
@@ -189,7 +248,7 @@ export default function StrategyAnalytics() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Total Trades</p>
-                  <p className="text-3xl font-bold">{mockTrades.length}</p>
+                  <p className="text-3xl font-bold">{analyticsTrades.length}</p>
                 </div>
                 <BarChart3 className="h-10 w-10 text-primary" />
               </div>
@@ -265,7 +324,7 @@ export default function StrategyAnalytics() {
                   <div className="flex items-center gap-2">
                     <span className="text-2xl font-bold text-destructive">{losses}</span>
                     <Badge variant="outline" className="text-destructive">
-                      {((losses / mockTrades.length) * 100).toFixed(1)}%
+                      {analyticsTrades.length > 0 ? ((losses / analyticsTrades.length) * 100).toFixed(1) : "0"}%
                     </Badge>
                   </div>
                 </div>
@@ -278,7 +337,7 @@ export default function StrategyAnalytics() {
                   <div className="flex items-center gap-2">
                     <span className="text-2xl font-bold text-gray-500">{breakEven}</span>
                     <Badge variant="outline" className="text-gray-500">
-                      {((breakEven / mockTrades.length) * 100).toFixed(1)}%
+                        {analyticsTrades.length > 0 ? ((breakEven / analyticsTrades.length) * 100).toFixed(1) : "0"}%
                     </Badge>
                   </div>
                 </div>
@@ -455,7 +514,7 @@ export default function StrategyAnalytics() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {mockTrades.map((trade) => (
+              {analyticsTrades.map((trade) => (
                 <div
                   key={trade.id}
                   className="flex items-center justify-between rounded-lg border p-4 hover:bg-muted/50 transition-colors"
