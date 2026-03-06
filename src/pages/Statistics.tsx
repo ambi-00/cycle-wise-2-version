@@ -771,7 +771,10 @@ export default function Statistics() {
                   };
                   
                   const phaseStats = phases.map(phase => {
-                    const phaseTrades = monthTrades.filter(t => t.cyclePhase === phase);
+                    const phaseTrades = monthTrades.filter(t => {
+                      const tradePhase = (t.cyclePhase || t.cycle_phase || '').toLowerCase();
+                      return tradePhase === phase;
+                    });
                     const wins = phaseTrades.filter(t => t.result === 'win').length;
                     const total = phaseTrades.filter(t => t.result === 'win' || t.result === 'loss').length;
                     const winRate = total > 0 ? (wins / total) * 100 : 0;
@@ -1377,7 +1380,12 @@ export default function Statistics() {
                     { phase: 'Ovulatory', icon: 'zap', color: 'from-yellow-500/20 to-orange-500/20', borderColor: 'border-yellow-500' },
                     { phase: 'Luteal', icon: 'moon', color: 'from-purple-500/20 to-indigo-500/20', borderColor: 'border-purple-500' }
                   ].map(({ phase, icon, color, borderColor }) => {
-                    const phaseTrades = allTrades.filter(t => t.cyclePhase === phase && t.status === 'closed');
+                    // Normalize phase names: 'Menstrual' -> 'menstruation', etc.
+                    const normalizedPhase = phase.toLowerCase().replace('menstrual', 'menstruation').replace('ovulatory', 'ovulation');
+                    const phaseTrades = allTrades.filter(t => {
+                      const tradePhase = (t.cyclePhase || t.cycle_phase || '').toLowerCase();
+                      return tradePhase === normalizedPhase && t.status === 'closed';
+                    });
                     const wins = phaseTrades.filter(t => t.result === 'win').length;
                     const losses = phaseTrades.filter(t => t.result === 'loss').length;
                     const winRate = phaseTrades.length > 0 ? ((wins / phaseTrades.length) * 100).toFixed(1) : '0';
@@ -1446,7 +1454,12 @@ export default function Statistics() {
                 <CardContent className="p-6">
                   <div className="space-y-4">
                     {['Menstrual', 'Follicular', 'Ovulatory', 'Luteal'].map(phase => {
-                      const phaseTrades = allTrades.filter(t => t.cyclePhase === phase && t.status === 'closed');
+                      // Normalize phase names to match data
+                      const normalizedPhase = phase.toLowerCase().replace('menstrual', 'menstruation').replace('ovulatory', 'ovulation');
+                      const phaseTrades = allTrades.filter(t => {
+                        const tradePhase = (t.cyclePhase || t.cycle_phase || '').toLowerCase();
+                        return tradePhase === normalizedPhase && t.status === 'closed';
+                      });
                       const tradesByDay = phaseTrades.reduce((acc, t) => {
                         const day = new Date(t.date).toLocaleDateString('en-US', { weekday: 'long' });
                         acc[day] = (acc[day] || 0) + 1;
@@ -1475,7 +1488,12 @@ export default function Statistics() {
                 <CardContent className="p-6">
                   <div className="space-y-4">
                     {['Menstrual', 'Follicular', 'Ovulatory', 'Luteal'].map(phase => {
-                      const phaseTrades = allTrades.filter(t => t.cyclePhase === phase && t.status === 'closed');
+                      // Normalize phase names to match data
+                      const normalizedPhase = phase.toLowerCase().replace('menstrual', 'menstruation').replace('ovulatory', 'ovulation');
+                      const phaseTrades = allTrades.filter(t => {
+                        const tradePhase = (t.cyclePhase || t.cycle_phase || '').toLowerCase();
+                        return tradePhase === normalizedPhase && t.status === 'closed';
+                      });
                       const avgRisk = phaseTrades.length > 0
                         ? (phaseTrades.reduce((sum, t) => {
                             const rValue = t.r_multiple !== undefined ? t.r_multiple : t.rMultiple;
@@ -1532,7 +1550,12 @@ export default function Statistics() {
                 <CardContent className="p-6">
                   <div className="grid gap-4">
                     {['Menstrual', 'Follicular', 'Ovulatory', 'Luteal'].map(phase => {
-                      const phaseTrades = allTrades.filter(t => t.cyclePhase === phase && t.status === 'closed' && t.strategy);
+                      // Normalize phase names to match data
+                      const normalizedPhase = phase.toLowerCase().replace('menstrual', 'menstruation').replace('ovulatory', 'ovulation');
+                      const phaseTrades = allTrades.filter(t => {
+                        const tradePhase = (t.cyclePhase || t.cycle_phase || '').toLowerCase();
+                        return tradePhase === normalizedPhase && t.status === 'closed' && t.strategy;
+                      });
                       const strategyStats = phaseTrades.reduce((acc, t) => {
                         const strategy = t.strategy || 'Unknown';
                         if (!acc[strategy]) {
