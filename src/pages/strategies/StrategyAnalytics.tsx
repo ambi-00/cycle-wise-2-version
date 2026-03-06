@@ -105,8 +105,6 @@ export default function StrategyAnalytics() {
     loadData();
   }, [id, strategy]);
 
-  }, [id]);
-
   // Helper function to get day of week from date
   const getDayOfWeek = (dateString: string): string => {
     const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
