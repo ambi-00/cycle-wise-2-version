@@ -62,7 +62,7 @@ const CYCLE_PHASE_INFO: Record<
   }
 > = {
   menstruation: {
-    emoji: "🌑",
+    emoji: "❄️",
     name: "Menstruation",
     days: "Days 1–5",
     borderColor: "border-red-400",
@@ -74,7 +74,7 @@ const CYCLE_PHASE_INFO: Record<
     tip: "Pre-plan setups during this phase. Prioritise quality over quantity, and use this time to journal past trades.",
   },
   follicular: {
-    emoji: "🌱",
+    emoji: "�",
     name: "Follicular",
     days: "Days 6–13",
     borderColor: "border-emerald-400",
@@ -86,7 +86,7 @@ const CYCLE_PHASE_INFO: Record<
     tip: "Leverage this phase — dig into statistics, study new setups, and set your trading intentions for the cycle ahead.",
   },
   ovulation: {
-    emoji: "🌕",
+    emoji: "☀️",
     name: "Ovulation",
     days: "Days 14–16",
     borderColor: "border-amber-400",
@@ -98,7 +98,7 @@ const CYCLE_PHASE_INFO: Record<
     tip: "Stick strictly to your risk rules. Pre-set your max daily loss limit before trading to guard against overconfidence.",
   },
   luteal: {
-    emoji: "🌘",
+    emoji: "�",
     name: "Luteal",
     days: "Days 17–28",
     borderColor: "border-violet-400",

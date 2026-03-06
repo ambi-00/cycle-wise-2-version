@@ -51,25 +51,25 @@ const IMPACT_BADGE: Record<string, string> = {
 // ─── Cycle phase metadata (for phase-transition alert cards) ─────────────────
 const PHASE_META: Record<string, { emoji: string; name: string; hormone: string; tip: string }> = {
   menstruation: {
-    emoji: "🌑",
+    emoji: "❄️",
     name: "Menstruation",
     hormone: "Estrogen & progesterone are at their lowest",
     tip: "Prioritise quality over quantity. Great time to review past trades and prepare your watchlist.",
   },
   follicular: {
-    emoji: "🌱",
+    emoji: "�",
     name: "Follicular",
     hormone: "Estrogen is rising steadily",
     tip: "Your sharpest cognitive phase. Great for learning new setups and making key decisions.",
   },
   ovulation: {
-    emoji: "🌕",
+    emoji: "☀️",
     name: "Ovulation",
     hormone: "Estrogen peaks + LH surge",
     tip: "Watch for overconfidence. Pre-set your max daily loss limit before each session.",
   },
   luteal: {
-    emoji: "🌘",
+    emoji: "�",
     name: "Luteal",
     hormone: "Progesterone rises then falls with estrogen",
     tip: "Late luteal increases emotional reactivity. Consider reducing position sizes in the final week.",
