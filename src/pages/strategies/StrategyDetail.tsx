@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { computeStrategyStats } from "@/lib/strategyStats";
 import { 
   ArrowLeft, 
   Edit, 
@@ -127,6 +128,25 @@ export default function StrategyDetail() {
   const [notFound, setNotFound] = useState(false);
   const [isMockStrategy, setIsMockStrategy] = useState(false);
 
+  // Live stats computed from actual logged trades – always computed, even for demo strategies
+  const liveStats = useMemo(
+    () => (strategy ? computeStrategyStats(strategy.name) : null),
+    [strategy]
+  );
+
+  // If real trades exist → use live data. If not and it's a demo → show example stats with label.
+  const hasRealTrades = (liveStats?.tradesCount ?? 0) > 0;
+  const isExampleStats = isMockStrategy && !hasRealTrades;
+
+  // Helper: pick live stat when real trades exist, otherwise fall back to stored/hardcoded values
+  const stat = {
+    winRate:     hasRealTrades ? liveStats!.winRate     : strategy?.winRate ?? 0,
+    avgR:        hasRealTrades ? liveStats!.avgR         : strategy?.avgR ?? 0,
+    tradesCount: hasRealTrades ? liveStats!.tradesCount  : strategy?.tradesCount ?? 0,
+    score:       hasRealTrades ? liveStats!.score        : strategy?.score ?? 0,
+    profitFactor:hasRealTrades ? liveStats!.profitFactor : strategy?.profitFactor,
+  };
+
   useEffect(() => {
     if (!id) {
       setNotFound(true);
@@ -246,6 +266,23 @@ export default function StrategyDetail() {
           </div>
         </motion.div>
 
+        {/* Example stats notice */}
+        {isExampleStats && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4"
+          >
+            <Trophy className="mt-0.5 h-5 w-5 shrink-0 text-amber-500" />
+            <div>
+              <p className="text-sm font-semibold text-amber-600 dark:text-amber-400">Beispiel-Statistiken</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Diese Zahlen sind Beispielwerte. Sobald du Trades mit dieser Strategie loggst, werden sie automatisch durch deine echten Daten ersetzt.
+              </p>
+            </div>
+          </motion.div>
+        )}
+
         {/* Performance Stats */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -258,7 +295,12 @@ export default function StrategyDetail() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground mb-1">Win Rate</p>
-                  <p className="text-3xl font-bold text-foreground">{strategy.winRate}%</p>
+                  <p className="text-3xl font-bold text-foreground">
+                    {stat.tradesCount > 0 || isMockStrategy ? `${stat.winRate}%` : '—'}
+                  </p>
+                  {!isMockStrategy && stat.tradesCount > 0 && (
+                    <p className="text-xs text-muted-foreground mt-1">{liveStats!.winCount}W / {liveStats!.lossCount}L</p>
+                  )}
                 </div>
                 <TrendingUp className="h-10 w-10 text-green-500 opacity-70" />
               </div>
@@ -270,7 +312,9 @@ export default function StrategyDetail() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground mb-1">Avg R-Multiple</p>
-                  <p className="text-3xl font-bold text-foreground">{strategy.avgR}R</p>
+                  <p className="text-3xl font-bold text-foreground">
+                    {stat.tradesCount > 0 || isMockStrategy ? `${stat.avgR}R` : '—'}
+                  </p>
                 </div>
                 <Target className="h-10 w-10 text-blue-500 opacity-70" />
               </div>
@@ -282,7 +326,7 @@ export default function StrategyDetail() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground mb-1">Total Trades</p>
-                  <p className="text-3xl font-bold text-foreground">{strategy.tradesCount}</p>
+                  <p className="text-3xl font-bold text-foreground">{stat.tradesCount}</p>
                 </div>
                 <BarChart3 className="h-10 w-10 text-purple-500 opacity-70" />
               </div>
@@ -294,7 +338,7 @@ export default function StrategyDetail() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground mb-1">Strategy Score</p>
-                  <p className="text-3xl font-bold text-foreground">{strategy.score}</p>
+                  <p className="text-3xl font-bold text-foreground">{stat.score}</p>
                 </div>
                 <Trophy className="h-10 w-10 text-amber-500 opacity-70" />
               </div>
@@ -303,26 +347,26 @@ export default function StrategyDetail() {
         </motion.div>
 
         {/* Additional Stats Row */}
-        {(strategy.profitFactor || strategy.maxDrawdown) && (
+        {(stat.profitFactor || strategy?.maxDrawdown) && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.15 }}
             className="grid gap-4 sm:grid-cols-2 mb-8"
           >
-            {strategy.profitFactor && (
+            {stat.profitFactor ? (
               <Card className="shadow-card">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-muted-foreground mb-1">Profit Factor</p>
-                      <p className="text-2xl font-bold text-foreground">{strategy.profitFactor}</p>
+                      <p className="text-2xl font-bold text-foreground">{stat.profitFactor}</p>
                     </div>
                     <TrendingUp className="h-8 w-8 text-primary opacity-70" />
                   </div>
                 </CardContent>
               </Card>
-            )}
+            ) : null}
 
             {strategy.maxDrawdown && (
               <Card className="shadow-card">

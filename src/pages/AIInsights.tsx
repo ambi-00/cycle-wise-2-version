@@ -57,7 +57,7 @@ const PHASE_META: Record<string, { emoji: string; name: string; hormone: string;
     tip: "Prioritise quality over quantity. Great time to review past trades and prepare your watchlist.",
   },
   follicular: {
-    emoji: "�",
+    emoji: "🌸",
     name: "Follicular",
     hormone: "Estrogen is rising steadily",
     tip: "Your sharpest cognitive phase. Great for learning new setups and making key decisions.",
@@ -69,7 +69,7 @@ const PHASE_META: Record<string, { emoji: string; name: string; hormone: string;
     tip: "Watch for overconfidence. Pre-set your max daily loss limit before each session.",
   },
   luteal: {
-    emoji: "�",
+    emoji: "🍂",
     name: "Luteal",
     hormone: "Progesterone rises then falls with estrogen",
     tip: "Late luteal increases emotional reactivity. Consider reducing position sizes in the final week.",

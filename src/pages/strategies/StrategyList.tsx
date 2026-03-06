@@ -1,7 +1,8 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { computeStrategyStats } from "@/lib/strategyStats";
 
 type StrategyDef = {
   name: string;
@@ -18,6 +19,15 @@ type StrategyDef = {
 export default function StrategyList() {
   const [strategies, setStrategies] = useState<StrategyDef[]>([]);
   const navigate = useNavigate();
+
+  // Live stats computed from actual trades – keyed by strategy name
+  const liveStats = useMemo(() => {
+    const map: Record<string, ReturnType<typeof computeStrategyStats>> = {};
+    strategies.forEach((s) => {
+      map[s.name] = computeStrategyStats(s.name);
+    });
+    return map;
+  }, [strategies]);
 
   useEffect(() => {
     try {
@@ -75,35 +85,46 @@ export default function StrategyList() {
                   </div>
                 </div>
                 <div className="flex items-center gap-4">
-                  <div className="text-right">
-                    <div className="text-xs text-muted-foreground">Win Rate</div>
-                    <div className="font-bold">{s.winRate ?? 0}%</div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-xs text-muted-foreground">Avg R</div>
-                    <div className="font-bold">{s.avgR ?? 0}R</div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-xs text-muted-foreground">Trades</div>
-                    <div className="font-bold">{s.tradesCount ?? 0}</div>
-                  </div>
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary/20 to-secondary">
-                    <span className="text-lg font-bold text-primary">{s.score ?? 0}</span>
-                  </div>
+                  {(() => {
+                    const ls = liveStats[s.name];
+                    return (
+                      <>
+                        <div className="text-right">
+                          <div className="text-xs text-muted-foreground">Win Rate</div>
+                          <div className={`font-bold ${ls.tradesCount > 0 ? (ls.winRate >= 50 ? 'text-green-500' : 'text-destructive') : 'text-muted-foreground'}`}>
+                            {ls.tradesCount > 0 ? `${ls.winRate}%` : '—'}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-xs text-muted-foreground">Avg R</div>
+                          <div className={`font-bold ${ls.tradesCount > 0 ? (ls.avgR >= 0 ? 'text-green-500' : 'text-destructive') : 'text-muted-foreground'}`}>
+                            {ls.tradesCount > 0 ? `${ls.avgR}R` : '—'}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-xs text-muted-foreground">Trades</div>
+                          <div className="font-bold">{ls.tradesCount}</div>
+                        </div>
+                        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary/20 to-secondary">
+                          <span className="text-lg font-bold text-primary">{ls.score}</span>
+                        </div>
+                      </>
+                    );
+                  })()}
                 </div>
               </div>
 
               <div className="mt-4">
                 <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Confirmation Checklist</p>
                 <div className="mt-3 space-y-2">
-                  {(s.confirmations || []).slice(0, 4).map((conf, i) => (
+                  {((s as any).setupConfirmations || s.confirmations || []).slice(0, 4).map((conf: string, i: number) => (
                     <div key={i} className="flex items-center gap-2 text-sm text-foreground">
                       <span className="text-accent-foreground">•</span>
                       {conf}
                     </div>
                   ))}
-                  {(s.confirmations || []).length > 4 && (
-                    <p className="text-xs text-muted-foreground">+{(s.confirmations || []).length - 4} more confirmations</p>
+                  {((s as any).setupConfirmations || s.confirmations || []).length > 4 && (
+                    <p className="text-xs text-muted-foreground">+{((s as any).setupConfirmations || s.confirmations || []).length - 4} more confirmations</p>
                   )}
                 </div>
               </div>

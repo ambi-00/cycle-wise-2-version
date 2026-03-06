@@ -1,12 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Plus, CheckCircle, Trash2, TrendingUp, BarChart3, Lock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { useSubscription } from "@/hooks/use-subscription";
 import { usePaymentSuccess } from "@/hooks/use-payment-success";
+import { computeStrategyStats } from "@/lib/strategyStats";
 
 const mockStrategies = [
   {
@@ -50,6 +52,17 @@ export default function Strategies() {
   const { subscription, loading: subLoading, hasFeature } = useSubscription();
   const [strategies, setStrategies] = useState(mockStrategies);
   usePaymentSuccess();
+
+  // Live stats computed from real trades – keyed by strategy name
+  const liveStats = useMemo(() => {
+    const map: Record<string, ReturnType<typeof computeStrategyStats>> = {};
+    strategies.forEach((s) => {
+      map[s.name] = computeStrategyStats(s.name);
+    });
+    return map;
+  }, [strategies]);
+
+  const isMock = (s: (typeof strategies)[0]) => mockStrategies.some((m) => m.id === s.id);
 
   useEffect(() => {
     // Load user-created strategies from localStorage
@@ -147,38 +160,64 @@ export default function Strategies() {
                   </div>
                 </div>
                 <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary/20 to-secondary">
-                  <span className="text-lg font-bold text-primary">{strategy.score}</span>
+                  <span className="text-lg font-bold text-primary">
+                    {(() => {
+                      const ls = liveStats[strategy.name];
+                      return ls?.tradesCount > 0 ? ls.score : strategy.score;
+                    })()}
+                  </span>
                 </div>
               </div>
 
+              {/* Beispiel-Banner for mock strategies with no real trades */}
+              {isMock(strategy) && (liveStats[strategy.name]?.tradesCount ?? 0) === 0 && (
+                <div className="mt-3 flex items-center gap-1.5">
+                  <Badge variant="outline" className="text-xs border-amber-500/40 text-amber-600 dark:text-amber-400 bg-amber-500/10">
+                    📊 Beispiel-Statistiken
+                  </Badge>
+                  <span className="text-xs text-muted-foreground">werden durch deine echten Daten ersetzt</span>
+                </div>
+              )}
+
               {/* Stats */}
-              <div className="mt-6 grid grid-cols-3 gap-4 rounded-xl bg-muted/30 p-4">
-                <div className="text-center">
-                  <p className="text-xs text-muted-foreground">Win Rate</p>
-                  <p className="mt-1 text-lg font-bold text-foreground">{strategy.winRate}%</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-xs text-muted-foreground">Avg R</p>
-                  <p className="mt-1 text-lg font-bold text-foreground">{strategy.avgR}R</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-xs text-muted-foreground">Trades</p>
-                  <p className="mt-1 text-lg font-bold text-foreground">{strategy.tradesCount}</p>
-                </div>
+              <div className="mt-4 grid grid-cols-3 gap-4 rounded-xl bg-muted/30 p-4">
+                {(() => {
+                  const ls = liveStats[strategy.name];
+                  const hasReal = ls?.tradesCount > 0;
+                  const wr    = hasReal ? ls.winRate     : strategy.winRate;
+                  const ar    = hasReal ? ls.avgR         : strategy.avgR;
+                  const cnt   = hasReal ? ls.tradesCount  : strategy.tradesCount;
+                  return (
+                    <>
+                      <div className="text-center">
+                        <p className="text-xs text-muted-foreground">Win Rate</p>
+                        <p className={`mt-1 text-lg font-bold ${hasReal ? (wr >= 50 ? 'text-green-500' : 'text-destructive') : 'text-foreground'}`}>{wr}%</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-xs text-muted-foreground">Avg R</p>
+                        <p className={`mt-1 text-lg font-bold ${hasReal ? (ar >= 0 ? 'text-green-500' : 'text-destructive') : 'text-foreground'}`}>{ar}R</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-xs text-muted-foreground">Trades</p>
+                        <p className="mt-1 text-lg font-bold text-foreground">{cnt}</p>
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
 
               {/* Confirmations */}
               <div className="mt-6">
                 <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Confirmation Checklist</p>
                 <div className="mt-3 space-y-2">
-                  {strategy.confirmations.slice(0, 3).map((conf, i) => (
+                  {((strategy as any).setupConfirmations || strategy.confirmations || []).slice(0, 3).map((conf: string, i: number) => (
                     <div key={`conf-${strategy.id}-${i}`} className="flex items-center gap-2 text-sm text-foreground">
                       <CheckCircle className="h-4 w-4 text-accent-foreground" />
                       {conf}
                     </div>
                   ))}
-                  {strategy.confirmations.length > 3 && (
-                    <p className="text-xs text-muted-foreground">+{strategy.confirmations.length - 3} more confirmations</p>
+                  {((strategy as any).setupConfirmations || strategy.confirmations || []).length > 3 && (
+                    <p className="text-xs text-muted-foreground">+{((strategy as any).setupConfirmations || strategy.confirmations || []).length - 3} more confirmations</p>
                   )}
                 </div>
               </div>
