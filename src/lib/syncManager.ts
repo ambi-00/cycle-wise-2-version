@@ -300,20 +300,61 @@ export async function syncLoad<T>(options: {
 }
 
 /**
+ * Clear sync queue and reset status
+ * Used to clean up stale/failed sync items
+ */
+export function clearSyncQueue() {
+  localStorage.removeItem(SYNC_QUEUE_KEY);
+  updateSyncStatus({
+    pendingCount: 0,
+    errors: [],
+    lastSyncTime: new Date().toISOString(),
+  });
+  console.log('Sync queue cleared');
+}
+
+/**
  * Initialize sync manager
  * Sets up event listeners for online/offline
  */
 export function initializeSyncManager() {
   console.log('Initializing Sync Manager...');
 
-  // Update online status
-  updateSyncStatus({ isOnline: navigator.onLine });
+  // Check if user is authenticated (check for Supabase auth token)
+  const checkAuth = () => {
+    // Check for Supabase session
+    const keys = Object.keys(localStorage);
+    return keys.some(key => key.startsWith('sb-') && key.includes('-auth-token'));
+  };
+  
+  const hasAuth = checkAuth();
+  
+  // Get current queue
+  let queue = getSyncQueue();
+  
+  // If not authenticated, clear the sync queue (no point keeping it)
+  if (!hasAuth && queue.length > 0) {
+    console.log('No authentication found - clearing sync queue');
+    clearSyncQueue();
+    queue = [];
+  }
+  
+  // Initialize sync status with correct values
+  updateSyncStatus({ 
+    isOnline: navigator.onLine,
+    pendingCount: queue.length,
+    errors: [], // Clear any old errors
+    // If no pending items, mark as synced
+    lastSyncTime: queue.length === 0 ? new Date().toISOString() : (getSyncStatus().lastSyncTime || null)
+  });
 
   // Listen for online/offline events
   window.addEventListener('online', () => {
     console.log('Connection restored - syncing pending changes...');
     updateSyncStatus({ isOnline: true });
-    syncPendingChanges();
+    if (checkAuth()) {
+      syncPendingChanges();
+    }
   });
 
   window.addEventListener('offline', () => {
@@ -321,17 +362,16 @@ export function initializeSyncManager() {
     updateSyncStatus({ isOnline: false });
   });
 
-  // Periodic sync every 5 minutes (if online)
+  // Periodic sync every 5 minutes (if online and authenticated)
   setInterval(() => {
-    if (navigator.onLine) {
+    if (navigator.onLine && checkAuth()) {
       syncPendingChanges();
     }
   }, 5 * 60 * 1000);
 
   // Initial sync if pending items exist
-  const queue = getSyncQueue();
-  if (queue.length > 0 && navigator.onLine) {
+  if (queue.length > 0 && navigator.onLine && hasAuth) {
     console.log(`Found ${queue.length} pending items - syncing...`);
-    syncPendingChanges();
+    setTimeout(() => syncPendingChanges(), 1000); // Small delay to let app fully initialize
   }
 }
