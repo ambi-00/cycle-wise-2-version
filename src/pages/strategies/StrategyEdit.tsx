@@ -229,11 +229,6 @@ export default function StrategyEdit() {
     }
   };
 
-  const save = () => {
-  const save = () => {
-    handleSave();
-  };
-
   if (notFound) {
     return (
       <main className="pb-24 pt-20 lg:pl-64 lg:pt-8">
