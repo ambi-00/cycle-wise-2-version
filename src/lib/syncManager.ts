@@ -314,20 +314,25 @@ export function clearSyncQueue() {
 }
 
 /**
+ * Check if user is authenticated
+ */
+async function checkAuth(): Promise<boolean> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    return !!user;
+  } catch (e) {
+    return false;
+  }
+}
+
+/**
  * Initialize sync manager
  * Sets up event listeners for online/offline
  */
-export function initializeSyncManager() {
+export async function initializeSyncManager() {
   console.log('Initializing Sync Manager...');
 
-  // Check if user is authenticated (check for Supabase auth token)
-  const checkAuth = () => {
-    // Check for Supabase session
-    const keys = Object.keys(localStorage);
-    return keys.some(key => key.startsWith('sb-') && key.includes('-auth-token'));
-  };
-  
-  const hasAuth = checkAuth();
+  const hasAuth = await checkAuth();
   
   // Get current queue
   let queue = getSyncQueue();
@@ -349,10 +354,11 @@ export function initializeSyncManager() {
   });
 
   // Listen for online/offline events
-  window.addEventListener('online', () => {
+  window.addEventListener('online', async () => {
     console.log('Connection restored - syncing pending changes...');
     updateSyncStatus({ isOnline: true });
-    if (checkAuth()) {
+    const isAuth = await checkAuth();
+    if (isAuth) {
       syncPendingChanges();
     }
   });
@@ -363,8 +369,9 @@ export function initializeSyncManager() {
   });
 
   // Periodic sync every 5 minutes (if online and authenticated)
-  setInterval(() => {
-    if (navigator.onLine && checkAuth()) {
+  setInterval(async () => {
+    const isAuth = await checkAuth();
+    if (navigator.onLine && isAuth) {
       syncPendingChanges();
     }
   }, 5 * 60 * 1000);
@@ -373,5 +380,7 @@ export function initializeSyncManager() {
   if (queue.length > 0 && navigator.onLine && hasAuth) {
     console.log(`Found ${queue.length} pending items - syncing...`);
     setTimeout(() => syncPendingChanges(), 1000); // Small delay to let app fully initialize
+  } else if (hasAuth) {
+    console.log('User authenticated - sync status initialized');
   }
 }
