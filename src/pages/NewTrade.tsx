@@ -644,7 +644,7 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
         sl_price: slPrice === '' ? null : Number(slPrice),
         tp_price: tpPrice === '' ? null : Number(tpPrice),
         strategy: quick ? null : strategy || null,
-        checklist: checklist.map((c) => ({ text: c.text, done: c.done })),
+        // Note: checklist is not stored in Supabase (column doesn't exist)
         pre_trade_note: preNote,
         post_trade_note: postNote,
         image_before_small_tf: imageBeforeSmallUrl || null,
