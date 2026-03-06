@@ -74,7 +74,7 @@ const CYCLE_PHASE_INFO: Record<
     tip: "Pre-plan setups during this phase. Prioritise quality over quantity, and use this time to journal past trades.",
   },
   follicular: {
-    emoji: "�",
+    emoji: "🌸",
     name: "Follicular",
     days: "Days 6–13",
     borderColor: "border-emerald-400",
@@ -98,7 +98,7 @@ const CYCLE_PHASE_INFO: Record<
     tip: "Stick strictly to your risk rules. Pre-set your max daily loss limit before trading to guard against overconfidence.",
   },
   luteal: {
-    emoji: "�",
+    emoji: "🍂",
     name: "Luteal",
     days: "Days 17–28",
     borderColor: "border-violet-400",
