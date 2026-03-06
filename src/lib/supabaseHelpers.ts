@@ -114,9 +114,29 @@ export async function saveTrade(trade: TradeInsert) {
       
       // Also cache in localStorage
       const localKey = `cw_journal_${trade.date}`;
-      const existing = JSON.parse(localStorage.getItem(localKey) || '{"trades":[]}');
-      existing.trades.push(data);
-      localStorage.setItem(localKey, JSON.stringify(existing));
+      try {
+        const rawData = localStorage.getItem(localKey);
+        const existing = rawData ? JSON.parse(rawData) : { trades: [] };
+        if (!existing.trades || !Array.isArray(existing.trades)) {
+          existing.trades = [];
+        }
+        existing.trades.push(data);
+        localStorage.setItem(localKey, JSON.stringify(existing));
+      } catch (e) {
+        console.error('Failed to cache trade in localStorage:', e);
+        // Create fresh structure
+        localStorage.setItem(localKey, JSON.stringify({ trades: [data] }));
+      }
+      
+      // Update sync status - successful save
+      const syncStatus = localStorage.getItem('cw_sync_status');
+      if (syncStatus) {
+        const status = JSON.parse(syncStatus);
+        status.lastSyncTime = new Date().toISOString();
+        status.errors = [];
+        localStorage.setItem('cw_sync_status', JSON.stringify(status));
+        window.dispatchEvent(new CustomEvent('syncStatusChanged', { detail: status }));
+      }
       
       return data;
     } catch (error) {
@@ -127,9 +147,19 @@ export async function saveTrade(trade: TradeInsert) {
 
   // Offline or no auth: Save to localStorage only
   const localKey = `cw_journal_${trade.date}`;
-  const existing = JSON.parse(localStorage.getItem(localKey) || '{"trades":[]}');
-  existing.trades.push(tradeData);
-  localStorage.setItem(localKey, JSON.stringify(existing));
+  try {
+    const rawData = localStorage.getItem(localKey);
+    const existing = rawData ? JSON.parse(rawData) : { trades: [] };
+    if (!existing.trades || !Array.isArray(existing.trades)) {
+      existing.trades = [];
+    }
+    existing.trades.push(tradeData);
+    localStorage.setItem(localKey, JSON.stringify(existing));
+  } catch (e) {
+    console.error('Failed to save trade to localStorage:', e);
+    // Create fresh structure
+    localStorage.setItem(localKey, JSON.stringify({ trades: [tradeData] }));
+  }
 
   // Add to sync queue only if user is authenticated (XP will be calculated when synced)
   if (user) {
@@ -141,6 +171,17 @@ export async function saveTrade(trade: TradeInsert) {
       operation: 'insert',
       getId: (d) => d.id,
     });
+  } else {
+    // In DEMO/FILMING mode: clear sync status errors and update as "synced"
+    const syncStatus = localStorage.getItem('cw_sync_status');
+    if (syncStatus) {
+      const status = JSON.parse(syncStatus);
+      status.lastSyncTime = new Date().toISOString();
+      status.errors = [];
+      status.pendingCount = 0;
+      localStorage.setItem('cw_sync_status', JSON.stringify(status));
+      window.dispatchEvent(new CustomEvent('syncStatusChanged', { detail: status }));
+    }
   }
 
   console.log('✅ Trade saved to localStorage:', tradeData.id, 'for date:', trade.date);
