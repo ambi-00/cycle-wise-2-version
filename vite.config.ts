@@ -21,6 +21,10 @@ export default defineConfig(({ mode }) => ({
   build: {
     // increase limit to a more generous size (in kB) or adjust as needed
     chunkSizeWarningLimit: 1200,
+    // Clear output directory before build
+    emptyOutDir: true,
+    // Add unique build IDs to force cache invalidation
+    assetsDir: 'assets',
     rollupOptions: {
       output: {
         manualChunks(id: string) {
