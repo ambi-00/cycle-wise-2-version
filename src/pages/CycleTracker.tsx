@@ -1160,9 +1160,9 @@ export default function CycleTracker() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.15 }}
-              className="mt-8"
+              className="mt-10 border-t border-border/40 pt-8"
             >
-              <div className="mb-3 flex items-center gap-2">
+              <div className="mb-4 flex items-center gap-2">
                 <Sparkles className="h-4 w-4 text-primary" />
                 <h2 className="font-serif text-lg font-semibold text-foreground">
                   Current Phase Intelligence
@@ -1423,7 +1423,7 @@ export default function CycleTracker() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="mt-8"
+              className="mt-10 border-t border-border/40 pt-8"
             >
               <div className="mb-4 flex items-center gap-2">
                 <Sparkles className="h-4 w-4 text-primary" />

@@ -521,12 +521,22 @@ function engineToFeedCard(insight: AIInsight): FeedCard {
 function InsightFeedCard({ card, index }: { card: FeedCard; index: number }) {
   const [expanded, setExpanded] = useState(false);
 
+  const accentBorder = card.gradient.includes("red")
+    ? "border-l-red-400/80"
+    : card.gradient.includes("amber")
+    ? "border-l-amber-400/80"
+    : card.gradient.includes("violet") || card.gradient.includes("purple")
+    ? "border-l-violet-400/80"
+    : card.gradient.includes("emerald") || card.gradient.includes("teal")
+    ? "border-l-emerald-400/80"
+    : "border-l-primary/60";
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.05, duration: 0.3 }}
-      className={`rounded-2xl bg-gradient-to-br ${card.gradient} p-5 shadow-soft cursor-pointer select-none border border-border/20`}
+      className={`rounded-2xl bg-card shadow-card p-5 cursor-pointer select-none border border-border/50 border-l-4 ${accentBorder}`}
       onClick={() => setExpanded((e) => !e)}
     >
       <div className="flex items-start gap-3">
@@ -560,7 +570,7 @@ function InsightFeedCard({ card, index }: { card: FeedCard; index: number }) {
               className="mt-3 space-y-3 overflow-hidden"
             >
               {card.tip && (
-                <div className="rounded-xl bg-card/60 border border-border/50 p-3">
+                <div className="rounded-xl bg-muted/50 border border-border/50 p-3">
                   <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
                     💡 Action
                   </p>
@@ -570,7 +580,7 @@ function InsightFeedCard({ card, index }: { card: FeedCard; index: number }) {
               {card.stats && card.stats.length > 0 && (
                 <div className={`grid gap-2 ${card.stats.length === 2 ? "grid-cols-2" : "grid-cols-3"}`}>
                   {card.stats.map((stat) => (
-                    <div key={stat.label} className="rounded-xl bg-card/50 p-2.5 text-center">
+                    <div key={stat.label} className="rounded-xl bg-muted/50 p-2.5 text-center">
                       <p className="text-sm font-bold text-foreground">{stat.value}</p>
                       <p className="text-xs text-muted-foreground mt-0.5">{stat.label}</p>
                     </div>
@@ -746,7 +756,7 @@ export default function AIInsights() {
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <main className="min-h-screen bg-background pb-24 pt-20 lg:pl-64 lg:pt-8">
-      <div className="mx-auto max-w-2xl px-4 py-6">
+      <div className="mx-auto max-w-4xl px-4 py-6">
 
         {/* Header */}
         <motion.div
