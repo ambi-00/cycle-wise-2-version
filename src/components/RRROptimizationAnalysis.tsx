@@ -66,6 +66,11 @@ export default function RRROptimizationAnalysis({ trades }: RRRAnalysisProps) {
   ).length;
   const aggressiveRate = (tooAggressive / tradesWithData.length) * 100;
   
+  // CRITICAL: Analyze losses that could have been wins with smaller TP
+  const lossTrades = tradesWithData.filter(t => t.result === 'loss' && (t.maxRReached || 0) > 0);
+  const avoidableLosses = lossTrades.filter(t => (t.maxRReached || 0) >= 1.0); // Would have won at 1:1
+  const avoidableLossRate = lossTrades.length > 0 ? (avoidableLosses.length / lossTrades.length) * 100 : 0;
+  
   // Test different RRR targets based on actual data
   const testRRRs = [0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0];
   
@@ -234,7 +239,7 @@ export default function RRROptimizationAnalysis({ trades }: RRRAnalysisProps) {
         </div>
 
         {/* Detailed Breakdown */}
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-4 md:grid-cols-3">
           <div className="p-4 rounded-xl bg-primary/10 border border-primary/30">
             <h4 className="font-semibold mb-3 text-sm flex items-center gap-2">
               <span className="text-primary">🎯</span>
@@ -255,6 +260,18 @@ export default function RRROptimizationAnalysis({ trades }: RRRAnalysisProps) {
               of trades where your target was unrealistic
             </p>
           </div>
+          {lossTrades.length > 0 && (
+            <div className="p-4 rounded-xl bg-orange-500/10 border border-orange-500/30">
+              <h4 className="font-semibold mb-3 text-sm flex items-center gap-2">
+                <span className="text-orange-500">💥</span>
+                Avoidable Losses
+              </h4>
+              <p className="text-2xl font-bold mb-2">{avoidableLosses.length}/{lossTrades.length}</p>
+              <p className="text-xs text-muted-foreground">
+                losses that were in profit but hit SL - would have won with smaller TP
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Insights */}
@@ -264,6 +281,11 @@ export default function RRROptimizationAnalysis({ trades }: RRRAnalysisProps) {
             Recommendations
           </h4>
           <ul className="space-y-2 text-sm text-muted-foreground">
+            {avoidableLosses.length > 0 && (
+              <li className="text-orange-600 dark:text-orange-400 font-semibold">
+                ⚠️ <strong>{avoidableLosses.length} of your losses</strong> were in profit before hitting SL. With a smaller TP target, they would have been winners!
+              </li>
+            )}
             {behavior === 'conservative' && (
               <>
                 <li>• Consider targeting <strong className="text-foreground">{optimal.rrr}R</strong> instead of {avgPlannedRRR.toFixed(1)}R</li>
@@ -276,6 +298,9 @@ export default function RRROptimizationAnalysis({ trades }: RRRAnalysisProps) {
                 <li>• Lower your target to <strong className="text-foreground">{optimal.rrr}R</strong> for better consistency</li>
                 <li>• You're hitting targets only {hitRate.toFixed(0)}% of the time</li>
                 <li>• More realistic targets = fewer stopped out trades = better results</li>
+                {avoidableLosses.length > 0 && (
+                  <li className="font-semibold">• If you had used {optimal.rrr}R instead, {avoidableLosses.length} more trades would have been winners</li>
+                )}
               </>
             )}
             {behavior === 'balanced' && (

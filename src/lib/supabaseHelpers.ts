@@ -281,9 +281,16 @@ function updateLocalStorageTrade(id: string, updates: any): any | null {
 }
 
 /**
- * Load all trades for the user (with Offline-First fallback)
+ * Load all trades for the user (with Offline-First fallback and DEMO mode support)
  */
 export async function loadAllTrades() {
+  // Check if we're in DEMO mode first
+  const appMode = localStorage.getItem('cw_app_mode');
+  if (appMode === 'DEMO') {
+    console.log('📊 loadAllTrades: DEMO mode detected, using demo data');
+    return loadTradesFromLocalStorage();
+  }
+
   const { data: { user } } = await supabase.auth.getUser();
   
   // Try loading from Supabase first
@@ -313,7 +320,7 @@ export async function loadAllTrades() {
     }
   }
 
-  // Fallback: Load from localStorage
+  // Fallback: Load from localStorage (includes DEMO mode via loadTradesFromLocalStorage)
   return loadTradesFromLocalStorage();
 }
 
