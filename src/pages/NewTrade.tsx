@@ -192,8 +192,9 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
     const requirements = Object.fromEntries(DEFAULT_STRATEGIES.map((s) => [s.name, s.minConfirmations]));
     // Add custom strategies with their confirmations
     customStrategies.forEach((s: any) => {
-      if (s.name && s.confirmations) {
-        requirements[s.name] = s.confirmations.length || 0;
+      const confs = s.setupConfirmations || s.confirmations;
+      if (s.name && confs) {
+        requirements[s.name] = confs.length || 0;
       }
     });
     return requirements;
@@ -416,9 +417,10 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
       const selectedStrategy = strategies.find((s: any) => s.name === strategy);
       
       if (selectedStrategy) {
-        // Load setup confirmations as checklist
-        if (selectedStrategy.setupConfirmations) {
-          const items = selectedStrategy.setupConfirmations.map((text: string, i: number) => ({
+        // Load setup confirmations as checklist (support both new setupConfirmations and legacy confirmations)
+        const confirmationSource = selectedStrategy.setupConfirmations || selectedStrategy.confirmations;
+        if (confirmationSource && confirmationSource.length > 0) {
+          const items = confirmationSource.map((text: string, i: number) => ({
             id: `${Date.now()}-${i}`,
             text,
             done: false
