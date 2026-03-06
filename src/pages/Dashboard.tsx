@@ -242,8 +242,8 @@ export default function Dashboard() {
     for (const t of storedTrades) {
       total += 1;
       if (t.result === 'win') wins += 1;
-      // Handle both r_multiple (snake_case from DB) and rMultiple (camelCase)
-      const rValue = t.r_multiple !== undefined ? t.r_multiple : t.rMultiple;
+      // Handle closed_rrr (from Supabase), r_multiple, or rMultiple (from localStorage)
+      const rValue = t.closed_rrr !== undefined ? t.closed_rrr : (t.r_multiple !== undefined ? t.r_multiple : t.rMultiple);
       const r = typeof rValue === 'number' && rValue != null ? rValue : Number(rValue) || 0;
       const p = Number(t.pnl) || 0;
       rSum += r;
@@ -375,7 +375,8 @@ export default function Dashboard() {
                   instrument: t.symbol || t.instrument || "Unknown",
                   direction: (t.direction === "short" ? "short" : "long") as "long" | "short",
                   result: (t.result === "win" || t.result === "loss" || t.result === "breakeven" ? t.result : "breakeven") as "win" | "loss" | "breakeven",
-                  rMultiple: typeof t.r_multiple === "number" ? t.r_multiple : (typeof t.rMultiple === "number" ? t.rMultiple : Number(t.r_multiple || t.rMultiple || 0)),
+                  // Handle closed_rrr (from Supabase), r_multiple, or rMultiple (from localStorage)
+                  rMultiple: typeof t.closed_rrr === "number" ? t.closed_rrr : (typeof t.r_multiple === "number" ? t.r_multiple : (typeof t.rMultiple === "number" ? t.rMultiple : Number(t.closed_rrr || t.r_multiple || t.rMultiple || 0))),
                   strategy: t.strategy || "",
                   cyclePhase: t.cycle_phase || t.cyclePhase || t.phase || "",
                 });

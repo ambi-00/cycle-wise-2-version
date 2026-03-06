@@ -376,14 +376,14 @@ export default function TradeJournal() {
     .filter((trade: any) => (directionFilter ? trade.direction === directionFilter : true))
     .filter((trade: any) => (cyclePhaseFilter ? trade.cyclePhase === cyclePhaseFilter : true))
     .filter((trade: any) => {
-      // Handle both r_multiple (snake_case) and rMultiple (camelCase)
-      const rValue = trade.r_multiple !== undefined ? trade.r_multiple : trade.rMultiple;
+      // Handle closed_rrr (from Supabase), r_multiple, or rMultiple (from localStorage)
+      const rValue = trade.closed_rrr !== undefined ? trade.closed_rrr : (trade.r_multiple !== undefined ? trade.r_multiple : trade.rMultiple);
       if (minR && rValue != null) return rValue >= parseFloat(minR);
       return true;
     })
     .filter((trade: any) => {
-      // Handle both r_multiple (snake_case) and rMultiple (camelCase)
-      const rValue = trade.r_multiple !== undefined ? trade.r_multiple : trade.rMultiple;
+      // Handle closed_rrr (from Supabase), r_multiple, or rMultiple (from localStorage)
+      const rValue = trade.closed_rrr !== undefined ? trade.closed_rrr : (trade.r_multiple !== undefined ? trade.r_multiple : trade.rMultiple);
       if (maxR && rValue != null) return rValue <= parseFloat(maxR);
       return true;
     })
@@ -500,8 +500,16 @@ export default function TradeJournal() {
             const losses = trades.filter(t => t.result === 'loss').length;
             const winRate = totalTrades > 0 ? ((wins / totalTrades) * 100).toFixed(0) : 0;
             const totalPnL = trades.reduce((sum, t) => sum + (t.pnl || 0), 0);
-            const bestR = trades.reduce((max, t) => Math.max(max, t.rMultiple || 0), 0);
-            const bestRStrategy = trades.find(t => t.rMultiple === bestR)?.strategy || '—';
+            // Handle closed_rrr (from Supabase), r_multiple, or rMultiple (from localStorage)
+            const bestR = trades.reduce((max, t) => {
+              const rValue = t.closed_rrr !== undefined ? t.closed_rrr : (t.r_multiple !== undefined ? t.r_multiple : t.rMultiple);
+              return Math.max(max, rValue || 0);
+            }, 0);
+            const bestRTrade = trades.find(t => {
+              const rValue = t.closed_rrr !== undefined ? t.closed_rrr : (t.r_multiple !== undefined ? t.r_multiple : t.rMultiple);
+              return rValue === bestR;
+            });
+            const bestRStrategy = bestRTrade?.strategy || '—';
             
             const stats = [
               { label: "Total Trades", value: totalTrades.toString(), trend: `${wins}W / ${losses}L` },
