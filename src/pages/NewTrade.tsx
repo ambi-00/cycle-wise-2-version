@@ -332,9 +332,10 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
       setTradeDate(found.date || tradeDate); // Set trade date from found trade
       setInstrument(found.instrument || '');
       setDirection(found.direction || 'long');
-      setEntryPrice(found.entry ?? '');
-      setSlPrice(found.sl ?? '');
-      setTpPrice(found.tp ?? '');
+      // Support both snake_case (new) and legacy camelCase/short field names
+      setEntryPrice(found.entry_price ?? found.entry ?? found.entryPrice ?? '');
+      setSlPrice(found.sl_price ?? found.sl ?? found.slPrice ?? '');
+      setTpPrice(found.tp_price ?? found.tp ?? found.tpPrice ?? '');
       setStrategy(found.strategy || '');
       
       // Load checklist - this is the key part
@@ -355,12 +356,12 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
         setChecklist(defs.map((t, i) => ({ id: `${found.id}-c-${i}`, text: t, done: false })));
       }
       
-      setPreNote(found.preNote || '');
-      setPostNote(found.postNote || '');
+      setPreNote(found.pre_trade_note ?? found.preNote ?? '');
+      setPostNote(found.post_trade_note ?? found.postNote ?? '');
       setEmotionBefore(found.emotion_before ?? 5);
       setEmotionAfter(found.emotion_after ?? 5);
-      setTfSmall(found.timeframe || found.tfSmall || '5m');
-      setTfLarge(found.higher_timeframe || found.tfLarge || '1h');
+      setTfSmall(found.timeframe_small ?? found.timeframe ?? found.tfSmall ?? '5m');
+      setTfLarge(found.timeframe_large ?? found.higher_timeframe ?? found.tfLarge ?? '1h');
       setResult(found.result || '');
       setLossReason(found.loss_reason || '');
       setExitReason(found.exit_reason || '');
@@ -371,13 +372,13 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
       setImageAfterLarge(found.image_after_large_tf || null);
       setMidTradeScreenshot(found.mid_trade_screenshot || null);
       setTradeRating(found.rating || 0);
-      setRrr(found.rrr ?? found.rMultiple ?? '');
-      setRiskPct(found.riskPct ?? '');
+      setRrr(found.planned_rrr ?? found.rrr ?? found.rMultiple ?? '');
+      setRiskPct(found.risk_percent ?? found.riskPct ?? '');
       setClosedPnl(found.pnl ?? '');
-      setClosedRrr(found.closedRrr ?? '');
-      setMaxRReached(found.maxRReached ?? '');
-      setIdealSlSize(found.idealSlSize ?? '');
-      setPlannedSlSize(found.plannedSlSize ?? '');
+      setClosedRrr(found.closed_rrr ?? found.closedRrr ?? '');
+      setMaxRReached(found.max_r_reached ?? found.maxRReached ?? '');
+      setIdealSlSize(found.ideal_sl_size ?? found.idealSlSize ?? '');
+      setPlannedSlSize(found.planned_sl_size ?? found.plannedSlSize ?? '');
       setLearnings(found.learnings || '');
       
       // Load new Mid-Trade & Advanced fields
