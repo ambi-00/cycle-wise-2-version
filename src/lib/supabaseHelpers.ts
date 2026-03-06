@@ -120,8 +120,12 @@ export async function saveTrade(trade: TradeInsert) {
         if (!existing.trades || !Array.isArray(existing.trades)) {
           existing.trades = [];
         }
-        // Add symbol alias for instrument compatibility
-        const cachedData = { ...data, symbol: data.instrument };
+        // Add computed fields for localStorage compatibility
+        const cachedData = { 
+          ...data, 
+          symbol: data.instrument, // Add symbol alias for backward compat
+          r_multiple: data.closed_rrr || data.planned_rrr || 0 // Map closed_rrr to r_multiple for display
+        };
         existing.trades.push(cachedData);
         localStorage.setItem(localKey, JSON.stringify(existing));
       } catch (e) {
@@ -155,8 +159,12 @@ export async function saveTrade(trade: TradeInsert) {
     if (!existing.trades || !Array.isArray(existing.trades)) {
       existing.trades = [];
     }
-    // Add symbol alias for instrument compatibility
-    const dataWithSymbol = { ...tradeData, symbol: tradeData.instrument };
+    // Add computed fields for localStorage compatibility
+    const dataWithSymbol = { 
+      ...tradeData, 
+      symbol: tradeData.instrument, // Add symbol alias for backward compat
+      r_multiple: tradeData.closed_rrr || tradeData.planned_rrr || 0 // Map closed_rrr to r_multiple for display
+    };
     existing.trades.push(dataWithSymbol);
     localStorage.setItem(localKey, JSON.stringify(existing));
   } catch (e) {
@@ -310,7 +318,13 @@ function cacheTradesToLocalStorage(trades: any[]) {
     if (!byDate[trade.date]) {
       byDate[trade.date] = [];
     }
-    byDate[trade.date].push(trade);
+    // Add computed fields for localStorage compatibility
+    const enrichedTrade = {
+      ...trade,
+      symbol: trade.instrument, // Add symbol alias for backward compat
+      r_multiple: trade.closed_rrr || trade.planned_rrr || 0 // Map closed_rrr to r_multiple for display
+    };
+    byDate[trade.date].push(enrichedTrade);
   });
 
   Object.entries(byDate).forEach(([date, dateTrades]) => {

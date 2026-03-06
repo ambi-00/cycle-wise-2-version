@@ -666,7 +666,7 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
         max_r_reached: maxRReached === '' ? null : Number(maxRReached),
         ideal_sl_size: idealSlSize === '' ? null : Number(idealSlSize),
         planned_sl_size: plannedSlSize === '' ? null : Number(plannedSlSize),
-        r_multiple: (close ? (closedRrr === '' ? (rrr === '' ? null : Number(rrr)) : Number(closedRrr)) : (rrr === '' ? null : Number(rrr))),
+        // Note: r_multiple is for localStorage only, Supabase uses closed_rrr
         learnings: learnings || null,
         rating: tradeRating || null,
         status: (close ? 'closed' : result ? 'closed' : 'open') as 'open' | 'closed',
