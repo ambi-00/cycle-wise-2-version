@@ -295,9 +295,18 @@ export async function loadAllTrades() {
         .order('date', { ascending: false });
 
       if (!error && data) {
+        // Map Supabase fields to UI-friendly names
+        const mappedData = data.map(trade => ({
+          ...trade,
+          symbol: trade.instrument, // Add symbol alias
+          r_multiple: trade.closed_rrr || trade.planned_rrr || 0, // Map closed_rrr to r_multiple
+          cyclePhase: trade.cycle_phase || trade.cyclePhase || trade.phase, // Map cycle_phase to cyclePhase
+          rMultiple: trade.closed_rrr || trade.planned_rrr || 0 // Also add rMultiple for compatibility
+        }));
+        
         // Update localStorage cache
         cacheTradesToLocalStorage(data);
-        return data;
+        return mappedData;
       }
     } catch (error) {
       console.error('Failed to load from Supabase, using localStorage:', error);
