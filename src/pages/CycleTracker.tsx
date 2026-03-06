@@ -226,11 +226,11 @@ function PhaseCard({
               </p>
               <div className="grid grid-cols-2 gap-3 mb-3">
                 <div>
-                  <p className="text-2xl font-bold text-foreground">{stats.winRate.toFixed(0)}%</p>
+                  <p className="text-xl font-bold text-foreground">{stats.winRate.toFixed(0)}%</p>
                   <p className="text-xs text-muted-foreground">Win Rate</p>
                 </div>
                 <div>
-                  <p className={`text-2xl font-bold ${stats.avgR >= 0 ? "text-emerald-500" : "text-red-500"}`}>
+                  <p className={`text-xl font-bold ${stats.avgR >= 0 ? "text-emerald-500" : "text-red-500"}`}>
                     {stats.avgR >= 0 ? "+" : ""}{stats.avgR.toFixed(2)}R
                   </p>
                   <p className="text-xs text-muted-foreground">Avg R</p>
@@ -1160,11 +1160,11 @@ export default function CycleTracker() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.15 }}
-              className="mt-6"
+              className="mt-8"
             >
               <div className="mb-3 flex items-center gap-2">
                 <Sparkles className="h-4 w-4 text-primary" />
-                <h2 className="font-serif text-base font-semibold text-foreground">
+                <h2 className="font-serif text-lg font-semibold text-foreground">
                   Current Phase Intelligence
                 </h2>
               </div>
@@ -1423,11 +1423,11 @@ export default function CycleTracker() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="mt-6"
+              className="mt-8"
             >
               <div className="mb-4 flex items-center gap-2">
                 <Sparkles className="h-4 w-4 text-primary" />
-                <h2 className="font-serif text-base font-semibold text-foreground">
+                <h2 className="font-serif text-lg font-semibold text-foreground">
                   All Phases — tap to expand
                 </h2>
               </div>

@@ -526,7 +526,7 @@ function InsightFeedCard({ card, index }: { card: FeedCard; index: number }) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.05, duration: 0.3 }}
-      className={`rounded-2xl bg-gradient-to-br ${card.gradient} p-5 shadow-soft cursor-pointer select-none border border-white/10`}
+      className={`rounded-2xl bg-gradient-to-br ${card.gradient} p-5 shadow-soft cursor-pointer select-none border border-border/20`}
       onClick={() => setExpanded((e) => !e)}
     >
       <div className="flex items-start gap-3">
@@ -585,7 +585,7 @@ function InsightFeedCard({ card, index }: { card: FeedCard; index: number }) {
       {/* Footer */}
       <div className="mt-3 flex items-center justify-between">
         <span className="text-xs text-muted-foreground/60">{relativeTime(card.timestamp)}</span>
-        <span className="text-xs text-muted-foreground/50">
+        <span className="text-xs text-muted-foreground/60">
           {expanded ? "↑ collapse" : "↓ details"}
         </span>
       </div>
@@ -788,7 +788,7 @@ export default function AIInsights() {
           ].map((item) => (
             <div
               key={item.label}
-              className="rounded-2xl bg-card p-3 shadow-card text-center border border-border/50"
+              className="rounded-2xl bg-card p-4 shadow-card text-center border border-border/50"
             >
               <p className="text-base font-bold text-foreground leading-tight">{item.value}</p>
               <p className="text-xs text-muted-foreground mt-0.5">{item.label}</p>
