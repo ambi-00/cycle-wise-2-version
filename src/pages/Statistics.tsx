@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Legend, ResponsiveContainer, Tooltip } from 'recharts';
 import RRROptimizationAnalysis from '@/components/RRROptimizationAnalysis';
 import SLOptimizationAnalysis from '@/components/SLOptimizationAnalysis';
+import OvertradingAnalysis from '@/components/OvertradingAnalysis';
 import { Lightbulb, Plus, TrendingUp, Lock, Moon, Sprout, Zap, AlertTriangle, BarChart3 } from 'lucide-react';
 import { useSubscription } from '@/hooks/use-subscription';
 import { supabase } from '@/integrations/supabase/client';
@@ -1348,6 +1349,9 @@ export default function Statistics() {
               </div>
               <div className={`mt-6 ${!hasFeature('full_statistics') ? 'blur-sm pointer-events-none' : ''}`}>
                 <SLOptimizationAnalysis trades={allTrades} />
+              </div>
+              <div className={`mt-6 ${!hasFeature('full_statistics') ? 'blur-sm pointer-events-none' : ''}`}>
+                <OvertradingAnalysis trades={allTrades} />
               </div>
             </div>
 

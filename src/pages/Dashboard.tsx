@@ -16,6 +16,7 @@ import { XPBar } from "@/components/XPBar";
 import { StreakDisplay } from "@/components/StreakDisplay";
 import { ProfileButton } from "@/components/ProfileButton";
 import { DashboardCustomizer } from "@/components/DashboardCustomizer";
+import TradingStopWarning from "@/components/TradingStopWarning";
 import { useFeatureFlags, useAppMode } from "@/hooks/use-app-mode";
 import {
   loadDashboardConfig,
@@ -232,7 +233,7 @@ export default function Dashboard() {
   }, []);
 
   // compute overall and per-strategy stats
-  const { totalTrades, totalWins, totalPnl, avgR, strategySummary } = useMemo(() => {
+  const { totalTrades, totalWins, totalPnl, avgR, strategySummary, todayTrades } = useMemo(() => {
     let total = 0;
     let wins = 0;
     let pnl = 0;
@@ -256,12 +257,18 @@ export default function Dashboard() {
       map[name].pnl += p;
     }
     const summary = Object.keys(map).map((k) => ({ name: k, ...map[k] })).sort((a, b) => b.count - a.count);
+    
+    // Filter today's trades for overtrading warning
+    const today = new Date().toISOString().slice(0, 10);
+    const todayTrades = storedTrades.filter(t => t.date === today);
+    
     return {
       totalTrades: total,
       totalWins: wins,
       totalPnl: Math.round(pnl),
       avgR: total > 0 ? +(rSum / total).toFixed(2) : 0,
       strategySummary: summary,
+      todayTrades: todayTrades,
     };
   }, [storedTrades]);
 
@@ -497,6 +504,11 @@ export default function Dashboard() {
           <motion.div variants={itemVariants} className="mb-6">
             <StreakDisplay />
           </motion.div>
+        )}
+
+        {/* Trading Stop Warning - shows when 2+ losses or overtrading detected */}
+        {todayTrades && todayTrades.length > 0 && (
+          <TradingStopWarning todayTrades={todayTrades} />
         )}
 
         <div className="grid gap-6 lg:grid-cols-3">
