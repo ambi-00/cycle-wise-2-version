@@ -74,7 +74,26 @@ export default function StrategyAnalytics() {
 
         // Load all trades and filter by strategy
         const allTrades = await loadAllTrades();
-        const strategyTrades = allTrades.filter(t => t.strategy_id === id);
+        console.log('📊 Analytics: Total trades loaded:', allTrades.length);
+        console.log('📊 Analytics: Strategy ID to filter:', id);
+        console.log('📊 Analytics: Sample trade:', allTrades[0]);
+        
+        // Filter by strategy_id or strategy_name
+        const strategyTrades = allTrades.filter(t => {
+          // Match by ID
+          if (t.strategy_id === id) return true;
+          // Match by name (case-insensitive) if strategy is loaded
+          if (strategy && t.strategy_name && strategy.name) {
+            return t.strategy_name.toLowerCase() === strategy.name.toLowerCase();
+          }
+          // Match by strategy field (for older trades)
+          if (strategy && t.strategy && strategy.name) {
+            return t.strategy.toLowerCase() === strategy.name.toLowerCase();
+          }
+          return false;
+        });
+        
+        console.log('📊 Analytics: Filtered trades for this strategy:', strategyTrades.length);
         setTrades(strategyTrades);
       } catch (error) {
         console.error("Error loading analytics data:", error);
@@ -84,7 +103,7 @@ export default function StrategyAnalytics() {
     };
 
     loadData();
-  }, [id]);
+  }, [id, strategy]);
 
   }, [id]);
 
