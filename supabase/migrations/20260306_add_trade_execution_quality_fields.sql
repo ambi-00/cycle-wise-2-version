@@ -1,5 +1,5 @@
--- Add execution quality and checklist fields to trades table
--- These fields are used for trade review and quality tracking
+-- Add execution quality, checklist, and image fields to trades table
+-- These fields are used for trade review, quality tracking, and chart screenshots
 
 -- Add checklist field (JSONB array of checklist items)
 ALTER TABLE trades
@@ -15,6 +15,13 @@ ADD COLUMN IF NOT EXISTS execution_score INTEGER,
 ADD COLUMN IF NOT EXISTS execution_notes TEXT,
 ADD COLUMN IF NOT EXISTS exit_criteria_used TEXT;
 
+-- Add image fields for chart screenshots (before and after trade on different timeframes)
+ALTER TABLE trades
+ADD COLUMN IF NOT EXISTS image_before_small_tf TEXT,
+ADD COLUMN IF NOT EXISTS image_before_large_tf TEXT,
+ADD COLUMN IF NOT EXISTS image_after_small_tf TEXT,
+ADD COLUMN IF NOT EXISTS image_after_large_tf TEXT;
+
 -- Add comments for documentation
 COMMENT ON COLUMN trades.checklist IS 'Pre-trade checklist items as JSONB array [{"text": "...", "done": true/false}]';
 COMMENT ON COLUMN trades.followed_entry_criteria IS 'Did trader follow entry criteria from strategy?';
@@ -24,3 +31,7 @@ COMMENT ON COLUMN trades.emotionally_neutral IS 'Was trader emotionally neutral 
 COMMENT ON COLUMN trades.execution_score IS 'Overall execution quality score (0-100)';
 COMMENT ON COLUMN trades.execution_notes IS 'Notes about trade execution quality';
 COMMENT ON COLUMN trades.exit_criteria_used IS 'Which exit criteria was actually used';
+COMMENT ON COLUMN trades.image_before_small_tf IS 'Chart screenshot before trade entry (small timeframe)';
+COMMENT ON COLUMN trades.image_before_large_tf IS 'Chart screenshot before trade entry (large timeframe)';
+COMMENT ON COLUMN trades.image_after_small_tf IS 'Chart screenshot after trade exit (small timeframe)';
+COMMENT ON COLUMN trades.image_after_large_tf IS 'Chart screenshot after trade exit (large timeframe)';
