@@ -66,11 +66,6 @@ export default function RRROptimizationAnalysis({ trades }: RRRAnalysisProps) {
   ).length;
   const aggressiveRate = (tooAggressive / tradesWithData.length) * 100;
   
-  // CRITICAL: Analyze losses that could have been wins with smaller TP
-  const lossTrades = tradesWithData.filter(t => t.result === 'loss' && (t.maxRReached || 0) > 0);
-  const avoidableLosses = lossTrades.filter(t => (t.maxRReached || 0) >= 1.0); // Would have won at 1:1
-  const avoidableLossRate = lossTrades.length > 0 ? (avoidableLosses.length / lossTrades.length) * 100 : 0;
-  
   // Test different RRR targets based on actual data
   const testRRRs = [0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0];
   
@@ -93,6 +88,12 @@ export default function RRROptimizationAnalysis({ trades }: RRRAnalysisProps) {
   const optimal = viable.length > 0 ? viable.reduce((best, current) => 
     current.expectedValue > best.expectedValue ? current : best
   , viable[0]) : rrrStats[0];
+
+  // CRITICAL: Analyze losses that could have been wins with OPTIMAL TP
+  // User manually enters maxRReached (how far trade went before SL)
+  const lossTrades = tradesWithData.filter(t => t.result === 'loss' && (t.maxRReached || 0) > 0);
+  const avoidableLosses = lossTrades.filter(t => (t.maxRReached || 0) >= optimal.rrr);
+  const avoidableLossRate = lossTrades.length > 0 ? (avoidableLosses.length / lossTrades.length) * 100 : 0;
   
   // Determine trader behavior
   const behavior = conservativeRate > 40 ? 'conservative' : 
@@ -268,7 +269,7 @@ export default function RRROptimizationAnalysis({ trades }: RRRAnalysisProps) {
               </h4>
               <p className="text-2xl font-bold mb-2">{avoidableLosses.length}/{lossTrades.length}</p>
               <p className="text-xs text-muted-foreground">
-                losses that were in profit but hit SL - would have won with smaller TP
+                losses that reached {optimal.rrr}R in profit but hit SL - would have won with TP at {optimal.rrr}R
               </p>
             </div>
           )}
@@ -283,7 +284,7 @@ export default function RRROptimizationAnalysis({ trades }: RRRAnalysisProps) {
           <ul className="space-y-2 text-sm text-muted-foreground">
             {avoidableLosses.length > 0 && (
               <li className="text-orange-600 dark:text-orange-400 font-semibold">
-                ⚠️ <strong>{avoidableLosses.length} of your losses</strong> were in profit before hitting SL. With a smaller TP target, they would have been winners!
+                ⚠️ <strong>{avoidableLosses.length} of your losses</strong> reached {optimal.rrr}R in profit before hitting SL. With TP at {optimal.rrr}R, they would have been winners! (Based on your manually entered maxRReached data)
               </li>
             )}
             {behavior === 'conservative' && (
@@ -299,7 +300,7 @@ export default function RRROptimizationAnalysis({ trades }: RRRAnalysisProps) {
                 <li>• You're hitting targets only {hitRate.toFixed(0)}% of the time</li>
                 <li>• More realistic targets = fewer stopped out trades = better results</li>
                 {avoidableLosses.length > 0 && (
-                  <li className="font-semibold">• If you had used {optimal.rrr}R instead, {avoidableLosses.length} more trades would have been winners</li>
+                  <li className="font-semibold">• If you had used TP at {optimal.rrr}R instead, {avoidableLosses.length} more trades would have been winners</li>
                 )}
               </>
             )}
@@ -308,6 +309,9 @@ export default function RRROptimizationAnalysis({ trades }: RRRAnalysisProps) {
                 <li>• Your RRR targeting is well balanced</li>
                 <li>• Consider <strong className="text-foreground">{optimal.rrr}R</strong> as optimal based on your data</li>
                 <li>• Keep tracking planned vs actual to maintain this balance</li>
+                {avoidableLosses.length > 0 && (
+                  <li className="text-orange-600 dark:text-orange-400 font-semibold">• However, {avoidableLosses.length} losses could have been avoided by taking profit at {optimal.rrr}R</li>
+                )}
               </>
             )}
           </ul>
