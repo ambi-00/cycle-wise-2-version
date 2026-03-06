@@ -25,16 +25,13 @@ type Strategy = {
   description?: string;
   markets: string[];
   timeframes: string[];
-  confirmations: string[];
-  entryTriggers?: string[];
-  slCriteria?: string[];
-  exitRules?: string[];
-  exitCriteria?: string[];
-  generalRules?: string[];
-  rules?: string[];
+  setupConfirmations?: string[]; // NEW: Merged confirmations
+  entryTrigger?: string; // NEW: Single entry trigger
+  slType?: string; // NEW: SL type
+  slDistance?: string; // NEW: SL distance/rule
+  tpType?: string; // NEW: TP type
+  exitOptions?: string[]; // NEW: Exit options for dropdown
   riskPerTrade?: number;
-  stopLossType?: string;
-  takeProfitType?: string;
   riskRewardRatio?: number;
   winRate: number;
   avgR: number;
@@ -43,6 +40,17 @@ type Strategy = {
   profitFactor?: number;
   maxDrawdown?: number;
   createdAt?: string;
+  
+  // OLD fields for backwards compatibility
+  confirmations?: string[];
+  entryTriggers?: string[];
+  slCriteria?: string[];
+  exitRules?: string[];
+  exitCriteria?: string[];
+  generalRules?: string[];
+  rules?: string[];
+  stopLossType?: string;
+  takeProfitType?: string;
 };
 
 const mockStrategies: Strategy[] = [
@@ -55,14 +63,13 @@ const mockStrategies: Strategy[] = [
     winRate: 72,
     avgR: 2.1,
     tradesCount: 45,
-    confirmations: ["Market structure shift", "FVG/OB mitigation", "Kill zone timing", "Volume confirmation", "Higher timeframe bias"],
-    entryTriggers: ["Break of structure", "Fair value gap entry", "Order block reaction"],
-    slCriteria: ["Below/above last swing point", "Beyond order block"],
-    exitRules: ["Target liquidity zones", "Partial profits at 1:2", "Trail stop after 1:3"],
-    generalRules: ["Only trade during NY/London sessions", "Avoid news events", "Maximum 2 trades per day"],
+    setupConfirmations: ["Market structure shift", "FVG/OB mitigation", "Kill zone timing", "Volume confirmation", "Higher timeframe bias"],
+    entryTrigger: "Break of structure + Fair value gap entry",
+    slType: "structure-based",
+    slDistance: "Below last swing point / Beyond order block",
+    tpType: "next-level",
+    exitOptions: ["Hit TP at liquidity zone", "Partial profits at 1:2 RR", "Trail stop after 1:3 RR", "Break of structure (reversal)"],
     riskPerTrade: 1,
-    stopLossType: "Fixed pips",
-    takeProfitType: "Risk:Reward ratio",
     riskRewardRatio: 3,
     profitFactor: 2.4,
     maxDrawdown: 8.5,
@@ -77,14 +84,13 @@ const mockStrategies: Strategy[] = [
     winRate: 65,
     avgR: 1.8,
     tradesCount: 32,
-    confirmations: ["Liquidity sweep", "Order block reaction", "Break of structure", "Displacement candle"],
-    entryTriggers: ["Return to order block", "Liquidity grab completion", "Change of character"],
-    slCriteria: ["Beyond order block", "Below liquidity sweep"],
-    exitRules: ["Target opposite liquidity", "Scale out at key levels"],
-    generalRules: ["Wait for sweep confirmation", "Higher timeframe alignment required"],
+    setupConfirmations: ["Liquidity sweep completed", "Order block present", "Break of structure", "Displacement candle"],
+    entryTrigger: "Return to order block after liquidity grab",
+    slType: "order-block",
+    slDistance: "Beyond order block / Below liquidity sweep",
+    tpType: "next-level",
+    exitOptions: ["Opposite liquidity reached", "Scale out at key levels", "Change of character (reversal)", "Time-based exit (session end)"],
     riskPerTrade: 1.5,
-    stopLossType: "Structure-based",
-    takeProfitType: "Liquidity targets",
     riskRewardRatio: 2,
     profitFactor: 2.1,
     maxDrawdown: 12.3,
@@ -377,7 +383,7 @@ export default function StrategyDetail() {
             </motion.div>
 
             {/* Entry Confirmations */}
-            {strategy.confirmations && strategy.confirmations.length > 0 && (
+            {((strategy.setupConfirmations && strategy.setupConfirmations.length > 0) || (strategy.confirmations && strategy.confirmations.length > 0)) && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -387,10 +393,10 @@ export default function StrategyDetail() {
                   <CardContent className="p-6">
                     <div className="flex items-center gap-2 mb-4">
                       <CheckCircle2 className="h-5 w-5 text-accent-foreground" />
-                      <h3 className="font-semibold text-lg">Entry Confirmations</h3>
+                      <h3 className="font-semibold text-lg">Setup Confirmations</h3>
                     </div>
                     <div className="space-y-2">
-                      {strategy.confirmations.map((conf, idx) => (
+                      {(strategy.setupConfirmations || strategy.confirmations || []).map((conf, idx) => (
                         <div key={idx} className="flex items-start gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
                           <div className="mt-0.5">
                             <div className="h-2 w-2 rounded-full bg-accent-foreground" />
@@ -404,8 +410,8 @@ export default function StrategyDetail() {
               </motion.div>
             )}
 
-            {/* Entry Triggers */}
-            {strategy.entryTriggers && strategy.entryTriggers.length > 0 && (
+            {/* Entry Trigger (NEW) */}
+            {(strategy.entryTrigger || (strategy.entryTriggers && strategy.entryTriggers.length > 0)) && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -415,38 +421,22 @@ export default function StrategyDetail() {
                   <CardContent className="p-6">
                     <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
                       <TrendingUp className="h-5 w-5 text-green-500" />
-                      Entry Triggers
+                      Entry Trigger
                     </h3>
-                    <ul className="space-y-2">
-                      {strategy.entryTriggers.map((trigger, idx) => (
-                        <li key={idx} className="flex items-center gap-2 text-sm p-2 rounded-lg hover:bg-muted/30 transition-colors">
-                          <div className="h-1.5 w-1.5 rounded-full bg-green-500" />
-                          <span>{trigger}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            )}
-
-            {/* General Rules */}
-            {((strategy.generalRules && strategy.generalRules.length > 0) || (strategy.rules && strategy.rules.length > 0)) && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5 }}
-              >
-                <Card className="shadow-card">
-                  <CardContent className="p-6">
-                    <h3 className="font-semibold text-lg mb-4">General Rules</h3>
-                    <ul className="space-y-3">
-                      {(strategy.generalRules || strategy.rules || []).map((rule, idx) => (
-                        <li key={idx} className="text-sm text-muted-foreground pl-4 border-l-2 border-primary/30 py-1">
-                          {rule}
-                        </li>
-                      ))}
-                    </ul>
+                    {strategy.entryTrigger ? (
+                      <div className="p-4 rounded-lg bg-primary/10 border border-primary/20">
+                        <p className="text-foreground">{strategy.entryTrigger}</p>
+                      </div>
+                    ) : (
+                      <ul className="space-y-2">
+                        {strategy.entryTriggers?.map((trigger, idx) => (
+                          <li key={idx} className="flex items-center gap-2 text-sm p-2 rounded-lg hover:bg-muted/30 transition-colors">
+                            <div className="h-1.5 w-1.5 rounded-full bg-green-500" />
+                            <span>{trigger}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </CardContent>
                 </Card>
               </motion.div>
@@ -455,7 +445,7 @@ export default function StrategyDetail() {
 
           {/* Right Column */}
           <div className="space-y-6">
-            {/* Risk Management */}
+            {/* Risk Management (with NEW SL info) */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -480,16 +470,22 @@ export default function StrategyDetail() {
                         <p className="text-xl font-semibold text-foreground">1:{strategy.riskRewardRatio}</p>
                       </div>
                     )}
-                    {strategy.stopLossType && (
+                    {(strategy.slType || strategy.stopLossType) && (
                       <div>
                         <p className="text-xs text-muted-foreground mb-2">Stop Loss Type</p>
-                        <Badge variant="outline" className="text-sm">{strategy.stopLossType}</Badge>
+                        <Badge variant="outline" className="text-sm">{strategy.slType || strategy.stopLossType}</Badge>
                       </div>
                     )}
-                    {strategy.takeProfitType && (
+                    {strategy.slDistance && (
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-2">SL Distance/Rule</p>
+                        <p className="text-sm text-foreground">{strategy.slDistance}</p>
+                      </div>
+                    )}
+                    {(strategy.tpType || strategy.takeProfitType) && (
                       <div>
                         <p className="text-xs text-muted-foreground mb-2">Take Profit Type</p>
-                        <Badge variant="outline" className="text-sm">{strategy.takeProfitType}</Badge>
+                        <Badge variant="outline" className="text-sm">{strategy.tpType || strategy.takeProfitType}</Badge>
                       </div>
                     )}
                   </div>
@@ -497,7 +493,7 @@ export default function StrategyDetail() {
               </Card>
             </motion.div>
 
-            {/* SL Criteria */}
+            {/* SL Criteria (LEGACY) */}
             {strategy.slCriteria && strategy.slCriteria.length > 0 && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -520,7 +516,35 @@ export default function StrategyDetail() {
               </motion.div>
             )}
 
-            {/* Exit Rules */}
+            {/* Exit Options (NEW) */}
+            {strategy.exitOptions && strategy.exitOptions.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
+              >
+                <Card className="shadow-card">
+                  <CardContent className="p-6">
+                    <h3 className="font-semibold text-lg mb-4">Exit Options</h3>
+                    <p className="text-xs text-muted-foreground mb-3">
+                      Available exit reasons when closing trades with this strategy
+                    </p>
+                    <div className="space-y-2">
+                      {strategy.exitOptions.map((option, idx) => (
+                        <div key={idx} className="flex items-start gap-3 p-3 rounded-lg bg-primary/5 hover:bg-primary/10 transition-colors">
+                          <div className="mt-0.5">
+                            <div className="h-2 w-2 rounded-full bg-primary" />
+                          </div>
+                          <p className="text-sm text-foreground flex-1">{option}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
+
+            {/* Exit Rules (LEGACY) */}
             {strategy.exitRules && strategy.exitRules.length > 0 && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}

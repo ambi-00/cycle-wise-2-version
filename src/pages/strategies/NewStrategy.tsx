@@ -39,42 +39,27 @@ export default function NewStrategy() {
   const [selectedMarkets, setSelectedMarkets] = useState<string[]>([]);
   const [selectedTimeframes, setSelectedTimeframes] = useState<string[]>([]);
   
-  // Strategy Details
-  const [confirmations, setConfirmations] = useState<string[]>([]);
-  const [rules, setRules] = useState<string[]>([]);
-  const [entryTriggers, setEntryTriggers] = useState<string[]>([]);
-  const [slCriteria, setSlCriteria] = useState<string[]>([]); // NEW: SL criteria
-  const [exitRules, setExitRules] = useState<string[]>([]);
-  const [exitCriteria, setExitCriteria] = useState<string[]>([]); // NEW: Dropdown exit criteria
+  // 1. Setup Confirmations (MERGED: Confirmations + Entry Triggers)
+  const [setupConfirmations, setSetupConfirmations] = useState<string[]>([]);
   
-  // Risk Management
+  // 2. Entry Trigger (SINGULAR - one specific trigger)
+  const [entryTrigger, setEntryTrigger] = useState("");
+  
+  // 3. Stop Loss Rules (MERGED: SL Criteria + SL Type)
+  const [slType, setSlType] = useState(""); // Dropdown: Fixed Pips, ATR-based, Structure-based, Order Block
+  const [slDistance, setSlDistance] = useState(""); // e.g., "50 pips", "1.5x ATR"
+  
+  // 4. Exit Strategy (MERGED: Exit Criteria + Exit Rules + TP Type)
+  const [tpType, setTpType] = useState(""); // Dropdown: Fixed RR, Next Level, Trailing, Manual
+  const [exitOptions, setExitOptions] = useState<string[]>([]); // Multi-select: options user will choose from when closing trade
+  
+  // Risk Management (SIMPLIFIED)
   const [riskPerTrade, setRiskPerTrade] = useState("1");
-  const [stopLossType, setStopLossType] = useState("");
-  const [takeProfitType, setTakeProfitType] = useState("");
   const [riskRewardRatio, setRiskRewardRatio] = useState("2");
   
   // Input states
-  const [newConfirmation, setNewConfirmation] = useState("");
-  const [newRule, setNewRule] = useState("");
-  const [newEntryTrigger, setNewEntryTrigger] = useState("");
-  const [newSlCriteria, setNewSlCriteria] = useState(""); // NEW
-  const [newExitRule, setNewExitRule] = useState("");
-  const [newExitCriteria, setNewExitCriteria] = useState(""); // NEW
-
-  // Example Trade Dialog
-  const [showExampleDialog, setShowExampleDialog] = useState(false);
-  const [exampleTrade, setExampleTrade] = useState({
-    pair: "",
-    direction: "",
-    entryPrice: "",
-    exitPrice: "",
-    stopLoss: "",
-    takeProfit: "",
-    riskReward: "",
-    outcome: "",
-    notes: "",
-    screenshots: [] as File[],
-  });
+  const [newSetupConfirmation, setNewSetupConfirmation] = useState("");
+  const [newExitOption, setNewExitOption] = useState("");
 
   const toggleMarket = (market: string) => {
     setSelectedMarkets(prev =>
@@ -88,108 +73,26 @@ export default function NewStrategy() {
     );
   };
 
-  const addConfirmation = () => {
-    if (newConfirmation.trim()) {
-      setConfirmations([...confirmations, newConfirmation.trim()]);
-      setNewConfirmation("");
+  const addSetupConfirmation = () => {
+    if (newSetupConfirmation.trim()) {
+      setSetupConfirmations([...setupConfirmations, newSetupConfirmation.trim()]);
+      setNewSetupConfirmation("");
     }
   };
 
-  const removeConfirmation = (index: number) => {
-    setConfirmations(confirmations.filter((_, i) => i !== index));
+  const removeSetupConfirmation = (index: number) => {
+    setSetupConfirmations(setupConfirmations.filter((_, i) => i !== index));
   };
 
-  const addRule = () => {
-    if (newRule.trim()) {
-      setRules([...rules, newRule.trim()]);
-      setNewRule("");
+  const addExitOption = () => {
+    if (newExitOption.trim()) {
+      setExitOptions([...exitOptions, newExitOption.trim()]);
+      setNewExitOption("");
     }
   };
 
-  const removeRule = (index: number) => {
-    setRules(rules.filter((_, i) => i !== index));
-  };
-
-  const addEntryTrigger = () => {
-    if (newEntryTrigger.trim()) {
-      setEntryTriggers([...entryTriggers, newEntryTrigger.trim()]);
-      setNewEntryTrigger("");
-    }
-  };
-
-  const removeEntryTrigger = (index: number) => {
-    setEntryTriggers(entryTriggers.filter((_, i) => i !== index));
-  };
-
-  const addSlCriteria = () => {
-    if (newSlCriteria.trim()) {
-      setSlCriteria([...slCriteria, newSlCriteria.trim()]);
-      setNewSlCriteria("");
-    }
-  };
-
-  const removeSlCriteria = (index: number) => {
-    setSlCriteria(slCriteria.filter((_, i) => i !== index));
-  };
-
-  const addExitRule = () => {
-    if (newExitRule.trim()) {
-      setExitRules([...exitRules, newExitRule.trim()]);
-      setNewExitRule("");
-    }
-  };
-
-  const removeExitRule = (index: number) => {
-    setExitRules(exitRules.filter((_, i) => i !== index));
-  };
-
-  const addExitCriteria = () => {
-    if (newExitCriteria.trim()) {
-      setExitCriteria([...exitCriteria, newExitCriteria.trim()]);
-      setNewExitCriteria("");
-    }
-  };
-
-  const removeExitCriteria = (index: number) => {
-    setExitCriteria(exitCriteria.filter((_, i) => i !== index));
-  };
-
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const newFiles = Array.from(e.target.files);
-      setExampleTrade(prev => ({
-        ...prev,
-        screenshots: [...prev.screenshots, ...newFiles]
-      }));
-    }
-  };
-
-  const removeScreenshot = (index: number) => {
-    setExampleTrade(prev => ({
-      ...prev,
-      screenshots: prev.screenshots.filter((_, i) => i !== index)
-    }));
-  };
-
-  const handleSaveExample = () => {
-    // TODO: Save to Supabase
-    toast({
-      title: "Example trade added",
-      description: "Your example trade has been saved to this strategy",
-    });
-    setShowExampleDialog(false);
-    setExampleTrade({
-      pair: "",
-      direction: "",
-      entryPrice: "",
-      exitPrice: "",
-      stopLoss: "",
-      takeProfit: "",
-      riskReward: "",
-      outcome: "",
-      notes: "",
-      screenshots: [],
-    });
+  const removeExitOption = (index: number) => {
+    setExitOptions(exitOptions.filter((_, i) => i !== index));
   };
 
   const handleSave = () => {
@@ -227,15 +130,13 @@ export default function NewStrategy() {
       description: description.trim(),
       markets: selectedMarkets,
       timeframes: selectedTimeframes,
-      confirmations,
-      entryTriggers,
-      slCriteria, // NEW: SL criteria
-      exitRules,
-      exitCriteria, // NEW: Exit criteria dropdown options
-      generalRules: rules,
+      setupConfirmations, // NEW: Merged confirmations
+      entryTrigger, // NEW: Single trigger
+      slType, // NEW: SL type dropdown
+      slDistance, // NEW: SL distance
+      tpType, // NEW: TP type dropdown
+      exitOptions, // NEW: Exit options for dropdown in trade
       riskPerTrade: parseFloat(riskPerTrade),
-      stopLossType,
-      takeProfitType,
       riskRewardRatio: parseFloat(riskRewardRatio),
       winRate: 0,
       avgR: 0,
@@ -364,29 +265,29 @@ export default function NewStrategy() {
           </CardContent>
         </Card>
 
-        {/* Confirmation Checklist */}
+        {/* 1. Setup Confirmations (MERGED) */}
         <Card>
           <CardHeader>
-            <CardTitle>Confirmation Checklist</CardTitle>
+            <CardTitle>Setup Confirmations ✅</CardTitle>
+            <p className="text-sm text-muted-foreground mt-1">
+              What must be present BEFORE entering a trade? These will appear as checkboxes when logging trades.
+            </p>
           </CardHeader>
           <CardContent className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              What confirmations must be present before entering a trade?
-            </p>
             <div className="flex gap-2">
               <Input
-                placeholder="e.g., Higher timeframe trend alignment"
-                value={newConfirmation}
-                onChange={(e) => setNewConfirmation(e.target.value)}
-                onKeyPress={(e) => e.key === "Enter" && addConfirmation()}
+                placeholder="e.g., HTF Trend Alignment, FVG Present, Market Structure Shift"
+                value={newSetupConfirmation}
+                onChange={(e) => setNewSetupConfirmation(e.target.value)}
+                onKeyPress={(e) => e.key === "Enter" && addSetupConfirmation()}
               />
-              <Button onClick={addConfirmation}>
+              <Button onClick={addSetupConfirmation}>
                 <Plus className="h-4 w-4" />
                 Add
               </Button>
             </div>
             <div className="space-y-2">
-              {confirmations.map((confirmation, i) => (
+              {setupConfirmations.map((confirmation, i) => (
                 <div
                   key={i}
                   className="flex items-center justify-between rounded-lg bg-primary/10 p-3"
@@ -395,206 +296,139 @@ export default function NewStrategy() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => removeConfirmation(i)}
+                    onClick={() => removeSetupConfirmation(i)}
                   >
                     <X className="h-4 w-4" />
                   </Button>
                 </div>
               ))}
-              {confirmations.length === 0 && (
+              {setupConfirmations.length === 0 && (
                 <p className="text-center text-sm text-muted-foreground py-4">
-                  No confirmations added yet
+                  No setup confirmations added yet
                 </p>
               )}
             </div>
           </CardContent>
         </Card>
 
-        {/* Entry Triggers */}
+        {/* 2. Entry Trigger (SINGULAR) */}
         <Card>
           <CardHeader>
-            <CardTitle>Entry Triggers</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              What specific signals trigger you to enter this trade?
+            <CardTitle>Entry Trigger 🎯</CardTitle>
+            <p className="text-sm text-muted-foreground mt-1">
+              The ONE specific signal that triggers you to enter this trade
             </p>
-            <div className="flex gap-2">
-              <Input
-                placeholder="e.g., Price breaks above order block with volume"
-                value={newEntryTrigger}
-                onChange={(e) => setNewEntryTrigger(e.target.value)}
-                onKeyPress={(e) => e.key === "Enter" && addEntryTrigger()}
-              />
-              <Button onClick={addEntryTrigger}>
-                <Plus className="h-4 w-4" />
-                Add
-              </Button>
-            </div>
-            <div className="space-y-2">
-              {entryTriggers.map((trigger, i) => (
-                <div
-                  key={i}
-                  className="flex items-center justify-between rounded-lg bg-accent/20 p-3"
-                >
-                  <span className="text-sm text-foreground">{trigger}</span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => removeEntryTrigger(i)}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
-              {entryTriggers.length === 0 && (
-                <p className="text-center text-sm text-muted-foreground py-4">
-                  No entry triggers added yet
-                </p>
-              )}
-            </div>
+          </CardHeader>
+          <CardContent>
+            <Input
+              placeholder="e.g., Price taps Order Block + Volume spike"
+              value={entryTrigger}
+              onChange={(e) => setEntryTrigger(e.target.value)}
+              className="text-base"
+            />
           </CardContent>
         </Card>
 
-        {/* SL Criteria - NEW */}
+        {/* 3. Stop Loss Rules */}
         <Card>
           <CardHeader>
-            <CardTitle>SL Criteria</CardTitle>
+            <CardTitle>Stop Loss Rules 🛑</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              What specific stop loss criteria do you use? (e.g., pips, % risk, price level)
-            </p>
-            <div className="flex gap-2">
-              <Input
-                placeholder="e.g., 50 pips, Break of structure, Previous Low"
-                value={newSlCriteria}
-                onChange={(e) => setNewSlCriteria(e.target.value)}
-                onKeyPress={(e) => e.key === "Enter" && addSlCriteria()}
-              />
-              <Button onClick={addSlCriteria}>
-                <Plus className="h-4 w-4" />
-                Add
-              </Button>
+            <div>
+              <Label htmlFor="slType">SL Type</Label>
+              <Select value={slType} onValueChange={setSlType}>
+                <SelectTrigger className="mt-1.5">
+                  <SelectValue placeholder="Select SL type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="fixed-pips">Fixed Pips</SelectItem>
+                  <SelectItem value="atr-based">ATR-based</SelectItem>
+                  <SelectItem value="structure-based">Structure-based (Swing/Break)</SelectItem>
+                  <SelectItem value="order-block">Below/Above Order Block</SelectItem>
+                  <SelectItem value="percentage">Percentage-based</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            <div className="space-y-2">
-              {slCriteria.map((criteria, i) => (
-                <div
-                  key={i}
-                  className="flex items-center justify-between rounded-lg bg-warning/10 p-3"
-                >
-                  <span className="text-sm text-foreground">{criteria}</span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => removeSlCriteria(i)}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
-              {slCriteria.length === 0 && (
-                <p className="text-center text-sm text-muted-foreground py-4">
-                  No SL criteria added yet
-                </p>
-              )}
+            <div>
+              <Label htmlFor="slDistance">SL Distance/Rule</Label>
+              <Input
+                id="slDistance"
+                placeholder="e.g., '50 pips', '1.5x ATR', 'Below last swing low'"
+                value={slDistance}
+                onChange={(e) => setSlDistance(e.target.value)}
+                className="mt-1.5"
+              />
             </div>
           </CardContent>
         </Card>
 
-        {/* Exit Criteria - NEW */}
+        {/* 4. Take Profit / Exit Strategy */}
         <Card>
           <CardHeader>
-            <CardTitle>Exit/TP Criteria</CardTitle>
+            <CardTitle>Take Profit / Exit Strategy 🎯</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Define your specific exit/take-profit criteria. You'll select from these when closing trades.
-            </p>
-            <div className="flex gap-2">
-              <Input
-                placeholder="e.g., Last High/Low, Inducement, Support/Resistance, Fixed TP"
-                value={newExitCriteria}
-                onChange={(e) => setNewExitCriteria(e.target.value)}
-                onKeyPress={(e) => e.key === "Enter" && addExitCriteria()}
-              />
-              <Button onClick={addExitCriteria}>
-                <Plus className="h-4 w-4" />
-                Add
-              </Button>
+            <div>
+              <Label htmlFor="tpType">TP Type</Label>
+              <Select value={tpType} onValueChange={setTpType}>
+                <SelectTrigger className="mt-1.5">
+                  <SelectValue placeholder="Select TP type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="fixed-rr">Fixed Risk:Reward Ratio</SelectItem>
+                  <SelectItem value="next-level">Next Major Level</SelectItem>
+                  <SelectItem value="trailing">Trailing Stop</SelectItem>
+                  <SelectItem value="manual">Manual Exit</SelectItem>
+                  <SelectItem value="time-based">Time-based Exit</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            <div className="space-y-2">
-              {exitCriteria.map((criteria, i) => (
-                <div
-                  key={i}
-                  className="flex items-center justify-between rounded-lg bg-primary/10 p-3"
-                >
-                  <span className="text-sm text-foreground">{criteria}</span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => removeExitCriteria(i)}
+            
+            <div>
+              <Label>Exit Options (when closing trade)</Label>
+              <p className="text-xs text-muted-foreground mb-2">
+                These will appear in the dropdown when you close a trade with this strategy
+              </p>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="e.g., Hit TP at 2:1 RR, Last High/Low, Liquidity Zone, Break of Structure"
+                  value={newExitOption}
+                  onChange={(e) => setNewExitOption(e.target.value)}
+                  onKeyPress={(e) => e.key === "Enter" && addExitOption()}
+                />
+                <Button onClick={addExitOption}>
+                  <Plus className="h-4 w-4" />
+                  Add
+                </Button>
+              </div>
+              <div className="space-y-2 mt-3">
+                {exitOptions.map((option, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center justify-between rounded-lg bg-primary/10 p-3"
                   >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
-              {exitCriteria.length === 0 && (
-                <p className="text-center text-sm text-muted-foreground py-4">
-                  No exit criteria added yet. Common examples: Last High/Low, Inducement Level, 2:1 RR, Time-based Exit
-                </p>
-              )}
+                    <span className="text-sm text-foreground">{option}</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeExitOption(i)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+                {exitOptions.length === 0 && (
+                  <p className="text-center text-sm text-muted-foreground py-4">
+                    No exit options added yet. Common examples: "Hit TP at 2:1", "Last High/Low", "Liquidity Zone Hit"
+                  </p>
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Exit Rules */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Exit Rules</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              When do you exit this trade? (Take profit & stop loss criteria)
-            </p>
-            <div className="flex gap-2">
-              <Input
-                placeholder="e.g., Take profit at next major resistance"
-                value={newExitRule}
-                onChange={(e) => setNewExitRule(e.target.value)}
-                onKeyPress={(e) => e.key === "Enter" && addExitRule()}
-              />
-              <Button onClick={addExitRule}>
-                <Plus className="h-4 w-4" />
-                Add
-              </Button>
-            </div>
-            <div className="space-y-2">
-              {exitRules.map((rule, i) => (
-                <div
-                  key={i}
-                  className="flex items-center justify-between rounded-lg bg-destructive/10 p-3"
-                >
-                  <span className="text-sm text-foreground">{rule}</span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => removeExitRule(i)}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
-              {exitRules.length === 0 && (
-                <p className="text-center text-sm text-muted-foreground py-4">
-                  No exit rules added yet
-                </p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Risk Management */}
+        {/* Risk Management (SIMPLIFIED) */}
         <Card>
           <CardHeader>
             <CardTitle>Risk Management</CardTitle>
@@ -630,285 +464,6 @@ export default function NewStrategy() {
                 />
               </div>
             </div>
-            <div>
-              <Label htmlFor="stopLoss">Stop Loss Type</Label>
-              <Input
-                id="stopLoss"
-                placeholder="e.g., Below order block, ATR-based, Fixed pips"
-                value={stopLossType}
-                onChange={(e) => setStopLossType(e.target.value)}
-                className="mt-1.5"
-              />
-            </div>
-            <div>
-              <Label htmlFor="takeProfit">Take Profit Type</Label>
-              <Input
-                id="takeProfit"
-                placeholder="e.g., Next major level, R:R target, Trailing stop"
-                value={takeProfitType}
-                onChange={(e) => setTakeProfitType(e.target.value)}
-                className="mt-1.5"
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* General Rules */}
-        <Card>
-          <CardHeader>
-            <CardTitle>General Trading Rules</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Any other important rules or conditions for this strategy
-            </p>
-            <div className="flex gap-2">
-              <Input
-                placeholder="e.g., Only trade during London kill zone"
-                value={newRule}
-                onChange={(e) => setNewRule(e.target.value)}
-                onKeyPress={(e) => e.key === "Enter" && addRule()}
-              />
-              <Button onClick={addRule}>
-                <Plus className="h-4 w-4" />
-                Add
-              </Button>
-            </div>
-            <div className="space-y-2">
-              {rules.map((rule, i) => (
-                <div
-                  key={i}
-                  className="flex items-center justify-between rounded-lg bg-primary/5 p-3"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
-                      {i + 1}
-                    </span>
-                    <span className="text-sm text-foreground">{rule}</span>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => removeRule(i)}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
-              {rules.length === 0 && (
-                <p className="text-center text-sm text-muted-foreground py-4">
-                  No general rules added yet
-                </p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Add Example Trade Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Example Trades</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground mb-4">
-              Add example trades to document how this strategy works in practice
-            </p>
-            <Dialog open={showExampleDialog} onOpenChange={setShowExampleDialog}>
-              <DialogTrigger asChild>
-                <Button className="w-full">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Example Trade
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>Add Example Trade</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-6">
-                  {/* Trade Details */}
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div>
-                      <Label htmlFor="pair">Currency Pair / Asset</Label>
-                      <Input
-                        id="pair"
-                        placeholder="e.g., EURUSD, BTCUSD"
-                        value={exampleTrade.pair}
-                        onChange={(e) => setExampleTrade({...exampleTrade, pair: e.target.value})}
-                        className="mt-1.5"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="direction">Direction</Label>
-                      <Select
-                        value={exampleTrade.direction}
-                        onValueChange={(value) => setExampleTrade({...exampleTrade, direction: value})}
-                      >
-                        <SelectTrigger className="mt-1.5">
-                          <SelectValue placeholder="Select direction" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Long">Long</SelectItem>
-                          <SelectItem value="Short">Short</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  {/* Price Levels */}
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div>
-                      <Label htmlFor="entry">Entry Price</Label>
-                      <Input
-                        id="entry"
-                        type="number"
-                        step="0.00001"
-                        placeholder="1.08500"
-                        value={exampleTrade.entryPrice}
-                        onChange={(e) => setExampleTrade({...exampleTrade, entryPrice: e.target.value})}
-                        className="mt-1.5"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="exit">Exit Price</Label>
-                      <Input
-                        id="exit"
-                        type="number"
-                        step="0.00001"
-                        placeholder="1.09000"
-                        value={exampleTrade.exitPrice}
-                        onChange={(e) => setExampleTrade({...exampleTrade, exitPrice: e.target.value})}
-                        className="mt-1.5"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="sl">Stop Loss</Label>
-                      <Input
-                        id="sl"
-                        type="number"
-                        step="0.00001"
-                        placeholder="1.08200"
-                        value={exampleTrade.stopLoss}
-                        onChange={(e) => setExampleTrade({...exampleTrade, stopLoss: e.target.value})}
-                        className="mt-1.5"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="tp">Take Profit</Label>
-                      <Input
-                        id="tp"
-                        type="number"
-                        step="0.00001"
-                        placeholder="1.09500"
-                        value={exampleTrade.takeProfit}
-                        onChange={(e) => setExampleTrade({...exampleTrade, takeProfit: e.target.value})}
-                        className="mt-1.5"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Trade Metadata */}
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div>
-                      <Label htmlFor="rr">Risk:Reward Ratio</Label>
-                      <Input
-                        id="rr"
-                        placeholder="e.g., 1:2, 1:3"
-                        value={exampleTrade.riskReward}
-                        onChange={(e) => setExampleTrade({...exampleTrade, riskReward: e.target.value})}
-                        className="mt-1.5"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="outcome">Outcome</Label>
-                      <Select
-                        value={exampleTrade.outcome}
-                        onValueChange={(value) => setExampleTrade({...exampleTrade, outcome: value})}
-                      >
-                        <SelectTrigger className="mt-1.5">
-                          <SelectValue placeholder="Select outcome" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Win">Win</SelectItem>
-                          <SelectItem value="Loss">Loss</SelectItem>
-                          <SelectItem value="Break Even">Break Even</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  {/* Notes */}
-                  <div>
-                    <Label htmlFor="notes">Trade Analysis / Notes</Label>
-                    <Textarea
-                      id="notes"
-                      placeholder="Describe what happened in this trade, what setups you saw, confirmations that were present, etc."
-                      value={exampleTrade.notes}
-                      onChange={(e) => setExampleTrade({...exampleTrade, notes: e.target.value})}
-                      rows={4}
-                      className="mt-1.5"
-                    />
-                  </div>
-
-                  {/* Screenshots */}
-                  <div>
-                    <Label>Screenshots / Charts</Label>
-                    <div className="mt-2 flex items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/25 p-12 text-center hover:border-muted-foreground/50 transition-colors">
-                      <input
-                        type="file"
-                        id="screenshots"
-                        multiple
-                        accept="image/*"
-                        className="hidden"
-                        onChange={handleFileUpload}
-                      />
-                      <label htmlFor="screenshots" className="cursor-pointer">
-                        <Upload className="mx-auto h-12 w-12 text-muted-foreground" />
-                        <p className="mt-2 text-sm text-muted-foreground">
-                          Click to upload screenshots or drag and drop
-                        </p>
-                        <p className="mt-1 text-xs text-muted-foreground">
-                          PNG, JPG up to 10MB each
-                        </p>
-                      </label>
-                    </div>
-
-                    {/* Screenshot Previews */}
-                    {exampleTrade.screenshots.length > 0 && (
-                      <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                        {exampleTrade.screenshots.map((file, index) => (
-                          <div key={index} className="relative rounded-lg border bg-muted/30 p-3">
-                            <div className="flex items-center gap-3">
-                              <ImageIcon className="h-8 w-8 text-muted-foreground" />
-                              <div className="flex-1 min-w-0">
-                                <p className="truncate text-sm font-medium text-foreground">{file.name}</p>
-                                <p className="text-xs text-muted-foreground">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
-                              </div>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => removeScreenshot(index)}
-                              >
-                                <X className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="flex justify-end gap-2 pt-4">
-                    <Button variant="outline" onClick={() => setShowExampleDialog(false)}>
-                      Cancel
-                    </Button>
-                    <Button onClick={handleSaveExample}>
-                      Save Example Trade
-                    </Button>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
           </CardContent>
         </Card>
       </motion.div>

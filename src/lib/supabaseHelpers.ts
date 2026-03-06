@@ -144,6 +144,12 @@ export async function saveTrade(trade: TradeInsert) {
   }
 
   console.log('✅ Trade saved to localStorage:', tradeData.id, 'for date:', trade.date);
+  
+  // Trigger custom event to notify Dashboard and other components
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('trades-updated', { detail: { tradeId: tradeData.id } }));
+  }
+  
   return tradeData;
 }
 
@@ -166,6 +172,11 @@ export async function updateTrade(id: string, updates: Partial<TradeInsert>) {
       // Update localStorage cache
       updateLocalStorageTrade(id, data);
       
+      // Trigger custom event
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('trades-updated', { detail: { tradeId: id } }));
+      }
+      
       return data;
     } catch (error) {
       console.error('Failed to update in Supabase, updating locally:', error);
@@ -185,6 +196,11 @@ export async function updateTrade(id: string, updates: Partial<TradeInsert>) {
       operation: 'update',
       getId: () => id,
     });
+    
+    // Trigger custom event
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('trades-updated', { detail: { tradeId: id } }));
+    }
   }
 
   return updated;

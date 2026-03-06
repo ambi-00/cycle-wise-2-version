@@ -73,6 +73,8 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
   const [quick, setQuick] = useState(false);
 
   const [checklist, setChecklist] = useState<{ id: string; text: string; done: boolean }[]>([]);
+  const [strategyExitOptions, setStrategyExitOptions] = useState<string[]>([]); // Exit options from strategy
+  const [strategyEntryTrigger, setStrategyEntryTrigger] = useState<string>(""); // Entry trigger from strategy
 
   const [preNote, setPreNote] = useState('');
   const [postNote, setPostNote] = useState('');
@@ -401,17 +403,67 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
     
     if (!strategy) {
       setChecklist([]);
+      setStrategyExitOptions([]);
+      setStrategyEntryTrigger("");
       return;
     }
     
-    const defs = [
-      'Price action aligns with bias',
-      'Higher timeframe support/resistance',
-      'Volatility profile acceptable',
-      'Risk defined (SL/TP)',
-    ];
-    const items = defs.map((t, i) => ({ id: `${Date.now()}-${i}`, text: t, done: false }));
-    setChecklist(items);
+    // Load strategy from localStorage
+    try {
+      const strategies = JSON.parse(localStorage.getItem('cw_strategies') || '[]');
+      const selectedStrategy = strategies.find((s: any) => s.name === strategy);
+      
+      if (selectedStrategy) {
+        // Load setup confirmations as checklist
+        if (selectedStrategy.setupConfirmations) {
+          const items = selectedStrategy.setupConfirmations.map((text: string, i: number) => ({
+            id: `${Date.now()}-${i}`,
+            text,
+            done: false
+          }));
+          setChecklist(items);
+        }
+        
+        // Load exit options for dropdown
+        if (selectedStrategy.exitOptions && selectedStrategy.exitOptions.length > 0) {
+          setStrategyExitOptions(selectedStrategy.exitOptions);
+        } else {
+          setStrategyExitOptions([]);
+        }
+        
+        // Load entry trigger
+        if (selectedStrategy.entryTrigger) {
+          setStrategyEntryTrigger(selectedStrategy.entryTrigger);
+        } else {
+          setStrategyEntryTrigger("");
+        }
+      } else {
+        // Fallback to default checklist if strategy not found
+        const defs = [
+          'Price action aligns with bias',
+          'Higher timeframe support/resistance',
+          'Volatility profile acceptable',
+          'Risk defined (SL/TP)',
+        ];
+        const items = defs.map((t, i) => ({ id: `${Date.now()}-${i}`, text: t, done: false }));
+        setChecklist(items);
+        setStrategyExitOptions([]);
+        setStrategyEntryTrigger("");
+      }
+    } catch (e) {
+      console.error('Error loading strategy:', e);
+      // Fallback to defaults
+      const defs = [
+        'Price action aligns with bias',
+        'Higher timeframe support/resistance',
+        'Volatility profile acceptable',
+        'Risk defined (SL/TP)',
+      ];
+      const items = defs.map((t, i) => ({ id: `${Date.now()}-${i}`, text: t, done: false }));
+      setChecklist(items);
+      setStrategyExitOptions([]);
+      setStrategyEntryTrigger("");
+    }
   }, [strategy, isEditing, idParam]);
 
   const handleFile = async (file?: File, target?: 'preSmall' | 'preLarge' | 'postSmall' | 'postLarge') => {
@@ -806,6 +858,20 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
                       <section className="rounded-2xl border p-4 bg-card shadow-soft">
                         <h4 className="font-serif text-xl font-semibold text-foreground">Confirmations</h4>
                         <div className="mt-3 text-xs text-muted-foreground mb-2">Mark the confirmations you observed before entering.</div>
+                        
+                        {/* Entry Trigger Reminder */}
+                        {strategyEntryTrigger && (
+                          <div className="mb-4 p-3 rounded-lg bg-primary/10 border border-primary/20">
+                            <div className="flex items-start gap-2">
+                              <span className="text-base">💡</span>
+                              <div>
+                                <p className="text-xs font-semibold text-primary mb-0.5">Entry Trigger:</p>
+                                <p className="text-sm text-foreground">{strategyEntryTrigger}</p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                        
                         <div className="space-y-2">
                           {checklist.map((c, idx) => (
                             <label key={c.id} className="flex items-start gap-3">
@@ -1047,6 +1113,20 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
                                   <SelectValue placeholder="Select exit reason" />
                                 </SelectTrigger>
                                 <SelectContent>
+                                  {/* Show strategy exit options first if available */}
+                                  {strategyExitOptions.length > 0 && (
+                                    <>
+                                      {strategyExitOptions.map((option) => (
+                                        <SelectItem key={option} value={option}>
+                                          {option}
+                                        </SelectItem>
+                                      ))}
+                                      <SelectItem value="_separator_" disabled className="text-xs text-muted-foreground">
+                                        ──────────────
+                                      </SelectItem>
+                                    </>
+                                  )}
+                                  {/* Then show default reasons */}
                                   {defaultWinReasons.map((reason) => (
                                     <SelectItem key={reason} value={reason} className="relative">
                                       <span className="block truncate pr-10">{reason}</span>
@@ -1081,7 +1161,7 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
                                       </button>
                                     </SelectItem>
                                   ))}
-                                  <SelectItem value="other">Other</SelectItem>
+                                  <SelectItem value="other">Other (Custom)</SelectItem>
                                 </SelectContent>
                               </Select>
                             </div>
@@ -1124,6 +1204,20 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
                                   <SelectValue placeholder="Select SL reason" />
                                 </SelectTrigger>
                                 <SelectContent>
+                                  {/* Show strategy exit options first if available */}
+                                  {strategyExitOptions.length > 0 && (
+                                    <>
+                                      {strategyExitOptions.map((option) => (
+                                        <SelectItem key={option} value={option}>
+                                          {option}
+                                        </SelectItem>
+                                      ))}
+                                      <SelectItem value="_separator_" disabled className="text-xs text-muted-foreground">
+                                        ──────────────
+                                      </SelectItem>
+                                    </>
+                                  )}
+                                  {/* Then show default loss reasons */}
                                   {defaultLossReasons.map((reason) => (
                                     <SelectItem key={reason} value={reason} className="relative">
                                       <span className="block truncate pr-10">{reason}</span>
@@ -1158,7 +1252,7 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
                                       </button>
                                     </SelectItem>
                                   ))}
-                                  <SelectItem value="other">Other</SelectItem>
+                                  <SelectItem value="other">Other (Custom)</SelectItem>
                                 </SelectContent>
                               </Select>
                             </div>

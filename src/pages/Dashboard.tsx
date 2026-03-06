@@ -222,8 +222,13 @@ export default function Dashboard() {
     const load = () => setStoredTrades(loadAllStoredTrades());
     load();
     const onStorage = () => load();
+    const onTradesUpdated = () => load();
     window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
+    window.addEventListener("trades-updated", onTradesUpdated);
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("trades-updated", onTradesUpdated);
+    };
   }, []);
 
   // compute overall and per-strategy stats
