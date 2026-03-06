@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Plus, Filter, Download, Upload, TrendingUp, TrendingDown, Search, CheckCircle, AlertCircle, Lightbulb, X, Zap, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Filter, Download, Upload, TrendingUp, TrendingDown, Search, CheckCircle, AlertCircle, Lightbulb, X, Zap, ChevronLeft, ChevronRight, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useEffect, useState, lazy, Suspense, useRef } from "react";
@@ -853,6 +853,7 @@ export default function TradeJournal() {
                   <th className="px-4 py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground hidden lg:table-cell">Strategy</th>
                   <th className="px-4 py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground hidden lg:table-cell">Phase</th>
                   <th className="px-4 py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground hidden xl:table-cell">Confirmations</th>
+                  <th className="px-4 py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground"></th>
                 </tr>
               </thead>
               <tbody>
@@ -862,7 +863,8 @@ export default function TradeJournal() {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: index * 0.05 }}
-                    className="border-b border-border/50 hover:bg-muted/20 transition-colors"
+                    className="border-b border-border/50 hover:bg-muted/20 transition-colors cursor-pointer"
+                    onClick={() => navigate(`/trade/new?id=${trade.id}&date=${trade.date}`)}
                   >
                     <td className="px-4 py-4">
                       <div>
@@ -972,8 +974,15 @@ export default function TradeJournal() {
                           ))}
                         </div>
                       )}
-                    </td>
-                  </motion.tr>
+                    </td>                      <td className="px-4 py-4">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); navigate(`/trade/new?id=${trade.id}&date=${trade.date}`); }}
+                          className="rounded-lg p-1.5 text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors"
+                          title="Edit trade"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                      </td>                  </motion.tr>
                 ))}
               </tbody>
             </table>

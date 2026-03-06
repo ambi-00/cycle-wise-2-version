@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { TrendingUp, TrendingDown, MoreHorizontal, Lightbulb, Plus } from "lucide-react";
+import { TrendingUp, TrendingDown, MoreHorizontal, Lightbulb, Plus, Pencil } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
@@ -77,6 +77,7 @@ export function RecentTradesTable({ trades }: RecentTradesTableProps) {
               <th className="pb-3">Result</th>
               <th className="pb-3">R</th>
               <th className="pb-3 hidden sm:table-cell">Phase</th>
+              <th className="pb-3"></th>
             </tr>
           </thead>
           <tbody>
@@ -86,7 +87,8 @@ export function RecentTradesTable({ trades }: RecentTradesTableProps) {
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.05 }}
-                className="border-b border-border/50 last:border-0"
+                className="border-b border-border/50 last:border-0 cursor-pointer hover:bg-muted/20 transition-colors"
+                onClick={() => navigate(`/trade/new?id=${trade.id}&date=${trade.date}`)}
               >
                 <td className="py-3 text-sm text-foreground">
                   {trade.iso ? (
@@ -115,6 +117,15 @@ export function RecentTradesTable({ trades }: RecentTradesTableProps) {
                 </td>
                 <td className="py-3 hidden sm:table-cell">
                   <span className="text-xs text-muted-foreground">{trade.cyclePhase}</span>
+                </td>
+                <td className="py-3">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); navigate(`/trade/new?id=${trade.id}&date=${trade.date}`); }}
+                    className="rounded-lg p-1.5 text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors"
+                    title="Edit trade"
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </button>
                 </td>
               </motion.tr>
             ))}

@@ -741,12 +741,18 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
           <CardHeader className="flex flex-row items-center justify-between border-b pb-6">
             <div className="space-y-1">
               <div className="flex items-baseline gap-5">
-                <h1 className="text-3xl font-serif font-bold tracking-tight text-foreground">New Trade</h1>
+                <h1 className="text-3xl font-serif font-bold tracking-tight text-foreground">
+                  {idParam ? 'Edit Trade' : 'New Trade'}
+                </h1>
               </div>
-              <p className="text-sm text-muted-foreground mt-1">Document your trade preparation and results</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                {idParam ? 'Update your trade details, notes and results' : 'Document your trade preparation and results'}
+              </p>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              <Button onClick={() => save(false)} className="rounded-full px-4 py-2 text-sm bg-gradient-to-r from-primary to-primary/70 text-primary-foreground shadow-soft">Save Trade</Button>
+              <Button onClick={() => save(false)} className="rounded-full px-4 py-2 text-sm bg-gradient-to-r from-primary to-primary/70 text-primary-foreground shadow-soft">
+                {idParam ? 'Update Trade' : 'Save Trade'}
+              </Button>
               <Button variant="ghost" onClick={() => navigate(-1)} className="rounded-full px-3 py-2 text-sm">Cancel</Button>
             </div>
           </CardHeader>
