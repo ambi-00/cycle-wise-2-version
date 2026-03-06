@@ -655,7 +655,7 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
         emotion_after: emotionAfter,
         timeframe_small: tfSmall,
         timeframe_large: tfLarge,
-        result: result || null,
+        result: result || (close ? 'breakeven' : ''), // Default to breakeven for closed trades without result
         loss_reason: result === 'loss' ? lossReason : null,
         exit_reason: exitReason || null,
         custom_exit_reason: exitReason === 'other' ? customExitReason : null,

@@ -3,6 +3,12 @@
  * Analyzes trading data and generates personalized insights
  */
 
+// Helper function to get R-Multiple value (handles both snake_case and camelCase)
+function getRMultiple(trade: any): number {
+  const rValue = trade.r_multiple !== undefined ? trade.r_multiple : trade.rMultiple;
+  return typeof rValue === 'number' ? rValue : 0;
+}
+
 export interface Trade {
   id: string;
   date: string;
@@ -16,6 +22,7 @@ export interface Trade {
   result?: "win" | "loss" | "breakeven";
   pnl?: number;
   rMultiple?: number;
+  r_multiple?: number; // Snake_case version from DB
   maxRReached?: number; // Maximum R achieved before reversal
   strategy?: string;
   cyclePhase?: string;
@@ -162,7 +169,7 @@ export class AIInsightsEngine {
     const phaseStats = ['Menstrual', 'Follicular', 'Ovulatory', 'Luteal'].map(phase => {
       const phaseTrades = this.trades.filter(t => t.cyclePhase === phase);
       const avgR = phaseTrades.length > 0
-        ? phaseTrades.reduce((sum, t) => sum + (t.rMultiple || 0), 0) / phaseTrades.length
+        ? phaseTrades.reduce((sum, t) => sum + getRMultiple(t), 0) / phaseTrades.length
         : 0;
       
       return { phase, avgR, count: phaseTrades.length };
@@ -208,7 +215,7 @@ export class AIInsightsEngine {
         acc[strategy] = { wins: 0, total: 0, totalR: 0 };
       }
       acc[strategy].total++;
-      acc[strategy].totalR += trade.rMultiple || 0;
+      acc[strategy].totalR += getRMultiple(trade);
       if (trade.result === 'win') acc[strategy].wins++;
       return acc;
     }, {} as Record<string, { wins: number; total: number; totalR: number }>);
@@ -313,7 +320,7 @@ export class AIInsightsEngine {
             confirmationStats[conf] = { wins: 0, total: 0, totalR: 0 };
           }
           confirmationStats[conf].total++;
-          confirmationStats[conf].totalR += trade.rMultiple || 0;
+          confirmationStats[conf].totalR += getRMultiple(trade);
           if (trade.result === 'win') confirmationStats[conf].wins++;
         });
       }
@@ -451,11 +458,11 @@ export class AIInsightsEngine {
   private analyzeRiskManagement(): AIInsight | null {
     if (this.trades.length < 15) return null;
 
-    const rMultiples = this.trades.map(t => Math.abs(t.rMultiple || 0));
-    const avgRisk = rMultiples.reduce((sum, r) => sum + r, 0) / rMultiples.length;
+    const rMultiples = this.trades.map(t => Math.abs(getRMultiple(t)));
+    const avgR = rMultiples.reduce((a, b) => a + b, 0) / rMultiples.length;
     const maxRisk = Math.max(...rMultiples);
 
-    const bigRiskTrades = this.trades.filter(t => Math.abs(t.rMultiple || 0) > 2);
+    const bigRiskTrades = this.trades.filter(t => Math.abs(getRMultiple(t)) > 2);
     const bigRiskWins = bigRiskTrades.filter(t => t.result === 'win').length;
     const bigRiskWinRate = bigRiskTrades.length > 0 ? (bigRiskWins / bigRiskTrades.length) * 100 : 0;
 
@@ -515,8 +522,8 @@ export class AIInsightsEngine {
 
     // Current average RRR target
     const currentAvgRRR = this.trades
-      .filter(t => t.rMultiple)
-      .reduce((sum, t) => sum + Math.abs(t.rMultiple || 0), 0) / this.trades.length || 2;
+      .filter(t => getRMultiple(t) !== 0)
+      .reduce((sum, t) => sum + Math.abs(getRMultiple(t)), 0) / this.trades.length || 2;
 
     // Only show insight if optimal is significantly different from current
     if (Math.abs(optimal.rrr - currentAvgRRR) < 0.5) return null;

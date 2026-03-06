@@ -120,7 +120,9 @@ export async function saveTrade(trade: TradeInsert) {
         if (!existing.trades || !Array.isArray(existing.trades)) {
           existing.trades = [];
         }
-        existing.trades.push(data);
+        // Add symbol alias for instrument compatibility
+        const cachedData = { ...data, symbol: data.instrument };
+        existing.trades.push(cachedData);
         localStorage.setItem(localKey, JSON.stringify(existing));
       } catch (e) {
         console.error('Failed to cache trade in localStorage:', e);
@@ -153,7 +155,9 @@ export async function saveTrade(trade: TradeInsert) {
     if (!existing.trades || !Array.isArray(existing.trades)) {
       existing.trades = [];
     }
-    existing.trades.push(tradeData);
+    // Add symbol alias for instrument compatibility
+    const dataWithSymbol = { ...tradeData, symbol: tradeData.instrument };
+    existing.trades.push(dataWithSymbol);
     localStorage.setItem(localKey, JSON.stringify(existing));
   } catch (e) {
     console.error('Failed to save trade to localStorage:', e);

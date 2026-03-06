@@ -242,7 +242,9 @@ export default function Dashboard() {
     for (const t of storedTrades) {
       total += 1;
       if (t.result === 'win') wins += 1;
-      const r = typeof t.rMultiple === 'number' && t.rMultiple != null ? t.rMultiple : Number(t.rMultiple) || 0;
+      // Handle both r_multiple (snake_case from DB) and rMultiple (camelCase)
+      const rValue = t.r_multiple !== undefined ? t.r_multiple : t.rMultiple;
+      const r = typeof rValue === 'number' && rValue != null ? rValue : Number(rValue) || 0;
       const p = Number(t.pnl) || 0;
       rSum += r;
       pnl += p;

@@ -664,9 +664,14 @@ export default function Statistics() {
                   const totalLosses = Math.abs(monthTrades.filter(t => t.result === 'loss').reduce((sum, t) => sum + (t.pnl || 0), 0));
                   const profitFactor = totalLosses > 0 ? totalWins / totalLosses : totalWins > 0 ? 999 : 0;
                   
-                  // Average RRR
-                  const rrrTrades = monthTrades.filter(t => t.rMultiple !== null && t.rMultiple !== undefined);
-                  const avgRrr = rrrTrades.length > 0 ? rrrTrades.reduce((sum, t) => sum + (t.rMultiple || 0), 0) / rrrTrades.length : 0;
+                  // Average RRR - handle both r_multiple and rMultiple
+                  const rrrTrades = monthTrades.filter(t => {
+                    const rValue = t.r_multiple !== undefined ? t.r_multiple : t.rMultiple;
+                    return rValue !== null && rValue !== undefined;
+                  });
+                  const avgRrr = rrrTrades.length > 0 
+                    ? rrrTrades.reduce((sum, t) => sum + ((t.r_multiple !== undefined ? t.r_multiple : t.rMultiple) || 0), 0) / rrrTrades.length 
+                    : 0;
                   
                   return (
                     <>
@@ -1472,7 +1477,10 @@ export default function Statistics() {
                     {['Menstrual', 'Follicular', 'Ovulatory', 'Luteal'].map(phase => {
                       const phaseTrades = allTrades.filter(t => t.cyclePhase === phase && t.status === 'closed');
                       const avgRisk = phaseTrades.length > 0
-                        ? (phaseTrades.reduce((sum, t) => sum + Math.abs(t.rMultiple || 0), 0) / phaseTrades.length).toFixed(2)
+                        ? (phaseTrades.reduce((sum, t) => {
+                            const rValue = t.r_multiple !== undefined ? t.r_multiple : t.rMultiple;
+                            return sum + Math.abs(rValue || 0);
+                          }, 0) / phaseTrades.length).toFixed(2)
                         : '0';
                       
                       return (

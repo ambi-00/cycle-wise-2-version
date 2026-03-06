@@ -259,7 +259,7 @@ export default function TradeJournal() {
       headers.join(','),
       ...trades.map(t => [
         t.date || '',
-        t.instrument || '',
+        t.symbol || t.instrument || '',
         t.direction || '',
         t.entryPrice || '',
         t.exitPrice || '',
@@ -376,11 +376,15 @@ export default function TradeJournal() {
     .filter((trade: any) => (directionFilter ? trade.direction === directionFilter : true))
     .filter((trade: any) => (cyclePhaseFilter ? trade.cyclePhase === cyclePhaseFilter : true))
     .filter((trade: any) => {
-      if (minR && trade.rMultiple != null) return trade.rMultiple >= parseFloat(minR);
+      // Handle both r_multiple (snake_case) and rMultiple (camelCase)
+      const rValue = trade.r_multiple !== undefined ? trade.r_multiple : trade.rMultiple;
+      if (minR && rValue != null) return rValue >= parseFloat(minR);
       return true;
     })
     .filter((trade: any) => {
-      if (maxR && trade.rMultiple != null) return trade.rMultiple <= parseFloat(maxR);
+      // Handle both r_multiple (snake_case) and rMultiple (camelCase)
+      const rValue = trade.r_multiple !== undefined ? trade.r_multiple : trade.rMultiple;
+      if (maxR && rValue != null) return rValue <= parseFloat(maxR);
       return true;
     })
     .filter((trade: any) => {

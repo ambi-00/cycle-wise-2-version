@@ -138,10 +138,14 @@ export default function Day() {
   const mappedTrades: RecentTrade[] = (journal.trades || []).map((t) => ({
     id: t.id,
     date: t.date || isoDate,
-    instrument: t.instrument || 'Unknown',
+    instrument: t.symbol || t.instrument || 'Unknown',
     direction: t.direction,
     result: (t as any).result || 'breakeven',
-    rMultiple: typeof t.rMultiple === 'number' && t.rMultiple !== null ? t.rMultiple : 0,
+    // Handle both r_multiple (snake_case) and rMultiple (camelCase)
+    rMultiple: (() => {
+      const rValue = (t as any).r_multiple !== undefined ? (t as any).r_multiple : t.rMultiple;
+      return typeof rValue === 'number' && rValue !== null ? rValue : 0;
+    })(),
     strategy: t.strategy || '',
     cyclePhase: (t as any).cyclePhase || phase,
     iso: !!t.date && /^\d{4}-\d{2}-\d{2}$/.test(t.date || ''),
