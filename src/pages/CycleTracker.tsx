@@ -18,6 +18,7 @@ import { useSubscription } from "@/hooks/use-subscription";
 import { FeatureGuard } from "@/components/FeatureGuard";
 import { usePaymentSuccess } from "@/hooks/use-payment-success";
 import { generateCalendarData, DayData } from "@/lib/cycleHelpers";
+import { localDateStr } from "@/lib/utils";
 import { loadCycleSettings, loadPeriodDates } from "@/lib/demoDataLoaders";
 
 type DayData = {
@@ -102,9 +103,13 @@ const generateCalendarData = (year: number, monthIndex: number, avgCycleLength: 
     return lastStart;
   };
 
+  // Helper: get local YYYY-MM-DD string (avoids UTC offset bug with toISOString())
+  const toLocalDateStr = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
   for (let i = 1; i <= daysInMonth; i++) {
     const date = new Date(year, monthIndex, i);
-    const dateStr = date.toISOString().split('T')[0];
+    const dateStr = toLocalDateStr(date);
 
     // Check if this date is a logged period day
     const isLoggedPeriodDay = loggedPeriodDays.includes(dateStr);
@@ -182,7 +187,7 @@ const generateCalendarData = (year: number, monthIndex: number, avgCycleLength: 
     }
 
     // Load real trades from journal instead of demo data
-    const dateIso = date.toISOString().slice(0, 10);
+    const dateIso = toLocalDateStr(date);
     let trades = 0;
     let pnl = 0;
     
@@ -864,7 +869,7 @@ export default function CycleTracker() {
                 <Button 
                   variant="outline" 
                   className="mt-6 w-full"
-                  onClick={() => navigate(`/day/${todayDate.toISOString().slice(0, 10)}`)}
+                  onClick={() => navigate(`/day/${localDateStr(todayDate)}`)}
                 >
                   <Plus className="h-4 w-4" />
                   Log Today's Data
@@ -1115,7 +1120,7 @@ export default function CycleTracker() {
                       <Button 
                         variant="outline" 
                         className="mt-6 w-full"
-                        onClick={() => navigate(`/day/${todayDate.toISOString().slice(0, 10)}`)}
+                        onClick={() => navigate(`/day/${localDateStr(todayDate)}`)}
                       >
                         <Plus className="h-4 w-4" />
                         Log Today's Data

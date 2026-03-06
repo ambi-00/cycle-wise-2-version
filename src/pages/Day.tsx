@@ -10,15 +10,21 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Plus, Droplets, Brain, Heart, Frown, Smile, Meh, Zap, Moon, Activity, HeartPulse, ChevronLeft, ChevronRight } from "lucide-react";
 import { loadCycleSettings, loadPeriodDates } from "@/lib/demoDataLoaders";
+import { localDateStr } from "@/lib/utils";
 
 export default function Day() {
   const { day } = useParams<{ day: string }>();
   const navigate = useNavigate();
 
   // Support both numeric day (e.g., '24') and ISO date (YYYY-MM-DD)
+  // IMPORTANT: new Date('YYYY-MM-DD') parses as UTC midnight which shifts the date
+  // for UTC+ users. We parse manually to get local midnight.
   const parseDate = (d?: string) => {
     if (!d) return new Date(2025, 0, 1);
-    if (/^\d{4}-\d{2}-\d{2}$/.test(d)) return new Date(d);
+    if (/^\d{4}-\d{2}-\d{2}$/.test(d)) {
+      const [y, m, day] = d.split('-').map(Number);
+      return new Date(y, m - 1, day); // local midnight
+    }
     const n = Number(d);
     return new Date(2025, 0, isNaN(n) ? 1 : n);
   };
@@ -30,15 +36,13 @@ export default function Day() {
   const goToPreviousDay = () => {
     const prevDate = new Date(dateObj);
     prevDate.setDate(prevDate.getDate() - 1);
-    const prevIso = prevDate.toISOString().slice(0, 10);
-    navigate(`/day/${prevIso}`);
+    navigate(`/day/${localDateStr(prevDate)}`);
   };
 
   const goToNextDay = () => {
     const nextDate = new Date(dateObj);
     nextDate.setDate(nextDate.getDate() + 1);
-    const nextIso = nextDate.toISOString().slice(0, 10);
-    navigate(`/day/${nextIso}`);
+    navigate(`/day/${localDateStr(nextDate)}`);
   };
 
 
@@ -55,7 +59,7 @@ export default function Day() {
   let phase: CyclePhase = "menstruation";
 
 
-  const isoDate = dateObj.toISOString().slice(0, 10);
+  const isoDate = localDateStr(dateObj);
 
   const [lastPeriodStart, setLastPeriodStart] = useState<string | null>(null);
 

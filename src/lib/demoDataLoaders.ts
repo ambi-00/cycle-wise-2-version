@@ -2,6 +2,7 @@
 // These functions check if app is in DEMO mode and return appropriate data
 
 import { generateDemoCycleData, generateDemoHealthCheckIns, type DemoCycleSettings, type DemoHealthCheckIn } from "@/data/demo-data";
+import { localDateStr } from "@/lib/utils";
 
 /**
  * Check if app is in DEMO mode
@@ -256,7 +257,7 @@ export function getCurrentCycleInfo(): {
  * Load today's health check-in - returns demo data in DEMO mode
  */
 export function loadTodayHealthCheckIn(): DemoHealthCheckIn | null {
-  const today = new Date().toISOString().split('T')[0];
+  const today = localDateStr();
   
   if (isInDemoMode()) {
     const allCheckIns = generateDemoHealthCheckIns();
@@ -303,12 +304,15 @@ export function loadAllHealthCheckIns(): DemoHealthCheckIn[] {
  * Check if health check-in was completed today
  */
 export function hasCompletedTodayCheckIn(): boolean {
-  const today = new Date().toISOString().split('T')[0];
+  const today = localDateStr();
   const lastCheckIn = localStorage.getItem('cw_last_checkin');
   
   if (!lastCheckIn) return false;
   
-  const lastCheckInDate = new Date(lastCheckIn).toISOString().split('T')[0];
+  // Compare stored date string directly if it's already YYYY-MM-DD, else parse locally
+  const lastCheckInDate = /^\d{4}-\d{2}-\d{2}$/.test(lastCheckIn)
+    ? lastCheckIn
+    : localDateStr(new Date(lastCheckIn));
   return lastCheckInDate === today;
 }
 

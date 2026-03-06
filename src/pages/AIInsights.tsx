@@ -3,6 +3,7 @@ import { Sparkles, TrendingUp, Calendar, Clock, Target, Brain, Lightbulb, ArrowR
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import NaturalLanguageInsights from "@/components/NaturalLanguageInsights";
+import IntelligentAIInsights from "@/components/IntelligentAIInsights";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSubscription } from "@/hooks/use-subscription";
@@ -848,6 +849,11 @@ export default function AIInsights() {
               </div>
             </motion.div>
           ))}
+        </div>
+
+        {/* Intelligent AI Insights - Based on RRR, SL, Overtrading Analysis */}
+        <div className="mb-8">
+          <IntelligentAIInsights trades={trades} />
         </div>
 
         {/* Demo Insights Cards */}

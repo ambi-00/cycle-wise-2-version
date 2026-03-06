@@ -7,6 +7,7 @@ import { PerformanceCard } from "@/components/PerformanceCard";
 import { DailyHealthCheckIn } from "@/components/DailyHealthCheckIn";
 import { loadCycleSettings, getCurrentCycleInfo, hasCompletedTodayCheckIn, loadPeriodDates } from "@/lib/demoDataLoaders";
 import { loadTradesFromLocalStorage } from "@/lib/tradeLoaders";
+import { localDateStr } from "@/lib/utils";
 import { useWeeklyInsightGeneration } from "@/hooks/use-weekly-insights";
 import { useXPNotifications } from "@/hooks/use-xp-notifications";
 import MigrationDialog from "@/components/MigrationDialog";
@@ -17,6 +18,7 @@ import { StreakDisplay } from "@/components/StreakDisplay";
 import { ProfileButton } from "@/components/ProfileButton";
 import { DashboardCustomizer } from "@/components/DashboardCustomizer";
 import TradingStopWarning from "@/components/TradingStopWarning";
+import { useAIInsightsAnalysis, getTopInsight, formatInsightForCard } from "@/hooks/use-ai-insights";
 import { useFeatureFlags, useAppMode } from "@/hooks/use-app-mode";
 import {
   loadDashboardConfig,
@@ -215,7 +217,7 @@ export default function Dashboard() {
     }
 
     // Check if today has a logged period
-    const todayIso = new Date().toISOString().slice(0, 10);
+    const todayIso = localDateStr();
     const periodDates = loadPeriodDates();
     setIsPeriodLogged(periodDates.includes(todayIso));
 
@@ -259,7 +261,7 @@ export default function Dashboard() {
     const summary = Object.keys(map).map((k) => ({ name: k, ...map[k] })).sort((a, b) => b.count - a.count);
     
     // Filter today's trades for overtrading warning
-    const today = new Date().toISOString().slice(0, 10);
+    const today = localDateStr();
     const todayTrades = storedTrades.filter(t => t.date === today);
     
     return {
@@ -271,6 +273,11 @@ export default function Dashboard() {
       todayTrades: todayTrades,
     };
   }, [storedTrades]);
+
+  // Generate intelligent AI insights based on all analysis data
+  const aiInsights = useAIInsightsAnalysis(storedTrades);
+  const topInsight = getTopInsight(aiInsights);
+  const insightForCard = formatInsightForCard(topInsight);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -352,20 +359,14 @@ export default function Dashboard() {
           </div>
         );
       case 'ai-insight':
-        // Always show patterns - real data or "No trades yet" message
+        // Intelligent AI insights based on RRR, SL, and overtrading analysis
         return features.showGamification ? (
           <Suspense fallback={<div className="rounded-2xl bg-card p-5 shadow-card h-24" />}>
             <AIInsightCard
-              insight={
-                strategySummary && strategySummary.length > 0
-                  ? strategySummary
-                      .slice(0, 3)
-                      .map((s: any) => `${s.name}: ${Math.round((s.wins / s.count) * 100) || 0}% (${s.count})`)
-                      .join(" • ")
-                  : "No trades yet. Start logging trades to discover patterns."
-              }
-              category="pattern"
+              insight={insightForCard.text}
+              category={insightForCard.category}
               actionLabel="View Full Analysis"
+              onAction={() => navigate('/statistics')}
             />
           </Suspense>
         ) : null;
@@ -535,20 +536,14 @@ export default function Dashboard() {
               <PerformanceCard title="Trades" value={totalTrades} type="count" />
             </div>
 
-            {/* Always show AI insights - real patterns or "No trades yet" */}
+            {/* Always show AI insights - intelligent analysis based on trading data */}
             {!(appMode === 'FILMING' && storedTrades.length === 0) && (
               <Suspense fallback={<div className="rounded-2xl bg-card p-5 shadow-card h-24" />}>
                 <AIInsightCard
-                  insight={
-                    strategySummary && strategySummary.length > 0
-                      ? strategySummary
-                          .slice(0, 3)
-                          .map((s: any) => `${s.name}: ${Math.round((s.wins / s.count) * 100) || 0}% (${s.count})`)
-                          .join(" • ")
-                      : "No trades yet. Start logging trades to discover patterns."
-                  }
-                  category="pattern"
+                  insight={insightForCard.text}
+                  category={insightForCard.category}
                   actionLabel="View Full Analysis"
+                  onAction={() => navigate('/statistics')}
                 />
               </Suspense>
             )}

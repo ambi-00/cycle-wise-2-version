@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { localDateStr } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -57,7 +58,7 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
   const navigate = useNavigate();
   const dateParam = searchParams.get('date');
   const idParam = searchParams.get('id');
-  const initialDate = dateProp || dateParam || new Date().toISOString().slice(0, 10);
+  const initialDate = dateProp || dateParam || localDateStr();
   
   console.log('NewTrade mounted with dateParam:', dateParam, 'idParam:', idParam);
 
@@ -767,7 +768,7 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
                   type="date"
                   value={tradeDate}
                   onChange={(e) => setTradeDate(e.target.value)}
-                  max={new Date().toISOString().slice(0, 10)}
+                  max={localDateStr()}
                   className="w-auto text-base font-medium"
                 />
               </div>

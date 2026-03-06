@@ -201,11 +201,15 @@ export default function Statistics() {
     
     const days = [];
     
+    // Helper: get local YYYY-MM-DD string (avoids UTC offset bug with toISOString())
+    const toLocalDateStr = (d: Date) =>
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
     // Previous month's days
     const prevMonthLastDay = new Date(year, month, 0).getDate();
     for (let i = startingDayOfWeek - 1; i >= 0; i--) {
       days.push({
-        date: new Date(year, month - 1, prevMonthLastDay - i).toISOString().slice(0, 10),
+        date: toLocalDateStr(new Date(year, month - 1, prevMonthLastDay - i)),
         dayNumber: prevMonthLastDay - i,
         isCurrentMonth: false,
       });
@@ -214,7 +218,7 @@ export default function Statistics() {
     // Current month's days
     for (let i = 1; i <= daysInMonth; i++) {
       days.push({
-        date: new Date(year, month, i).toISOString().slice(0, 10),
+        date: toLocalDateStr(new Date(year, month, i)),
         dayNumber: i,
         isCurrentMonth: true,
       });
@@ -224,7 +228,7 @@ export default function Statistics() {
     const remainingDays = 42 - days.length; // 6 rows x 7 days
     for (let i = 1; i <= remainingDays; i++) {
       days.push({
-        date: new Date(year, month + 1, i).toISOString().slice(0, 10),
+        date: toLocalDateStr(new Date(year, month + 1, i)),
         dayNumber: i,
         isCurrentMonth: false,
       });
