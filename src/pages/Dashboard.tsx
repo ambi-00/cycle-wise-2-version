@@ -367,14 +367,15 @@ export default function Dashboard() {
             <RecentTradesTable
               trades={(() => {
                 const mapTrade = (t: any) => ({
-                  id: t.id || String(t.createdAt || Date.now()),
-                  date: t.date || t.iso || "Unknown",
-                  instrument: t.instrument || "Unknown",
+                  id: t.id || String(t.created_at || Date.now()),
+                  date: t.date || "Unknown",
+                  iso: t.date, // For date links
+                  instrument: t.symbol || t.instrument || "Unknown",
                   direction: (t.direction === "short" ? "short" : "long") as "long" | "short",
                   result: (t.result === "win" || t.result === "loss" || t.result === "breakeven" ? t.result : "breakeven") as "win" | "loss" | "breakeven",
-                  rMultiple: typeof t.rMultiple === "number" && t.rMultiple != null ? t.rMultiple : Number(t.rMultiple) || 0,
+                  rMultiple: typeof t.r_multiple === "number" ? t.r_multiple : (typeof t.rMultiple === "number" ? t.rMultiple : Number(t.r_multiple || t.rMultiple || 0)),
                   strategy: t.strategy || "",
-                  cyclePhase: t.cyclePhase || t.phase || "",
+                  cyclePhase: t.cycle_phase || t.cyclePhase || t.phase || "",
                 });
                 const displayed = (storedTrades || []).map(mapTrade);
                 if (displayed.length > 0) return displayed;
@@ -542,14 +543,15 @@ export default function Dashboard() {
               <RecentTradesTable
                 trades={(() => {
                   const mapTrade = (t: any) => ({
-                    id: t.id || String(t.createdAt || Date.now()),
-                    date: t.date || t.iso || "Unknown",
-                    instrument: t.instrument || "Unknown",
-                    direction: (t.direction === "short" ? "short" : "long") as "long" | "short",
-                    result: (t.result === "win" || t.result === "loss" || t.result === "breakeven" ? t.result : "breakeven") as "win" | "loss" | "breakeven",
-                    rMultiple: typeof t.rMultiple === "number" && t.rMultiple != null ? t.rMultiple : Number(t.rMultiple) || 0,
-                    strategy: t.strategy || "",
-                    cyclePhase: t.cyclePhase || t.phase || "",
+                  id: t.id || String(t.created_at || Date.now()),
+                  date: t.date || "Unknown",
+                  iso: t.date, // For date links
+                  instrument: t.symbol || t.instrument || "Unknown",
+                  direction: (t.direction === "short" ? "short" : "long") as "long" | "short",
+                  result: (t.result === "win" || t.result === "loss" || t.result === "breakeven" ? t.result : "breakeven") as "win" | "loss" | "breakeven",
+                  rMultiple: typeof t.r_multiple === "number" ? t.r_multiple : (typeof t.rMultiple === "number" ? t.rMultiple : Number(t.r_multiple || t.rMultiple || 0)),
+                  strategy: t.strategy || "",
+                  cyclePhase: t.cycle_phase || t.cyclePhase || t.phase || "",
                   });
 
                   const displayed = (storedTrades || []).map(mapTrade);

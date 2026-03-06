@@ -46,7 +46,7 @@ export function RecentTradesTable({ trades }: RecentTradesTableProps) {
         <p className="mt-2 text-sm text-muted-foreground">
           Start logging your trades to build your trading journal and unlock AI insights.
         </p>
-        <Button onClick={() => navigate('/new-trade')} className="mt-4 gap-2">
+        <Button onClick={() => navigate('/trade/new')} className="mt-4 gap-2">
           <Plus className="h-4 w-4" />
           Log Your First Trade
         </Button>
