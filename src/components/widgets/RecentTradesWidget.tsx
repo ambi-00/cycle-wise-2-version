@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useState } from "react";
 import { WidgetSize, getColSpan, getColSpanMobile } from "@/lib/dashboardWidgets";
 import { getWidgetHeightClass, getWidgetDescriptionClass, getWidgetValueClass } from "@/lib/widgetSizing";
 import { loadTradesFromLocalStorage } from "@/lib/tradeLoaders";
@@ -17,7 +17,7 @@ interface RecentTradesWidgetProps {
 }
 
 export function RecentTradesWidget({ size }: RecentTradesWidgetProps) {
-  const storedTrades = loadTradesFromLocalStorage();
+  const [storedTrades, setStoredTrades] = useState<any[]>(() => loadTradesFromLocalStorage());
 
   const mapTrade = (t: any) => ({
     id: t.id || String(t.createdAt || Date.now()),
@@ -90,7 +90,10 @@ export function RecentTradesWidget({ size }: RecentTradesWidgetProps) {
         </div>
       ) : (
         <Suspense fallback={<div className="rounded-2xl bg-card p-5 shadow-card" />}>
-          <RecentTradesTable trades={trades} />
+          <RecentTradesTable
+            trades={trades}
+            onDelete={(tradeId) => setStoredTrades(prev => prev.filter(t => (t.id || String(t.createdAt || Date.now())) !== tradeId))}
+          />
         </Suspense>
       )}
     </motion.div>

@@ -1,7 +1,8 @@
 import { motion } from "framer-motion";
-import { TrendingUp, TrendingDown, MoreHorizontal, Lightbulb, Plus, Pencil } from "lucide-react";
+import { TrendingUp, TrendingDown, MoreHorizontal, Lightbulb, Plus, Pencil, Trash2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { useState } from "react";
 
 interface Trade {
   id: string;
@@ -16,10 +17,33 @@ interface Trade {
 
 interface RecentTradesTableProps {
   trades: Trade[];
+  onDelete?: (tradeId: string) => void;
 }
 
-export function RecentTradesTable({ trades }: RecentTradesTableProps) {
+export function RecentTradesTable({ trades, onDelete }: RecentTradesTableProps) {
   const navigate = useNavigate();
+  const [deleteDialog, setDeleteDialog] = useState<{ tradeId: string; tradeLabel: string } | null>(null);
+
+  const handleDeleteTrade = (tradeId: string) => {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (!key?.startsWith('cw_journal_')) continue;
+      try {
+        const raw = localStorage.getItem(key);
+        if (!raw) continue;
+        const data = JSON.parse(raw);
+        const before = (data.trades || []).length;
+        data.trades = (data.trades || []).filter((t: any) => t.id !== tradeId);
+        if (data.trades.length < before) {
+          localStorage.setItem(key, JSON.stringify(data));
+          break;
+        }
+      } catch (e) { /* ignore */ }
+    }
+    onDelete?.(tradeId);
+    window.dispatchEvent(new Event('trades-updated'));
+    setDeleteDialog(null);
+  };
   const getResultStyles = (result: Trade["result"]) => {
     switch (result) {
       case "win":
@@ -119,19 +143,57 @@ export function RecentTradesTable({ trades }: RecentTradesTableProps) {
                   <span className="text-xs text-muted-foreground">{trade.cyclePhase}</span>
                 </td>
                 <td className="py-3">
-                  <button
-                    onClick={(e) => { e.stopPropagation(); navigate(`/trade/new?id=${trade.id}&date=${trade.date}`); }}
-                    className="rounded-lg p-1.5 text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors"
-                    title="Edit trade"
-                  >
-                    <Pencil className="h-3.5 w-3.5" />
-                  </button>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); navigate(`/trade/new?id=${trade.id}&date=${trade.date}`); }}
+                      className="rounded-lg p-1.5 text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors"
+                      title="Edit trade"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setDeleteDialog({ tradeId: trade.id, tradeLabel: `${trade.instrument} on ${trade.date}` }); }}
+                      className="rounded-lg p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+                      title="Delete trade"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 </td>
               </motion.tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      {deleteDialog && (
+        <div
+          className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4"
+          onClick={() => setDeleteDialog(null)}
+        >
+          <div
+            className="bg-card rounded-2xl shadow-2xl border max-w-sm w-full p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-serif font-semibold text-foreground mb-2">Trade löschen?</h3>
+            <p className="text-sm text-muted-foreground mb-6">
+              Möchtest du <span className="font-medium text-foreground">{deleteDialog.tradeLabel}</span> wirklich löschen? Das kann nicht rückgängig gemacht werden.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <Button variant="ghost" onClick={() => setDeleteDialog(null)} className="rounded-full px-4">
+                Abbrechen
+              </Button>
+              <Button
+                onClick={() => handleDeleteTrade(deleteDialog.tradeId)}
+                className="rounded-full px-4 bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Löschen
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </motion.div>
   );
 }

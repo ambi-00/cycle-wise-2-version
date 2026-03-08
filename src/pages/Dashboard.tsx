@@ -551,6 +551,7 @@ export default function Dashboard() {
             {/* Always show recent trades table - shows empty or mock data */}
             <Suspense fallback={<div className="rounded-2xl bg-card p-5 shadow-card" />}>
               <RecentTradesTable
+                onDelete={(tradeId) => setStoredTrades(prev => prev.filter(t => (t.id || String(t.created_at || Date.now())) !== tradeId))}
                 trades={(() => {
                   const mapTrade = (t: any) => ({
                   id: t.id || String(t.created_at || Date.now()),
