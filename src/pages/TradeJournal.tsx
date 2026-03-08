@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Plus, Filter, Download, Upload, TrendingUp, TrendingDown, Search, CheckCircle, AlertCircle, Lightbulb, X, Zap, ChevronLeft, ChevronRight, Pencil } from "lucide-react";
+import { Plus, Filter, Download, Upload, TrendingUp, TrendingDown, Search, CheckCircle, AlertCircle, Lightbulb, X, Zap, ChevronLeft, ChevronRight, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useEffect, useState, lazy, Suspense, useRef } from "react";
@@ -220,6 +220,7 @@ export default function TradeJournal() {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [trades, setTrades] = useState<any[]>([]);
+  const [deleteDialog, setDeleteDialog] = useState<{ tradeId: string; tradeLabel: string } | null>(null);
   const [importing, setImporting] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
   const [loadingMTTrades, setLoadingMTTrades] = useState(false);
@@ -250,6 +251,35 @@ export default function TradeJournal() {
   const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
   const weekDayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
   const currentDayLabel = `${weekDayNames[today.getDay()]}, ${monthNames[today.getMonth()]} ${today.getDate()}`;
+
+  // Delete a trade from localStorage
+  const handleDeleteTrade = (tradeId: string) => {
+    let deleted = false;
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (!key?.startsWith('cw_journal_')) continue;
+      try {
+        const raw = localStorage.getItem(key);
+        if (!raw) continue;
+        const data = JSON.parse(raw);
+        const before = (data.trades || []).length;
+        data.trades = (data.trades || []).filter((t: any) => t.id !== tradeId);
+        if (data.trades.length < before) {
+          localStorage.setItem(key, JSON.stringify(data));
+          deleted = true;
+          break;
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
+    if (deleted) {
+      setTrades(prev => prev.filter(t => t.id !== tradeId));
+      window.dispatchEvent(new Event('trades-updated'));
+      toast({ title: 'Trade deleted', description: 'The trade has been removed from your journal.' });
+    }
+    setDeleteDialog(null);
+  };
 
   // Export trades as CSV
   const handleExport = () => {
@@ -975,13 +1005,22 @@ export default function TradeJournal() {
                         </div>
                       )}
                     </td>                      <td className="px-4 py-4">
-                        <button
-                          onClick={(e) => { e.stopPropagation(); navigate(`/trade/new?id=${trade.id}&date=${trade.date}`); }}
-                          className="rounded-lg p-1.5 text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors"
-                          title="Edit trade"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </button>
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); navigate(`/trade/new?id=${trade.id}&date=${trade.date}`); }}
+                            className="rounded-lg p-1.5 text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors"
+                            title="Edit trade"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setDeleteDialog({ tradeId: trade.id, tradeLabel: `${trade.instrument || 'Trade'} on ${trade.date}` }); }}
+                            className="rounded-lg p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+                            title="Delete trade"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
                       </td>                  </motion.tr>
                 ))}
               </tbody>
@@ -989,6 +1028,35 @@ export default function TradeJournal() {
           </div>
           )}
         </motion.div>
+
+        {/* Delete Trade Confirmation Dialog */}
+        {deleteDialog && (
+          <div
+            className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4"
+            onClick={() => setDeleteDialog(null)}
+          >
+            <div
+              className="bg-card rounded-2xl shadow-2xl border max-w-sm w-full p-6"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 className="text-lg font-serif font-semibold text-foreground mb-2">Delete Trade?</h3>
+              <p className="text-sm text-muted-foreground mb-6">
+                Are you sure you want to delete <span className="font-medium text-foreground">{deleteDialog.tradeLabel}</span>? This cannot be undone.
+              </p>
+              <div className="flex gap-3 justify-end">
+                <Button variant="ghost" onClick={() => setDeleteDialog(null)} className="rounded-full px-4">
+                  Cancel
+                </Button>
+                <Button
+                  onClick={() => handleDeleteTrade(deleteDialog.tradeId)}
+                  className="rounded-full px-4 bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  Delete
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* MT Trade Enrichment Dialog */}
         <MTTradeEnrichmentDialog
