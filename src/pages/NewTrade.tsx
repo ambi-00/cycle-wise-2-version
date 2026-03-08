@@ -949,22 +949,7 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
 
                       <div className="mt-4 grid gap-4">
                         {/* Mental State & Focus */}
-                        <div className="grid grid-cols-2 gap-3">
-                          <div>
-                            <label className="text-xs text-muted-foreground mb-1.5 block">Session Quality 🧠</label>
-                            <Select onValueChange={(v) => setSessionQuality(v as any)} value={sessionQuality}>
-                              <SelectTrigger>
-                                <SelectValue placeholder="How's your focus?" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="sharp">🔥 Sharp - Best focus</SelectItem>
-                                <SelectItem value="focused">Focused - Good</SelectItem>
-                                <SelectItem value="declining">⚠️ Declining - Getting tired</SelectItem>
-                                <SelectItem value="exhausted">😴 Exhausted - Shutting down</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-
+                        <div className="grid grid-cols-1 gap-3">
                           <div>
                             <label className="text-xs text-muted-foreground mb-1.5 block">Concentration Level (1-10)</label>
                             <div className="flex gap-1.5 flex-wrap">
