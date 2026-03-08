@@ -176,19 +176,19 @@ export function RecentTradesTable({ trades, onDelete }: RecentTradesTableProps) 
             className="bg-card rounded-2xl shadow-2xl border max-w-sm w-full p-6"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="text-lg font-serif font-semibold text-foreground mb-2">Trade löschen?</h3>
+            <h3 className="text-lg font-serif font-semibold text-foreground mb-2">Delete Trade?</h3>
             <p className="text-sm text-muted-foreground mb-6">
-              Möchtest du <span className="font-medium text-foreground">{deleteDialog.tradeLabel}</span> wirklich löschen? Das kann nicht rückgängig gemacht werden.
+              Are you sure you want to delete <span className="font-medium text-foreground">{deleteDialog.tradeLabel}</span>? This cannot be undone.
             </p>
             <div className="flex gap-3 justify-end">
               <Button variant="ghost" onClick={() => setDeleteDialog(null)} className="rounded-full px-4">
-                Abbrechen
+                Cancel
               </Button>
               <Button
                 onClick={() => handleDeleteTrade(deleteDialog.tradeId)}
                 className="rounded-full px-4 bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
-                Löschen
+                Delete
               </Button>
             </div>
           </div>
