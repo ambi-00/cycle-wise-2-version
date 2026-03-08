@@ -967,16 +967,21 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
 
                           <div>
                             <label className="text-xs text-muted-foreground mb-1.5 block">Concentration Level (1-10)</label>
-                            <div className="flex items-center gap-2">
-                              <input 
-                                type="range" 
-                                min="1" 
-                                max="10" 
-                                value={concentrationLevel}
-                                onChange={(e) => setConcentrationLevel(Number(e.target.value))}
-                                className="flex-1"
-                              />
-                              <span className="text-sm font-semibold min-w-[2rem]">{concentrationLevel}</span>
+                            <div className="flex gap-1.5 flex-wrap">
+                              {Array.from({ length: 10 }, (_, i) => i + 1).map((num) => (
+                                <button
+                                  key={num}
+                                  type="button"
+                                  onClick={() => setConcentrationLevel(num)}
+                                  className={`h-8 w-8 rounded-full text-xs font-semibold transition-all ${
+                                    concentrationLevel === num
+                                      ? 'bg-gradient-to-r from-primary to-primary/70 text-primary-foreground shadow-md scale-110'
+                                      : 'bg-muted hover:bg-muted/80 text-muted-foreground'
+                                  }`}
+                                >
+                                  {num}
+                                </button>
+                              ))}
                             </div>
                           </div>
                         </div>
