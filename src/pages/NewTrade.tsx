@@ -771,7 +771,7 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
                   </div>
                   <div>
                     <label className="text-sm font-semibold text-foreground block">Trade Date</label>
-                    <p className="text-xs text-muted-foreground">Wähle das Datum für diesen Trade</p>
+                    <p className="text-xs text-muted-foreground">Select the date for this trade</p>
                   </div>
                 </div>
                 <Input
