@@ -795,7 +795,7 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
                 {viewMode === 'before' ? (
                   <>
                     <section className="rounded-2xl border p-4 bg-card shadow-soft">
-                      <h4 className="font-serif text-xl font-semibold text-foreground text-center">Strategy Setup Tracker</h4>
+                      <h4 className="font-serif text-xl font-semibold text-foreground">Strategy Setup Tracker</h4>
 
                       <div className="mt-3 grid gap-3">
                         <div className="grid grid-cols-2 gap-3">
@@ -944,7 +944,7 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
                 ) : viewMode === 'during' ? (
                   <>
                     <section className="rounded-2xl border p-4 bg-card shadow-soft">
-                      <h4 className="font-serif text-xl font-semibold text-foreground text-center">Live Trade Monitor</h4>
+                      <h4 className="font-serif text-xl font-semibold text-foreground">Live Trade Monitor</h4>
                       <p className="text-sm text-muted-foreground mt-1">Document what happens while the trade is active</p>
 
                       <div className="mt-4 grid gap-4">
@@ -1089,7 +1089,7 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
                 ) : (
                   <>
                     <section className="rounded-2xl border p-4 bg-card shadow-soft flex-1 flex flex-col">
-                      <h4 className="font-serif text-xl font-semibold text-foreground text-center">Trade Result & Review</h4>
+                      <h4 className="font-serif text-xl font-semibold text-foreground">Trade Result & Review</h4>
                       <div className="mt-3 grid gap-3">
                         <div className="flex items-center gap-2">
                           <button type="button" onClick={() => setResult('win')} className={`flex-1 rounded-md py-2 text-sm font-medium ${result === 'win' ? 'bg-accent/30 text-accent-foreground' : 'bg-muted/10 text-muted-foreground'}`}>Win</button>
