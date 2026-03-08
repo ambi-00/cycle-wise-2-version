@@ -784,8 +784,8 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
             </div>
 
             <div className="my-5 flex gap-3 justify-center flex-wrap">
-              <button type="button" className={`rounded-full px-4 py-2 text-sm font-medium shadow-soft ${viewMode === 'before' ? 'bg-gradient-to-r from-primary to-primary/70 text-primary-foreground' : 'bg-muted/10 text-muted-foreground'}`} onClick={() => setViewMode('before')}>📋 Before Trade</button>
-              <button type="button" className={`rounded-full px-4 py-2 text-sm font-medium shadow-soft ${viewMode === 'during' ? 'bg-gradient-to-r from-primary to-primary/70 text-primary-foreground' : 'bg-muted/10 text-muted-foreground'}`} onClick={() => setViewMode('during')}>⚡ During Trade</button>
+              <button type="button" className={`rounded-full px-4 py-2 text-sm font-medium shadow-soft ${viewMode === 'before' ? 'bg-gradient-to-r from-primary to-primary/70 text-primary-foreground' : 'bg-muted/10 text-muted-foreground'}`} onClick={() => setViewMode('before')}>Before Trade</button>
+              <button type="button" className={`rounded-full px-4 py-2 text-sm font-medium shadow-soft ${viewMode === 'during' ? 'bg-gradient-to-r from-primary to-primary/70 text-primary-foreground' : 'bg-muted/10 text-muted-foreground'}`} onClick={() => setViewMode('during')}>During Trade</button>
               <button type="button" className={`rounded-full px-4 py-2 text-sm font-medium shadow-soft ${viewMode === 'after' ? 'bg-gradient-to-r from-primary to-primary/70 text-primary-foreground' : 'bg-muted/10 text-muted-foreground'}`} onClick={() => setViewMode('after')}>After Trade</button>
             </div>
 
@@ -943,7 +943,7 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
                 ) : viewMode === 'during' ? (
                   <>
                     <section className="rounded-2xl border p-4 bg-card shadow-soft">
-                      <h4 className="font-serif text-xl font-semibold text-foreground">⚡ Mid-Trade Tracking</h4>
+                      <h4 className="font-serif text-xl font-semibold text-foreground">Mid-Trade Tracking</h4>
                       <p className="text-sm text-muted-foreground mt-1">Document what happens while the trade is active</p>
 
                       <div className="mt-4 grid gap-4">
