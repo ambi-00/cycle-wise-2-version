@@ -1343,7 +1343,7 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
                         </div>
 
                         <div className="mt-4">
-                          <label className="text-sm">Learnings / Improvements</label>
+                          <label className="text-xs text-muted-foreground mb-1.5 block">Learnings / Improvements</label>
                           <Textarea value={learnings} onChange={(e) => setLearnings(e.target.value)} className="min-h-[120px]" placeholder="What would you do differently next time?" />
                         </div>
                       </div>
