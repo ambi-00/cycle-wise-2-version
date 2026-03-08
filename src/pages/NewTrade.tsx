@@ -470,7 +470,7 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
     }
   }, [strategy, isEditing, idParam]);
 
-  const handleFile = async (file?: File, target?: 'preSmall' | 'preLarge' | 'postSmall' | 'postLarge') => {
+  const handleFile = async (file?: File, target?: 'preSmall' | 'preLarge' | 'postSmall' | 'postLarge' | 'midTrade') => {
     if (!file || !target) return;
     try {
       const dataUrl = await fileToDataUrl(file);
@@ -479,6 +479,7 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
       if (target === 'preLarge') setImageBeforeLarge(compressed);
       if (target === 'postSmall') setImageAfterSmall(compressed);
       if (target === 'postLarge') setImageAfterLarge(compressed);
+      if (target === 'midTrade') setMidTradeScreenshot(compressed);
     } catch (e) {
       console.error(e);
     }
@@ -1082,24 +1083,6 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
                           />
                         </div>
 
-                        <div>
-                          <label className="text-xs text-muted-foreground mb-1.5 block">Screenshot During Trade 📸</label>
-                          <div className="rounded-lg border-2 border-dashed p-4 text-center bg-muted/20 cursor-pointer hover:bg-muted/30">
-                            <input 
-                              type="file"
-                              accept="image/*"
-                              onChange={(e) => {
-                                const file = e.target.files?.[0];
-                                if (file) handleFile(file, 'postSmall');
-                              }}
-                              className="hidden"
-                              id="mid-file"
-                            />
-                            <label htmlFor="mid-file" className="cursor-pointer block">
-                              {midTradeScreenshot ? 'Screenshot added' : 'Click or paste screenshot'}
-                            </label>
-                          </div>
-                        </div>
                       </div>
                     </section>
                   </>
@@ -1502,6 +1485,39 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
                       )}
                       </div>
                       )}
+                  </>
+                ) : viewMode === 'during' ? (
+                  <>
+                    <div className="rounded-2xl border p-6 bg-card shadow-soft flex flex-col gap-4">
+                      <label className="text-sm font-medium text-foreground">During Trade Screenshot</label>
+                      {!midTradeScreenshot ? (
+                        <div className="rounded-lg border-dashed border-2 border-border/30 p-8 text-center text-sm text-muted-foreground bg-muted/5 min-h-[160px] flex items-center justify-center">Click to upload or paste<br/>PNG, JPG up to 10MB</div>
+                      ) : (
+                        <div className="relative">
+                          <img
+                            src={midTradeScreenshot}
+                            alt="mid-trade"
+                            className="w-full h-40 object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                            onClick={() => setPreviewImage(midTradeScreenshot)}
+                          />
+                          <button type="button" aria-label="Remove" onClick={() => setMidTradeScreenshot(null)} className="absolute top-2 right-2 inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-sm font-bold shadow">×</button>
+                        </div>
+                      )}
+                      {!midTradeScreenshot && (
+                        <div className="mt-2 grid gap-2">
+                          <div className="flex gap-2">
+                            <Input className="flex-1 min-w-0" placeholder="Paste chart image URL" value={midTradeUrl} onChange={(e) => setMidTradeUrl(e.target.value)} />
+                            <Button onClick={() => { if (midTradeUrl) setMidTradeScreenshot(midTradeUrl); }} className="px-3 whitespace-nowrap">Use</Button>
+                          </div>
+                          <div>
+                            <label className="cursor-pointer inline-flex items-center px-3 py-1.5 text-sm border rounded-md hover:bg-muted/50 transition-colors">
+                              <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFile(e.target.files?.[0], 'midTrade')} />
+                              Choose File
+                            </label>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </>
                 ) : (
                   <>
