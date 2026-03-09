@@ -3,6 +3,7 @@ import { TrendingUp, TrendingDown, MoreHorizontal, Lightbulb, Plus, Pencil, Tras
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import { deleteTradeFromLocalStorage } from "@/lib/tradeLoaders";
 
 interface Trade {
   id: string;
@@ -25,23 +26,11 @@ export function RecentTradesTable({ trades, onDelete }: RecentTradesTableProps) 
   const [deleteDialog, setDeleteDialog] = useState<{ tradeId: string; tradeLabel: string } | null>(null);
 
   const handleDeleteTrade = (tradeId: string) => {
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (!key?.startsWith('cw_journal_')) continue;
-      try {
-        const raw = localStorage.getItem(key);
-        if (!raw) continue;
-        const data = JSON.parse(raw);
-        const before = (data.trades || []).length;
-        data.trades = (data.trades || []).filter((t: any) => t.id !== tradeId);
-        if (data.trades.length < before) {
-          localStorage.setItem(key, JSON.stringify(data));
-          break;
-        }
-      } catch (e) { /* ignore */ }
+    const deleted = deleteTradeFromLocalStorage(tradeId);
+    if (deleted) {
+      onDelete?.(tradeId);
+      window.dispatchEvent(new Event('trades-updated'));
     }
-    onDelete?.(tradeId);
-    window.dispatchEvent(new Event('trades-updated'));
     setDeleteDialog(null);
   };
   const getResultStyles = (result: Trade["result"]) => {

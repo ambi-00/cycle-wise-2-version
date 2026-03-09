@@ -236,6 +236,54 @@ export function countTradesInMonth(year: number, month: number): number {
 }
 
 /**
+ * Delete a trade from localStorage by ID (UUID or createdAt fallback).
+ * Returns true if a trade was actually found and removed.
+ *
+ * Background: the RecentTradesTable maps trades with
+ *   id: t.id || String(t.createdAt || Date.now())
+ * so older trades that were saved without an `id` field get a synthetic
+ * timestamp-based id.  We must handle both cases when deleting.
+ */
+export function deleteTradeFromLocalStorage(tradeId: string): boolean {
+  try {
+    // Pre-collect all journal keys so the for-index loop can't skip items.
+    const journalKeys: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k?.startsWith('cw_journal_')) journalKeys.push(k);
+    }
+
+    for (const key of journalKeys) {
+      try {
+        const raw = localStorage.getItem(key);
+        if (!raw) continue;
+        const data = JSON.parse(raw);
+        if (!Array.isArray(data.trades)) continue;
+
+        const before = data.trades.length;
+        data.trades = data.trades.filter((t: any) => {
+          // Primary match: exact id
+          if (t.id && t.id === tradeId) return false;
+          // Fallback: synthetic id built from createdAt
+          if (!t.id && String(t.createdAt || '') === tradeId) return false;
+          return true;
+        });
+
+        if (data.trades.length < before) {
+          localStorage.setItem(key, JSON.stringify(data));
+          return true;
+        }
+      } catch {
+        // ignore malformed entry
+      }
+    }
+  } catch {
+    // ignore
+  }
+  return false;
+}
+
+/**
  * Calculate win/loss streak
  * Consecutive wins or losses from most recent trades
  */

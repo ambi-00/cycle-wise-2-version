@@ -175,7 +175,13 @@ export function getCurrentCycleInfo(): {
   
   if (!lastPeriodStart && periodDates.length === 0) return null;
   
+  // Normalize to local midnight so the diff matches how generateCalendarData
+  // builds each day (new Date(year, month, day) = local midnight).
+  // Without this, getCurrentCycleInfo uses the current timestamp (e.g. 14:00),
+  // which floors to a higher diff than the calendar's 00:00 and causes an
+  // off-by-one day in UTC+ timezones.
   const today = new Date();
+  today.setHours(0, 0, 0, 0);
   const msPerDay = 1000 * 60 * 60 * 24;
   
   /**

@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { Plus, Filter, Download, Upload, TrendingUp, TrendingDown, Search, CheckCircle, AlertCircle, Lightbulb, X, Zap, ChevronLeft, ChevronRight, Pencil, Trash2 } from "lucide-react";
+import { deleteTradeFromLocalStorage } from "@/lib/tradeLoaders";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useEffect, useState, lazy, Suspense, useRef } from "react";
@@ -254,27 +255,11 @@ export default function TradeJournal() {
 
   // Delete a trade from localStorage
   const handleDeleteTrade = (tradeId: string) => {
-    let deleted = false;
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (!key?.startsWith('cw_journal_')) continue;
-      try {
-        const raw = localStorage.getItem(key);
-        if (!raw) continue;
-        const data = JSON.parse(raw);
-        const before = (data.trades || []).length;
-        data.trades = (data.trades || []).filter((t: any) => t.id !== tradeId);
-        if (data.trades.length < before) {
-          localStorage.setItem(key, JSON.stringify(data));
-          deleted = true;
-          break;
-        }
-      } catch (e) {
-        // ignore
-      }
-    }
+    const deleted = deleteTradeFromLocalStorage(tradeId);
     if (deleted) {
-      setTrades(prev => prev.filter(t => t.id !== tradeId));
+      setTrades(prev => prev.filter(t =>
+        t.id ? t.id !== tradeId : String(t.createdAt || '') !== tradeId
+      ));
       window.dispatchEvent(new Event('trades-updated'));
       toast({ title: 'Trade deleted', description: 'The trade has been removed from your journal.' });
     }
