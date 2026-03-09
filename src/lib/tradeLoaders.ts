@@ -5,6 +5,7 @@
 
 import { useState, useEffect } from 'react';
 import { generateDemoTrades } from "@/data/demo-data";
+import { supabase } from '@/integrations/supabase/client';
 
 /**
  * Check if we're in DEMO mode
@@ -282,6 +283,37 @@ export function deleteTradeFromLocalStorage(tradeId: string): boolean {
     // ignore
   }
   return false;
+}
+
+/**
+ * Delete a trade from BOTH localStorage and Supabase (when authenticated).
+ *
+ * On Vercel (authenticated), loadAllTrades() re-fetches ALL trades from
+ * Supabase and calls cacheTradesToLocalStorage() which overwrites the
+ * cw_journal_* keys — bringing deleted trades back unless we also delete
+ * them from Supabase.
+ */
+export async function deleteTradeEverywhere(tradeId: string): Promise<boolean> {
+  // 1. Remove from localStorage cache immediately
+  const removedLocally = deleteTradeFromLocalStorage(tradeId);
+
+  // 2. Also delete from Supabase when online and authenticated
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user && navigator.onLine) {
+      const { error } = await supabase
+        .from('trades')
+        .delete()
+        .eq('id', tradeId);
+      if (error) {
+        console.error('Supabase trade delete failed:', error);
+      }
+    }
+  } catch (e) {
+    console.error('deleteTradeEverywhere: Supabase call failed:', e);
+  }
+
+  return removedLocally;
 }
 
 /**

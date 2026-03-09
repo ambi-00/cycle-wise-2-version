@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Plus, Filter, Download, Upload, TrendingUp, TrendingDown, Search, CheckCircle, AlertCircle, Lightbulb, X, Zap, ChevronLeft, ChevronRight, Pencil, Trash2 } from "lucide-react";
-import { deleteTradeFromLocalStorage } from "@/lib/tradeLoaders";
+import { deleteTradeEverywhere } from "@/lib/tradeLoaders";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useEffect, useState, lazy, Suspense, useRef } from "react";
@@ -253,9 +253,9 @@ export default function TradeJournal() {
   const weekDayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
   const currentDayLabel = `${weekDayNames[today.getDay()]}, ${monthNames[today.getMonth()]} ${today.getDate()}`;
 
-  // Delete a trade from localStorage
-  const handleDeleteTrade = (tradeId: string) => {
-    const deleted = deleteTradeFromLocalStorage(tradeId);
+  // Delete a trade from localStorage and Supabase
+  const handleDeleteTrade = async (tradeId: string) => {
+    const deleted = await deleteTradeEverywhere(tradeId);
     if (deleted) {
       setTrades(prev => prev.filter(t =>
         t.id ? t.id !== tradeId : String(t.createdAt || '') !== tradeId

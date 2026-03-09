@@ -3,7 +3,7 @@ import { TrendingUp, TrendingDown, MoreHorizontal, Lightbulb, Plus, Pencil, Tras
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import { deleteTradeFromLocalStorage } from "@/lib/tradeLoaders";
+import { deleteTradeEverywhere } from "@/lib/tradeLoaders";
 
 interface Trade {
   id: string;
@@ -25,8 +25,8 @@ export function RecentTradesTable({ trades, onDelete }: RecentTradesTableProps) 
   const navigate = useNavigate();
   const [deleteDialog, setDeleteDialog] = useState<{ tradeId: string; tradeLabel: string } | null>(null);
 
-  const handleDeleteTrade = (tradeId: string) => {
-    const deleted = deleteTradeFromLocalStorage(tradeId);
+  const handleDeleteTrade = async (tradeId: string) => {
+    const deleted = await deleteTradeEverywhere(tradeId);
     if (deleted) {
       onDelete?.(tradeId);
       window.dispatchEvent(new Event('trades-updated'));
