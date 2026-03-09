@@ -1,15 +1,16 @@
 import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { BarChart3 } from 'lucide-react';
-import { loadTradesFromLocalStorage } from '@/lib/tradeLoaders';
+import { useStoredTrades } from '@/lib/tradeLoaders';
 
 interface Props {
   size: 'small' | 'medium' | 'large';
 }
 
 export function StrategyComparisonWidget({ size }: Props) {
+  const storedTrades = useStoredTrades();
   const data = useMemo(() => {
-    const trades = loadTradesFromLocalStorage().filter(t => t.status === 'closed');
+    const trades = storedTrades.filter(t => t.status === 'closed');
     
     const strategyMap = new Map<string, {
       trades: number;
@@ -43,7 +44,7 @@ export function StrategyComparisonWidget({ size }: Props) {
       .sort((a, b) => b.pnl - a.pnl);
     
     return { strategies };
-  }, []);
+  }, [storedTrades]);
 
   if (size === 'small') {
     // Best strategy only

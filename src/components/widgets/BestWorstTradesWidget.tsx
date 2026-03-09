@@ -1,14 +1,14 @@
 import { motion } from "framer-motion";
 import { WidgetSize, getColSpan, getColSpanMobile } from "@/lib/dashboardWidgets";
 import { useMemo } from "react";
-import { loadTradesFromLocalStorage } from "@/lib/tradeLoaders";
+import { useStoredTrades } from "@/lib/tradeLoaders";
 
 interface BestWorstTradesWidgetProps {
   size: WidgetSize;
 }
 
 export function BestWorstTradesWidget({ size }: BestWorstTradesWidgetProps) {
-  const storedTrades = loadTradesFromLocalStorage();
+  const storedTrades = useStoredTrades();
 
   const { bestTrades, worstTrades } = useMemo(() => {
     const sorted = [...storedTrades].sort((a, b) => {

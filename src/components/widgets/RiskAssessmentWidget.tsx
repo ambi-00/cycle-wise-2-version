@@ -1,14 +1,14 @@
 import { motion } from "framer-motion";
 import { WidgetSize, getColSpan, getColSpanMobile } from "@/lib/dashboardWidgets";
 import { useMemo } from "react";
-import { loadTradesFromLocalStorage } from "@/lib/tradeLoaders";
+import { useStoredTrades } from "@/lib/tradeLoaders";
 
 interface RiskAssessmentWidgetProps {
   size: WidgetSize;
 }
 
 export function RiskAssessmentWidget({ size }: RiskAssessmentWidgetProps) {
-  const storedTrades = loadTradesFromLocalStorage();
+  const storedTrades = useStoredTrades();
 
   const { riskScore, riskLevel, avgRiskPerTrade, maxDrawdown } = useMemo(() => {
     let totalRisk = 0;

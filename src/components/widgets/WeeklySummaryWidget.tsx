@@ -1,14 +1,14 @@
 import { motion } from "framer-motion";
 import { WidgetSize, getColSpan, getColSpanMobile } from "@/lib/dashboardWidgets";
 import { useMemo } from "react";
-import { loadTradesFromLocalStorage } from "@/lib/tradeLoaders";
+import { useStoredTrades } from "@/lib/tradeLoaders";
 
 interface WeeklySummaryWidgetProps {
   size: WidgetSize;
 }
 
 export function WeeklySummaryWidget({ size }: WeeklySummaryWidgetProps) {
-  const storedTrades = loadTradesFromLocalStorage();
+  const storedTrades = useStoredTrades();
 
   const weeklySummary = useMemo(() => {
     const today = new Date();

@@ -3,6 +3,7 @@
  * Consolidates all localStorage iteration patterns into reusable functions
  */
 
+import { useState, useEffect } from 'react';
 import { generateDemoTrades } from "@/data/demo-data";
 
 /**
@@ -330,4 +331,24 @@ export function getWinLossStreak(trades?: any[]): {
   } catch (e) {
     return { winStreak: 0, lossStreak: 0, currentType: 'none' };
   }
+}
+/**
+ * React hook: returns all trades from localStorage and re-renders whenever
+ * a trade is added, updated, or deleted (listens to 'trades-updated' and
+ * 'storage' events so all widgets stay in sync automatically).
+ */
+export function useStoredTrades(): any[] {
+  const [trades, setTrades] = useState<any[]>(() => loadTradesFromLocalStorage());
+
+  useEffect(() => {
+    const reload = () => setTrades(loadTradesFromLocalStorage());
+    window.addEventListener('trades-updated', reload);
+    window.addEventListener('storage', reload);
+    return () => {
+      window.removeEventListener('trades-updated', reload);
+      window.removeEventListener('storage', reload);
+    };
+  }, []);
+
+  return trades;
 }

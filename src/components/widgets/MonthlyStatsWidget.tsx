@@ -1,14 +1,14 @@
 import { motion } from "framer-motion";
 import { WidgetSize, getColSpan, getColSpanMobile } from "@/lib/dashboardWidgets";
 import { useMemo } from "react";
-import { loadTradesFromLocalStorage } from "@/lib/tradeLoaders";
+import { useStoredTrades } from "@/lib/tradeLoaders";
 
 interface MonthlyStatsWidgetProps {
   size: WidgetSize;
 }
 
 export function MonthlyStatsWidget({ size }: MonthlyStatsWidgetProps) {
-  const storedTrades = loadTradesFromLocalStorage();
+  const storedTrades = useStoredTrades();
 
   const { monthlyData, currentMonth } = useMemo(() => {
     const months: Record<string, { trades: number; wins: number; totalR: number; totalPnl: number }> = {};

@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense, useState, useEffect } from "react";
 import { WidgetSize, getColSpan, getColSpanMobile } from "@/lib/dashboardWidgets";
 import { getWidgetHeightClass, getWidgetDescriptionClass, getWidgetValueClass } from "@/lib/widgetSizing";
 import { loadTradesFromLocalStorage } from "@/lib/tradeLoaders";
@@ -18,6 +18,16 @@ interface RecentTradesWidgetProps {
 
 export function RecentTradesWidget({ size }: RecentTradesWidgetProps) {
   const [storedTrades, setStoredTrades] = useState<any[]>(() => loadTradesFromLocalStorage());
+
+  useEffect(() => {
+    const reload = () => setStoredTrades(loadTradesFromLocalStorage());
+    window.addEventListener('trades-updated', reload);
+    window.addEventListener('storage', reload);
+    return () => {
+      window.removeEventListener('trades-updated', reload);
+      window.removeEventListener('storage', reload);
+    };
+  }, []);
 
   const mapTrade = (t: any) => ({
     id: t.id || String(t.createdAt || Date.now()),

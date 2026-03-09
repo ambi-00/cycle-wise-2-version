@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { TrendingUp, TrendingDown } from 'lucide-react';
-import { loadTradesFromLocalStorage } from '@/lib/tradeLoaders';
+import { useStoredTrades } from '@/lib/tradeLoaders';
 import { 
   getWidgetHeightClass,
   getWidgetFlexClass,
@@ -16,8 +16,9 @@ interface Props {
 }
 
 export function PnLMeterWidget({ size }: Props) {
+  const storedTrades = useStoredTrades();
   const data = useMemo(() => {
-    const trades = loadTradesFromLocalStorage().filter(t => t.status === 'closed');
+    const trades = storedTrades.filter(t => t.status === 'closed');
     
     const totalPnL = trades.reduce((sum, t) => sum + (t.pnl || 0), 0);
     const wins = trades.filter(t => t.result === 'win').reduce((sum, t) => sum + (t.pnl || 0), 0);

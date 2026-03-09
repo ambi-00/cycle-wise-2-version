@@ -3,7 +3,7 @@ import { Sparkles, TrendingUp, TrendingDown, AlertCircle, Target, Calendar } fro
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { loadTradesFromLocalStorage } from "@/lib/tradeLoaders";
+import { loadTradesFromLocalStorage, useStoredTrades } from "@/lib/tradeLoaders";
 
 interface TradePattern {
   type: "positive" | "negative" | "warning";
@@ -14,6 +14,10 @@ interface TradePattern {
 }
 
 export default function NaturalLanguageInsights() {
+  // useStoredTrades causes a re-render whenever trades are added/deleted
+  // so analyzeTradePatterns() picks up fresh data from localStorage
+  useStoredTrades();
+
   const analyzeTradePatterns = (): TradePattern[] => {
     const patterns: TradePattern[] = [];
     

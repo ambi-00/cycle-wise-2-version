@@ -1,14 +1,14 @@
 import { motion } from "framer-motion";
 import { WidgetSize, getColSpan, getColSpanMobile } from "@/lib/dashboardWidgets";
 import { useMemo } from "react";
-import { loadTradesFromLocalStorage } from "@/lib/tradeLoaders";
+import { useStoredTrades } from "@/lib/tradeLoaders";
 
 interface DisciplineMeterWidgetProps {
   size: WidgetSize;
 }
 
 export function DisciplineMeterWidget({ size }: DisciplineMeterWidgetProps) {
-  const storedTrades = loadTradesFromLocalStorage();
+  const storedTrades = useStoredTrades();
 
   const { disciplineScore } = useMemo(() => {
     // Calculate discipline based on: consistent strategy usage, trade journal entries, risk management

@@ -1,15 +1,16 @@
 import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Award, AlertCircle } from 'lucide-react';
-import { loadTradesFromLocalStorage } from '@/lib/tradeLoaders';
+import { useStoredTrades } from '@/lib/tradeLoaders';
 
 interface Props {
   size: 'small' | 'medium' | 'large';
 }
 
 export function ProfitFactorWidget({ size }: Props) {
+  const storedTrades = useStoredTrades();
   const data = useMemo(() => {
-    const trades = loadTradesFromLocalStorage().filter(t => t.status === 'closed');
+    const trades = storedTrades.filter(t => t.status === 'closed');
     
     const wins = trades.filter(t => t.result === 'win').reduce((sum, t) => sum + (t.pnl || 0), 0);
     const losses = Math.abs(trades.filter(t => t.result === 'loss').reduce((sum, t) => sum + (t.pnl || 0), 0));
@@ -34,7 +35,7 @@ export function ProfitFactorWidget({ size }: Props) {
     }
     
     return { profitFactor, wins, losses, quality, color };
-  }, []);
+  }, [storedTrades]);
 
   if (size === 'small') {
     // Just profit factor

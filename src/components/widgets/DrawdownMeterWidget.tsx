@@ -1,15 +1,16 @@
 import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { TrendingDown } from 'lucide-react';
-import { loadTradesFromLocalStorage } from '@/lib/tradeLoaders';
+import { useStoredTrades } from '@/lib/tradeLoaders';
 
 interface Props {
   size: 'small' | 'medium' | 'large';
 }
 
 export function DrawdownMeterWidget({ size }: Props) {
+  const storedTrades = useStoredTrades();
   const data = useMemo(() => {
-    const trades = loadTradesFromLocalStorage()
+    const trades = storedTrades
       .filter(t => t.status === 'closed')
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     
@@ -46,8 +47,7 @@ export function DrawdownMeterWidget({ size }: Props) {
     }
     
     return { maxDrawdown, maxDrawdownPercent, riskLevel, riskColor, peak, currentDrawdown };
-  }, []);
-
+  }, [storedTrades]);
   if (size === 'small') {
     // Just max drawdown percentage
     return (

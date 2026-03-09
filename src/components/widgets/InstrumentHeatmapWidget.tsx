@@ -1,15 +1,16 @@
 import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { BarChart3 } from 'lucide-react';
-import { loadTradesFromLocalStorage } from '@/lib/tradeLoaders';
+import { useStoredTrades } from '@/lib/tradeLoaders';
 
 interface Props {
   size: 'small' | 'medium' | 'large';
 }
 
 export function InstrumentHeatmapWidget({ size }: Props) {
+  const storedTrades = useStoredTrades();
   const data = useMemo(() => {
-    const trades = loadTradesFromLocalStorage().filter(t => t.status === 'closed');
+    const trades = storedTrades.filter(t => t.status === 'closed');
     
     const instMap = new Map<string, { pnl: number; trades: number; wins: number; losses: number }>();
     
@@ -37,7 +38,7 @@ export function InstrumentHeatmapWidget({ size }: Props) {
       .sort((a, b) => b.pnl - a.pnl);
     
     return { instruments };
-  }, []);
+  }, [storedTrades]);
 
   if (size === 'small') {
     // Just best instrument

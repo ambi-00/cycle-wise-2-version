@@ -1,14 +1,14 @@
 import { motion } from "framer-motion";
 import { WidgetSize, getColSpan, getColSpanMobile } from "@/lib/dashboardWidgets";
 import { useMemo } from "react";
-import { loadTradesFromLocalStorage } from "@/lib/tradeLoaders";
+import { useStoredTrades } from "@/lib/tradeLoaders";
 
 interface WinRateMeterWidgetProps {
   size: WidgetSize;
 }
 
 export function WinRateMeterWidget({ size }: WinRateMeterWidgetProps) {
-  const storedTrades = loadTradesFromLocalStorage();
+  const storedTrades = useStoredTrades();
 
   const { winRate, totalTrades, wins, losses } = useMemo(() => {
     let total = 0;

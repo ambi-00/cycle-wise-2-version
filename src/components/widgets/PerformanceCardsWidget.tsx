@@ -3,14 +3,14 @@ import { PerformanceCard } from "@/components/PerformanceCard";
 import { WidgetSize, getColSpan } from "@/lib/dashboardWidgets";
 import { WidgetContainer, WidgetTitle, WidgetContent, WidgetEmptyState } from "./WidgetContainer";
 import { useMemo } from "react";
-import { loadTradesFromLocalStorage } from "@/lib/tradeLoaders";
+import { useStoredTrades } from "@/lib/tradeLoaders";
 
 interface PerformanceCardsWidgetProps {
   size: WidgetSize;
 }
 
 export function PerformanceCardsWidget({ size }: PerformanceCardsWidgetProps) {
-  const storedTrades = loadTradesFromLocalStorage();
+  const storedTrades = useStoredTrades();
 
   const { totalTrades, totalWins, totalPnl, avgR } = useMemo(() => {
     let total = 0;

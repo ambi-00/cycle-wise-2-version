@@ -1,15 +1,16 @@
 import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Flame, TrendingDown } from 'lucide-react';
-import { loadTradesFromLocalStorage } from '@/lib/tradeLoaders';
+import { useStoredTrades } from '@/lib/tradeLoaders';
 
 interface Props {
   size: 'small' | 'medium' | 'large';
 }
 
 export function StreakMeterWidget({ size }: Props) {
+  const storedTrades = useStoredTrades();
   const data = useMemo(() => {
-    const trades = loadTradesFromLocalStorage()
+    const trades = storedTrades
       .filter(t => t.status === 'closed')
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     
@@ -40,7 +41,7 @@ export function StreakMeterWidget({ size }: Props) {
       longestLossStreak,
       lastTrade: trades[trades.length - 1]?.result || 'none',
     };
-  }, []);
+  }, [storedTrades]);
 
   if (size === 'small') {
     // Just current win streak

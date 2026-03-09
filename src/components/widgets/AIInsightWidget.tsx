@@ -3,7 +3,7 @@ import { lazy, Suspense } from "react";
 import { WidgetSize, getColSpan, getColSpanMobile } from "@/lib/dashboardWidgets";
 import { getWidgetHeightClass } from "@/lib/widgetSizing";
 import { useMemo } from "react";
-import { loadTradesFromLocalStorage } from "@/lib/tradeLoaders";
+import { useStoredTrades } from "@/lib/tradeLoaders";
 
 const AIInsightCard = lazy(() => import("@/components/AIInsightCard").then((m) => ({ default: m.AIInsightCard })));
 
@@ -12,7 +12,7 @@ interface AIInsightWidgetProps {
 }
 
 export function AIInsightWidget({ size }: AIInsightWidgetProps) {
-  const storedTrades = loadTradesFromLocalStorage();
+  const storedTrades = useStoredTrades();
 
   const { strategySummary } = useMemo(() => {
     const map: Record<string, { count: number; wins: number; totalR: number; pnl: number }> = {};

@@ -1,14 +1,14 @@
 import { motion } from "framer-motion";
 import { WidgetSize, getColSpan, getColSpanMobile } from "@/lib/dashboardWidgets";
 import { useMemo } from "react";
-import { loadTradesFromLocalStorage } from "@/lib/tradeLoaders";
+import { useStoredTrades } from "@/lib/tradeLoaders";
 
 interface CyclePhasePerformanceWidgetProps {
   size: WidgetSize;
 }
 
 export function CyclePhasePerformanceWidget({ size }: CyclePhasePerformanceWidgetProps) {
-  const storedTrades = loadTradesFromLocalStorage();
+  const storedTrades = useStoredTrades();
 
   const { phaseStats } = useMemo(() => {
     const phases: Record<string, { count: number; wins: number; totalR: number }> = {

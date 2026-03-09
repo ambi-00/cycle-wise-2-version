@@ -1,14 +1,14 @@
 import { motion } from "framer-motion";
 import { WidgetSize, getColSpan, getColSpanMobile } from "@/lib/dashboardWidgets";
 import { useMemo } from "react";
-import { loadTradesFromLocalStorage } from "@/lib/tradeLoaders";
+import { useStoredTrades } from "@/lib/tradeLoaders";
 
 interface StrategyPerformanceWidgetProps {
   size: WidgetSize;
 }
 
 export function StrategyPerformanceWidget({ size }: StrategyPerformanceWidgetProps) {
-  const storedTrades = loadTradesFromLocalStorage();
+  const storedTrades = useStoredTrades();
 
   const { strategySummary } = useMemo(() => {
     const map: Record<string, { count: number; wins: number; losses: number; totalR: number; pnl: number }> = {};
