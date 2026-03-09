@@ -66,6 +66,29 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
   const [tradeDate, setTradeDate] = useState(initialDate); // Editable trade date
 
   const [instrument, setInstrument] = useState('');
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  // Build unique sorted list of previously used instruments from localStorage
+  const pastInstruments = useMemo(() => {
+    const seen = new Set<string>();
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (!key?.startsWith('cw_journal_')) continue;
+      try {
+        const data = JSON.parse(localStorage.getItem(key) || '{}');
+        (data.trades || []).forEach((t: any) => {
+          const v = (t.instrument || t.symbol || '').trim().toUpperCase();
+          if (v && v !== 'UNKNOWN') seen.add(v);
+        });
+      } catch { /* ignore */ }
+    }
+    return Array.from(seen).sort();
+  }, []);
+
+  const instrumentSuggestions = instrument.trim()
+    ? pastInstruments.filter(p => p.startsWith(instrument.trim().toUpperCase()) && p !== instrument.trim().toUpperCase())
+    : [];
+
   const [direction, setDirection] = useState<'long' | 'short'>('long');
   const [entryPrice, setEntryPrice] = useState<number | ''>('');
   const [slPrice, setSlPrice] = useState<number | ''>('');
@@ -807,7 +830,30 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
                               Short
                             </button>
                           </div>
-                          <Input value={instrument} onChange={(e) => setInstrument(e.target.value)} placeholder="Instrument (e.g. EUR/USD)" />
+                          <div className="relative">
+                            <Input
+                              value={instrument}
+                              onChange={(e) => { setInstrument(e.target.value.toUpperCase()); setShowSuggestions(true); }}
+                              onFocus={() => setShowSuggestions(true)}
+                              onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+                              placeholder="Instrument (e.g. EUR/USD)"
+                            />
+                            {showSuggestions && instrumentSuggestions.length > 0 && (
+                              <div className="absolute left-0 right-0 top-full z-50 mt-1 rounded-xl border border-border bg-card shadow-lg overflow-hidden">
+                                {instrumentSuggestions.map((s) => (
+                                  <button
+                                    key={s}
+                                    type="button"
+                                    onMouseDown={(e) => e.preventDefault()}
+                                    onClick={() => { setInstrument(s); setShowSuggestions(false); }}
+                                    className="w-full px-3 py-2 text-left text-sm font-medium hover:bg-muted transition-colors"
+                                  >
+                                    {s}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
                         </div>
 
                         <Select onValueChange={(v) => setStrategy(v === '__none' ? '' : v)} disabled={!hasFeature('unlimited_strategies')}>
