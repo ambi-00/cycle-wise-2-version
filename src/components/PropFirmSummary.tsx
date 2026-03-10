@@ -977,25 +977,22 @@ export function PropFirmSummary() {
 
             {/* TAB: Preview */}
             <TabsContent value="preview" className="min-h-0 px-6 pb-2 mt-0">
-              <ScrollArea className="h-[400px] mt-4 rounded-xl border border-border">
-                <div className="p-5 space-y-4 font-sans text-sm">
-                  {/* Preview Header */}
-                  <div className="flex items-start justify-between border-b-2 border-primary pb-4">
-                    <div>
-                      <span className="text-xl font-black text-primary">Cycle</span>
-                      <span className="text-xl font-black text-foreground">Wise</span>
-                    </div>
+              <ScrollArea className="h-[400px] mt-4 rounded border border-border">
+                <div className="p-5 space-y-4 font-sans text-xs text-foreground bg-background">
+
+                  {/* Header */}
+                  <div className="flex items-end justify-between border-b border-foreground pb-3">
+                    <span className="text-sm font-black tracking-tight">CycleWise</span>
                     <div className="text-right">
-                      <p className="font-bold text-base">Tax Report – Prop Firm Trading</p>
-                      <p className="text-xs text-muted-foreground">
-                        Tax Year {taxInfo.taxYear} · Created on{" "}
-                        {new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}
+                      <p className="font-bold text-sm">Prop Firm Tax Report</p>
+                      <p className="text-[10px] text-muted-foreground">
+                        Tax Year {taxInfo.taxYear} · {new Date().toLocaleDateString(country.dateLocale, { year: "numeric", month: "long", day: "numeric" })}
                       </p>
                     </div>
                   </div>
 
-                  {/* Person + Meta */}
-                  <div className="grid grid-cols-2 gap-3">
+                  {/* Meta grid */}
+                  <div className="grid grid-cols-2 border border-border">
                     {[
                       {
                         title: "Taxpayer",
@@ -1007,24 +1004,19 @@ export function PropFirmSummary() {
                         ],
                       },
                       {
-                        title: "Document Information",
+                        title: "Document",
                         rows: [
                           ["Tax Year", taxInfo.taxYear],
-                          ["Country", `${country.flag} ${country.name}`],
+                          ["Country", country.name],
                           [country.taxAdvisorLabel, taxInfo.taxAdvisor || "–"],
-                          ["No. of Accounts", String(accountCount)],
+                          ["Accounts", String(accountCount)],
                         ],
                       },
-                    ].map((box) => (
-                      <div
-                        key={box.title}
-                        className="rounded-lg bg-primary/5 border border-primary/20 p-3 space-y-1.5"
-                      >
-                        <p className="text-[9px] font-bold uppercase tracking-wider text-primary mb-2">
-                          {box.title}
-                        </p>
+                    ].map((box, bi) => (
+                      <div key={box.title} className={`p-3 space-y-1 ${bi === 0 ? "border-r border-border" : ""}`}>
+                        <p className="text-[8px] font-bold uppercase tracking-widest text-muted-foreground mb-2">{box.title}</p>
                         {box.rows.map(([label, value]) => (
-                          <div key={label} className="flex justify-between text-xs gap-2">
+                          <div key={label} className="flex justify-between gap-2">
                             <span className="text-muted-foreground">{label}</span>
                             <span className="font-semibold text-right">{value}</span>
                           </div>
@@ -1033,126 +1025,55 @@ export function PropFirmSummary() {
                     ))}
                   </div>
 
-                  {/* Summary boxes */}
-                  <div className="grid grid-cols-4 gap-2">
+                  {/* Summary row */}
+                  <div className="grid grid-cols-4 border border-border">
                     {[
-                      {
-                        label: "Expenses",
-                        value: `- ${fmtCurrency(totalExpenses, country)}`,
-                        color: "text-destructive",
-                        bg: "bg-destructive/10",
-                      },
-                      {
-                        label: "Income",
-                        value: `+ ${fmtCurrency(totalPayouts, country)}`,
-                        color: "text-green-600",
-                        bg: "bg-green-500/10",
-                      },
-                      {
-                        label: "Net Profit",
-                        value: `${isProfit ? "+" : ""}${fmtCurrency(netProfit, country)}`,
-                        color: isProfit ? "text-primary" : "text-destructive",
-                        bg: isProfit ? "bg-primary/10" : "bg-destructive/10",
-                      },
-                      {
-                        label: "ROI",
-                        value: `${roi} %`,
-                        color: "text-purple-500",
-                        bg: "bg-purple-500/10",
-                      },
-                    ].map((item) => (
-                      <div
-                        key={item.label}
-                        className={`rounded-lg ${item.bg} p-2.5 text-center`}
-                      >
-                        <p className="text-[9px] text-muted-foreground uppercase mb-1">
-                          {item.label}
-                        </p>
-                        <p className={`text-xs font-black ${item.color} tabular-nums`}>
-                          {item.value}
-                        </p>
+                      { label: "Expenses", value: `- ${fmtCurrency(totalExpenses, country)}` },
+                      { label: "Income (Payouts)", value: `+ ${fmtCurrency(totalPayouts, country)}` },
+                      { label: "Net Profit / Loss", value: `${isProfit ? "+" : ""}${fmtCurrency(netProfit, country)}` },
+                      { label: "ROI", value: `${roi} %` },
+                    ].map((item, i) => (
+                      <div key={item.label} className={`p-2.5 text-center ${i < 3 ? "border-r border-border" : ""}`}>
+                        <p className="text-[8px] uppercase text-muted-foreground mb-1">{item.label}</p>
+                        <p className="font-bold tabular-nums">{item.value}</p>
                       </div>
                     ))}
                   </div>
 
                   {/* Accounts table */}
                   <div>
-                    <p className="text-xs font-bold pl-2 border-l-2 border-primary mb-2">
-                      Account Overview
-                    </p>
-                    <table className="w-full text-xs border-collapse">
+                    <p className="text-[9px] font-bold uppercase tracking-widest border-b border-foreground pb-1 mb-0">Account Overview</p>
+                    <table className="w-full border-collapse">
                       <thead>
-                        <tr className="bg-primary text-primary-foreground">
-                          {["Prop Firm", "Account No.", "Expenses", "Income", "Result"].map(
-                            (h) => (
-                              <th
-                                key={h}
-                                className="px-2.5 py-1.5 text-left font-semibold text-[10px]"
-                              >
-                                {h}
-                              </th>
-                            )
-                          )}
+                        <tr className="bg-muted/60">
+                          {["Prop Firm", "Account No.", "Expenses", "Income", "Net"].map((h, i) => (
+                            <th key={h} className={`px-2 py-1.5 text-[9px] font-semibold uppercase tracking-wide border-b border-border ${i >= 2 ? "text-right" : "text-left"}`}>{h}</th>
+                          ))}
                         </tr>
                       </thead>
                       <tbody>
                         {accounts.length === 0 ? (
-                          <tr>
-                            <td
-                              colSpan={5}
-                              className="text-center text-muted-foreground py-3 text-xs"
-                            >
-                              No accounts recorded
-                            </td>
-                          </tr>
+                          <tr><td colSpan={5} className="text-center text-muted-foreground py-3">No accounts recorded</td></tr>
                         ) : (
                           accounts.map((acc) => {
-                            const ps = (acc.payoutHistory || []).reduce(
-                              (s, p) => s + (p.amount || 0),
-                              0
-                            );
+                            const ps = (acc.payoutHistory || []).reduce((s, p) => s + (p.amount || 0), 0);
                             const n = ps - (acc.initialCost || 0);
                             return (
-                              <tr
-                                key={acc.id}
-                                className="border-b border-border even:bg-muted/30"
-                              >
-                                <td className="px-2.5 py-1.5">{acc.propFirm}</td>
-                                <td className="px-2.5 py-1.5">{acc.accountNumber}</td>
-                                <td className="px-2.5 py-1.5 text-right text-destructive">
-                                  - {fmtCurrency(acc.initialCost || 0, country)}
-                                </td>
-                                <td className="px-2.5 py-1.5 text-right text-green-600">
-                                  + {fmtCurrency(ps, country)}
-                                </td>
-                                <td
-                                  className={`px-2.5 py-1.5 text-right font-semibold ${
-                                    n >= 0 ? "text-primary" : "text-destructive"
-                                  }`}
-                                >
-                                  {n >= 0 ? "+" : ""}{fmtCurrency(n, country)}
-                                </td>
+                              <tr key={acc.id} className="border-b border-border/50">
+                                <td className="px-2 py-1.5">{acc.propFirm}</td>
+                                <td className="px-2 py-1.5">{acc.accountNumber}</td>
+                                <td className="px-2 py-1.5 text-right tabular-nums">- {fmtCurrency(acc.initialCost || 0, country)}</td>
+                                <td className="px-2 py-1.5 text-right tabular-nums">+ {fmtCurrency(ps, country)}</td>
+                                <td className="px-2 py-1.5 text-right font-semibold tabular-nums">{n >= 0 ? "+" : ""}{fmtCurrency(n, country)}</td>
                               </tr>
                             );
                           })
                         )}
-                        <tr className="bg-primary/10 font-bold border-t-2 border-primary">
-                          <td colSpan={2} className="px-2.5 py-1.5">
-                            Total
-                          </td>
-                          <td className="px-2.5 py-1.5 text-right text-destructive">
-                            - {fmtCurrency(totalExpenses, country)}
-                          </td>
-                          <td className="px-2.5 py-1.5 text-right text-green-600">
-                            + {fmtCurrency(totalPayouts, country)}
-                          </td>
-                          <td
-                            className={`px-2.5 py-1.5 text-right ${
-                              isProfit ? "text-primary" : "text-destructive"
-                            }`}
-                          >
-                            {isProfit ? "+" : ""}{fmtCurrency(netProfit, country)}
-                          </td>
+                        <tr className="border-t border-foreground font-bold bg-muted/40">
+                          <td colSpan={2} className="px-2 py-1.5">Total</td>
+                          <td className="px-2 py-1.5 text-right tabular-nums">- {fmtCurrency(totalExpenses, country)}</td>
+                          <td className="px-2 py-1.5 text-right tabular-nums">+ {fmtCurrency(totalPayouts, country)}</td>
+                          <td className="px-2 py-1.5 text-right tabular-nums">{isProfit ? "+" : ""}{fmtCurrency(netProfit, country)}</td>
                         </tr>
                       </tbody>
                     </table>
@@ -1160,47 +1081,26 @@ export function PropFirmSummary() {
 
                   {/* Payout history */}
                   <div>
-                    <p className="text-xs font-bold pl-2 border-l-2 border-primary mb-2">
-                      Payout History
-                    </p>
-                    <table className="w-full text-xs border-collapse">
+                    <p className="text-[9px] font-bold uppercase tracking-widest border-b border-foreground pb-1 mb-0">Payout History</p>
+                    <table className="w-full border-collapse">
                       <thead>
-                        <tr className="bg-primary text-primary-foreground">
-                          {["Prop Firm", "Account No.", "Date", "Amount"].map((h) => (
-                            <th
-                              key={h}
-                              className="px-2.5 py-1.5 text-left font-semibold text-[10px]"
-                            >
-                              {h}
-                            </th>
+                        <tr className="bg-muted/60">
+                          {["Prop Firm", "Account No.", "Date", "Amount"].map((h, i) => (
+                            <th key={h} className={`px-2 py-1.5 text-[9px] font-semibold uppercase tracking-wide border-b border-border ${i === 3 ? "text-right" : "text-left"}`}>{h}</th>
                           ))}
                         </tr>
                       </thead>
                       <tbody>
                         {accounts.every((a) => !a.payoutHistory?.length) ? (
-                          <tr>
-                            <td
-                              colSpan={4}
-                              className="text-center text-muted-foreground py-3 text-xs"
-                            >
-                              No payouts recorded
-                            </td>
-                          </tr>
+                          <tr><td colSpan={4} className="text-center text-muted-foreground py-3">No payouts recorded</td></tr>
                         ) : (
                           accounts.flatMap((acc) =>
                             (acc.payoutHistory || []).map((p, i) => (
-                              <tr
-                                key={`${acc.id}-${i}`}
-                                className="border-b border-border even:bg-muted/30"
-                              >
-                                <td className="px-2.5 py-1.5">{acc.propFirm}</td>
-                                <td className="px-2.5 py-1.5">{acc.accountNumber}</td>
-                                <td className="px-2.5 py-1.5">
-                                  {new Date(p.date).toLocaleDateString(country.dateLocale, { year: "numeric", month: "short", day: "numeric" })}
-                                </td>
-                                <td className="px-2.5 py-1.5 text-right font-semibold text-green-600">
-                                  + {fmtCurrency(p.amount || 0, country)}
-                                </td>
+                              <tr key={`${acc.id}-${i}`} className="border-b border-border/50">
+                                <td className="px-2 py-1.5">{acc.propFirm}</td>
+                                <td className="px-2 py-1.5">{acc.accountNumber}</td>
+                                <td className="px-2 py-1.5">{new Date(p.date).toLocaleDateString(country.dateLocale, { year: "numeric", month: "short", day: "numeric" })}</td>
+                                <td className="px-2 py-1.5 text-right font-semibold tabular-nums">+ {fmtCurrency(p.amount || 0, country)}</td>
                               </tr>
                             ))
                           )
@@ -1209,7 +1109,7 @@ export function PropFirmSummary() {
                     </table>
                   </div>
 
-                  <p className="text-[9px] text-muted-foreground italic border-t border-border pt-3 leading-relaxed">
+                  <p className="text-[8px] text-muted-foreground italic border-t border-border pt-2 leading-relaxed">
                     {country.disclaimer}
                   </p>
                 </div>
