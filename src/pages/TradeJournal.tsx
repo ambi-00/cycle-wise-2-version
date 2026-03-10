@@ -26,7 +26,9 @@ const loadStoredTrades = (dateFilter: string) => {
       // Map cycle_phase (from Supabase) to cyclePhase (camelCase for UI)
       return (data.trades || []).map((t: any) => ({ 
         ...t,
-        cyclePhase: t.cyclePhase || t.cycle_phase || t.phase
+        cyclePhase: t.cyclePhase || t.cycle_phase || t.phase,
+        tfSmall: t.tfSmall || t.timeframe_small || t.timeframe || null,
+        tfLarge: t.tfLarge || t.timeframe_large || t.higher_timeframe || null,
       }));
     }
 
@@ -41,7 +43,9 @@ const loadStoredTrades = (dateFilter: string) => {
           // Map cycle_phase (from Supabase) to cyclePhase (camelCase for UI)
           (data.trades || []).forEach((t: any) => trades.push({ 
             ...t,
-            cyclePhase: t.cyclePhase || t.cycle_phase || t.phase
+            cyclePhase: t.cyclePhase || t.cycle_phase || t.phase,
+            tfSmall: t.tfSmall || t.timeframe_small || t.timeframe || null,
+            tfLarge: t.tfLarge || t.timeframe_large || t.higher_timeframe || null,
           }));
         } catch (e) {
           // ignore parse errors
@@ -862,7 +866,7 @@ export default function TradeJournal() {
                   <th className="px-4 py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">Date</th>
                   <th className="px-4 py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">Instrument</th>
                   <th className="px-4 py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">Direction</th>
-                  <th className="px-4 py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">Timeframes</th>
+                  <th className="px-4 py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground hidden lg:table-cell">Timeframes</th>
                   <th className="px-4 py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">Result</th>
                   <th className="px-4 py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">R</th>
                   <th className="px-4 py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground hidden lg:table-cell">Strategy</th>
