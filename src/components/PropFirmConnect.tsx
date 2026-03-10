@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, Trash2, RefreshCw, Check, AlertCircle, Eye, EyeOff, ExternalLink, Search, X } from 'lucide-react';
+import { Plus, Trash2, RefreshCw, Check, AlertCircle, Eye, EyeOff, ExternalLink, Search, X, DollarSign, ChevronDown, ChevronUp, PlusCircle, MinusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
@@ -193,6 +193,12 @@ export function PropFirmConnect() {
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
   const [showPropFirmPicker, setShowPropFirmPicker] = useState(false);
+
+  // Finance tracking state
+  const [openFinanceId, setOpenFinanceId] = useState<string | null>(null);
+  const [editCost, setEditCost] = useState('');
+  const [newPayoutAmount, setNewPayoutAmount] = useState('');
+  const [newPayoutDate, setNewPayoutDate] = useState(new Date().toISOString().split('T')[0]);
 
   // Get the actual server value (either from dropdown or custom input)
   const actualServer = server === 'custom' ? customServer : server;
@@ -448,6 +454,46 @@ export function PropFirmConnect() {
     return PROP_FIRMS.find(p => p.id === id) || { name: id, logo: '📊', color: 'bg-gray-500' };
   };
 
+  const toggleFinances = (account: PropFirmAccount) => {
+    if (openFinanceId === account.id) {
+      setOpenFinanceId(null);
+    } else {
+      setOpenFinanceId(account.id);
+      setEditCost(account.initialCost != null ? String(account.initialCost) : '');
+      setNewPayoutAmount('');
+      setNewPayoutDate(new Date().toISOString().split('T')[0]);
+    }
+  };
+
+  const saveCost = (id: string) => {
+    const cost = parseFloat(editCost);
+    if (isNaN(cost) || cost < 0) return;
+    saveAccounts(accounts.map(a => a.id === id ? { ...a, initialCost: cost } : a));
+  };
+
+  const addPayout = (id: string) => {
+    const amount = parseFloat(newPayoutAmount);
+    if (isNaN(amount) || amount <= 0 || !newPayoutDate) return;
+    saveAccounts(
+      accounts.map(a =>
+        a.id === id
+          ? { ...a, payoutHistory: [...(a.payoutHistory || []), { date: newPayoutDate, amount }] }
+          : a
+      )
+    );
+    setNewPayoutAmount('');
+  };
+
+  const removePayout = (accountId: string, idx: number) => {
+    saveAccounts(
+      accounts.map(a =>
+        a.id === accountId
+          ? { ...a, payoutHistory: (a.payoutHistory || []).filter((_, i) => i !== idx) }
+          : a
+      )
+    );
+  };
+
   const getStatusBadge = (status: PropFirmAccount['status']) => {
     switch (status) {
       case 'connected':
@@ -525,6 +571,17 @@ export function PropFirmConnect() {
                   </div>
 
                   <div className="flex items-center gap-2">
+                    <Button
+                      variant={openFinanceId === account.id ? 'secondary' : 'ghost'}
+                      size="sm"
+                      onClick={() => toggleFinances(account)}
+                      title="Edit finances (costs & payouts)"
+                    >
+                      <DollarSign className="h-4 w-4" />
+                      {openFinanceId === account.id
+                        ? <ChevronUp className="h-3 w-3 ml-1" />
+                        : <ChevronDown className="h-3 w-3 ml-1" />}
+                    </Button>
                     <Button 
                       variant="ghost" 
                       size="sm"
@@ -585,6 +642,92 @@ export function PropFirmConnect() {
                   <p className="text-xs text-muted-foreground mt-3">
                     Last synced: {new Date(account.lastSync).toLocaleString('en-US')}
                   </p>
+                )}
+
+                {/* Finance Panel */}
+                {openFinanceId === account.id && (
+                  <div className="mt-4 pt-4 border-t border-border/50 space-y-4">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">💰 Finance Tracking</p>
+
+                    {/* Challenge Cost */}
+                    <div>
+                      <label className="text-sm font-medium text-foreground">Challenge / Account Cost ($)</label>
+                      <p className="text-xs text-muted-foreground mb-1.5">How much did you pay for this account?</p>
+                      <div className="flex gap-2">
+                        <Input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={editCost}
+                          onChange={(e) => setEditCost(e.target.value)}
+                          placeholder="e.g. 149.00"
+                          className="max-w-[180px]"
+                        />
+                        <Button size="sm" onClick={() => saveCost(account.id)}>Save</Button>
+                      </div>
+                      {account.initialCost != null && (
+                        <p className="text-xs text-muted-foreground mt-1">Saved: <span className="font-semibold text-destructive">${account.initialCost.toFixed(2)}</span></p>
+                      )}
+                    </div>
+
+                    {/* Payout History */}
+                    <div>
+                      <label className="text-sm font-medium text-foreground">Payouts Received</label>
+                      <p className="text-xs text-muted-foreground mb-2">Record every payout from this account.</p>
+
+                      {/* Existing Payouts */}
+                      {(account.payoutHistory || []).length > 0 ? (
+                        <div className="mb-2 space-y-1">
+                          {(account.payoutHistory || []).map((p, i) => (
+                            <div key={i} className="flex items-center justify-between rounded-lg bg-green-500/10 border border-green-500/20 px-3 py-1.5">
+                              <div>
+                                <span className="text-sm font-semibold text-green-600">+${p.amount.toFixed(2)}</span>
+                                <span className="text-xs text-muted-foreground ml-2">
+                                  {new Date(p.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                                </span>
+                              </div>
+                              <button
+                                onClick={() => removePayout(account.id, i)}
+                                className="text-muted-foreground hover:text-destructive transition-colors"
+                              >
+                                <MinusCircle className="h-4 w-4" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-muted-foreground mb-2 italic">No payouts yet.</p>
+                      )}
+
+                      {/* Add New Payout */}
+                      <div className="flex gap-2 items-center flex-wrap">
+                        <Input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={newPayoutAmount}
+                          onChange={(e) => setNewPayoutAmount(e.target.value)}
+                          placeholder="Amount ($)"
+                          className="w-[130px]"
+                        />
+                        <Input
+                          type="date"
+                          value={newPayoutDate}
+                          onChange={(e) => setNewPayoutDate(e.target.value)}
+                          className="w-[150px]"
+                        />
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="gap-1.5 text-green-600 border-green-500/40 hover:bg-green-500/10"
+                          onClick={() => addPayout(account.id)}
+                        >
+                          <PlusCircle className="h-4 w-4" />
+                          Add Payout
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
                 )}
               </motion.div>
             );
