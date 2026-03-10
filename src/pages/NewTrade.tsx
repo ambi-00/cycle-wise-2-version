@@ -1476,20 +1476,20 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
                       <button
                         type="button"
                         onClick={() => setShowReflection(!showReflection)}
-                        className="w-full flex items-center justify-between gap-3 rounded-xl border border-pink-500/40 bg-pink-500/5 px-4 py-3 text-sm font-medium text-pink-600 dark:text-pink-400 hover:bg-pink-500/10 transition-colors"
+                        className="w-full flex items-center justify-between gap-3 rounded-xl border border-primary/40 bg-primary/5 px-4 py-3 text-sm font-medium text-primary hover:bg-primary/10 transition-colors"
                       >
                         <div className="flex items-center gap-2">
-                          <span className="text-base text-pink-500">✦</span>
+                          <span className="text-base text-primary">✦</span>
                           <span>Trade Reflection</span>
                           {(mistakeCategory || whatWentWrong || keyLesson) && (
-                            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-pink-500/20 text-pink-600 font-semibold">saved</span>
+                            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/20 text-primary font-semibold">saved</span>
                           )}
                         </div>
                         <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${showReflection ? 'rotate-180' : ''}`} />
                       </button>
 
                       {showReflection && (
-                        <section className="mt-2 rounded-2xl border border-pink-500/30 p-4 space-y-4 bg-pink-500/5">
+                        <section className="mt-2 rounded-2xl border border-primary/30 p-4 space-y-4 bg-primary/5">
                           <p className="text-xs text-muted-foreground">What would you do differently? Be specific — this is your personal playbook for next time.</p>
 
                           {/* Mistake Category */}
@@ -1558,7 +1558,7 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
                               Ideal Setup Screenshot <span className="opacity-60">(optional)</span>
                             </label>
                             {!reflectionScreenshot ? (
-                              <div className="rounded-lg border-dashed border-2 border-pink-500/30 p-6 text-center text-sm text-muted-foreground bg-muted/5 min-h-[100px] flex flex-col items-center justify-center gap-1.5">
+                              <div className="rounded-lg border-dashed border-2 border-primary/30 p-6 text-center text-sm text-muted-foreground bg-muted/5 min-h-[100px] flex flex-col items-center justify-center gap-1.5">
                                 <span className="text-2xl">📸</span>
                                 <span>Upload your ideal chart setup</span>
                               </div>
