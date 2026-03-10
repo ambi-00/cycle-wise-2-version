@@ -399,27 +399,32 @@ export default function StrategyEdit() {
               )}
             </div>
 
-            {setupConfirmations.length > 0 && (
-              <div className="flex items-center gap-3 rounded-lg border border-primary/30 bg-primary/5 px-4 py-3">
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-foreground">Minimum required to enter a trade</p>
-                  <p className="text-xs text-muted-foreground">How many of the {setupConfirmations.length} confirmations must be checked before you can log the trade?</p>
-                </div>
-                <Input
-                  type="number"
-                  min={1}
-                  max={setupConfirmations.length}
-                  value={minConfirmations}
-                  onChange={(e) => setMinConfirmations(Math.min(setupConfirmations.length, Math.max(1, Number(e.target.value))))}
-                  className="w-20 text-center font-semibold text-base"
-                />
+            <div className="flex items-center gap-3 rounded-lg border border-primary/30 bg-primary/5 px-4 py-3">
+              <div className="flex-1">
+                <p className="text-sm font-medium text-foreground">Minimum required to enter a trade</p>
+                <p className="text-xs text-muted-foreground">
+                  {setupConfirmations.length > 0
+                    ? `How many of the ${setupConfirmations.length} confirmations must be checked before you can log the trade?`
+                    : "Add confirmations above, then set the minimum required."}
+                </p>
               </div>
-            )}
+              <Input
+                type="number"
+                min={1}
+                max={Math.max(1, setupConfirmations.length)}
+                value={minConfirmations}
+                disabled={setupConfirmations.length === 0}
+                onChange={(e) => setMinConfirmations(Math.min(Math.max(1, setupConfirmations.length), Math.max(1, Number(e.target.value))))}
+                className="w-20 text-center font-semibold text-base"
+              />
+            </div>
           </CardContent>
         </Card>
 
         {/* Entry Trigger */}
         <Card>
+          <CardHeader>
+            <CardTitle>Entry Trigger ⚡</CardTitle>
             <p className="text-sm text-muted-foreground mt-1">
               The ONE specific signal that triggers you to enter this trade
             </p>
