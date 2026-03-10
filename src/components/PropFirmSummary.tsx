@@ -411,61 +411,62 @@ export function PropFirmSummary() {
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <title>Tax Report ${taxInfo.taxYear} - ${taxInfo.fullName || "Trader"}</title>
+  <title>Tax Report ${taxInfo.taxYear} – ${taxInfo.fullName || "Trader"}</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 11pt; color: #1a1a2e; background: #fff; }
-    .page { max-width: 210mm; margin: 0 auto; padding: 18mm 20mm 14mm; }
-    .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #7c3aed; padding-bottom: 14px; margin-bottom: 22px; }
-    .logo { font-size: 20pt; font-weight: 800; color: #7c3aed; letter-spacing: -0.5px; }
-    .logo span { color: #1a1a2e; }
+    body { font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 10.5pt; color: #111; background: #fff; }
+    .page { max-width: 210mm; margin: 0 auto; padding: 18mm 22mm 16mm; }
+
+    /* Header */
+    .header { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 1px solid #111; padding-bottom: 10px; margin-bottom: 20px; }
+    .logo { font-size: 14pt; font-weight: 800; letter-spacing: -0.3px; color: #111; }
     .doc-title { text-align: right; }
-    .doc-title h1 { font-size: 15pt; font-weight: 700; color: #1a1a2e; }
-    .doc-title p { font-size: 9pt; color: #666; margin-top: 3px; }
-    .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
-    .meta-box { background: #f7f5ff; border: 1px solid #e0d6ff; border-radius: 8px; padding: 13px 15px; }
-    .meta-box h3 { font-size: 7.5pt; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: #7c3aed; margin-bottom: 9px; }
-    .meta-row { display: flex; justify-content: space-between; font-size: 10pt; margin-bottom: 4px; gap: 8px; }
-    .meta-row .lbl { color: #777; flex-shrink: 0; }
-    .meta-row .val { font-weight: 600; color: #1a1a2e; text-align: right; }
-    .summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 26px; }
-    .sc { border-radius: 8px; padding: 13px 10px; text-align: center; }
-    .sc.exp { background: #fff0f0; border: 1px solid #ffcccc; }
-    .sc.pay { background: #f0faf0; border: 1px solid #b8edb8; }
-    .sc.net { background: ${positiveBg}; border: 1px solid ${positiveBorder}; }
-    .sc.roi { background: #fdf5ff; border: 1px solid #ddb8ff; }
-    .sc .sc-lbl { font-size: 7.5pt; color: #777; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
-    .sc .sc-val { font-size: 13pt; font-weight: 800; }
-    .sc.exp .sc-val { color: #c62828; }
-    .sc.pay .sc-val { color: #2e7d32; }
-    .sc.net .sc-val { color: ${positiveColor}; }
-    .sc.roi .sc-val { color: #7c3aed; }
-    section { margin-bottom: 26px; }
-    section h2 { font-size: 11pt; font-weight: 700; color: #1a1a2e; margin-bottom: 10px; padding-left: 10px; border-left: 4px solid #7c3aed; }
+    .doc-title h1 { font-size: 12pt; font-weight: 700; color: #111; }
+    .doc-title p { font-size: 8.5pt; color: #555; margin-top: 2px; }
+
+    /* Meta */
+    .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; margin-bottom: 20px; border: 1px solid #ccc; }
+    .meta-box { padding: 11px 14px; }
+    .meta-box:first-child { border-right: 1px solid #ccc; }
+    .meta-box h3 { font-size: 7pt; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #555; margin-bottom: 8px; }
+    .meta-row { display: flex; justify-content: space-between; font-size: 9.5pt; margin-bottom: 3px; gap: 8px; }
+    .meta-row .lbl { color: #555; flex-shrink: 0; }
+    .meta-row .val { font-weight: 600; color: #111; text-align: right; }
+
+    /* Summary */
+    .summary { display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid #ccc; margin-bottom: 22px; }
+    .sc { padding: 11px 10px; text-align: center; border-right: 1px solid #ccc; }
+    .sc:last-child { border-right: none; }
+    .sc .sc-lbl { font-size: 7pt; color: #555; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 5px; }
+    .sc .sc-val { font-size: 12pt; font-weight: 700; color: #111; }
+
+    /* Sections */
+    section { margin-bottom: 22px; }
+    section h2 { font-size: 9pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #111; border-bottom: 1px solid #111; padding-bottom: 4px; margin-bottom: 0; }
     table { width: 100%; border-collapse: collapse; font-size: 9.5pt; }
-    th { background: #7c3aed; color: #fff; padding: 8px 11px; text-align: left; font-weight: 600; font-size: 8.5pt; text-transform: uppercase; letter-spacing: 0.4px; }
+    th { background: #f4f4f4; color: #111; padding: 7px 10px; text-align: left; font-weight: 600; font-size: 8pt; text-transform: uppercase; letter-spacing: 0.3px; border-bottom: 1px solid #ccc; }
     th.num, td.num { text-align: right; }
-    td { padding: 8px 11px; border-bottom: 1px solid #eee; }
+    td { padding: 7px 10px; border-bottom: 1px solid #e8e8e8; color: #111; }
     tr:last-child td { border-bottom: none; }
-    tr:nth-child(even) td { background: #fafafa; }
-    .pos { color: #2e7d32; font-weight: 600; }
-    .neg { color: #c62828; font-weight: 600; }
-    .total-row td { font-weight: 700; background: #f0eeff !important; border-top: 2px solid #7c3aed; }
-    .footer { margin-top: 28px; padding-top: 12px; border-top: 1px solid #e0e0e0; display: flex; justify-content: space-between; font-size: 7.5pt; color: #aaa; }
-    .disclaimer { font-size: 8pt; color: #bbb; margin-top: 8px; font-style: italic; line-height: 1.5; }
+    .total-row td { font-weight: 700; border-top: 1px solid #111; border-bottom: none; background: #f9f9f9; }
+
+    /* Footer */
+    .footer { margin-top: 24px; padding-top: 8px; border-top: 1px solid #ccc; display: flex; justify-content: space-between; font-size: 7.5pt; color: #888; }
+    .disclaimer { font-size: 7.5pt; color: #999; margin-top: 6px; font-style: italic; line-height: 1.5; }
+
     @media print {
       body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-      .page { padding: 10mm 15mm; }
+      .page { padding: 12mm 18mm; }
     }
   </style>
 </head>
 <body>
 <div class="page">
   <div class="header">
-    <div class="logo">Cycle<span>Wise</span></div>
+    <div class="logo">CycleWise</div>
     <div class="doc-title">
-      <h1>Tax Report - Prop Firm Trading</h1>
-      <p>Tax Year ${taxInfo.taxYear} &nbsp;&#183;&nbsp; Created on ${dateStr}</p>
+      <h1>Prop Firm Tax Report</h1>
+      <p>Tax Year ${taxInfo.taxYear} &nbsp;&#183;&nbsp; ${dateStr}</p>
     </div>
   </div>
 
@@ -478,29 +479,29 @@ export function PropFirmSummary() {
       <div class="meta-row"><span class="lbl">${c.taxIdLabel}</span><span class="val">${taxInfo.taxNumber || "&#8211;"}</span></div>
     </div>
     <div class="meta-box">
-      <h3>Document Information</h3>
+      <h3>Document</h3>
       <div class="meta-row"><span class="lbl">Tax Year</span><span class="val">${taxInfo.taxYear}</span></div>
-      <div class="meta-row"><span class="lbl">Country</span><span class="val">${c.flag} ${c.name}</span></div>
+      <div class="meta-row"><span class="lbl">Country</span><span class="val">${c.name}</span></div>
       <div class="meta-row"><span class="lbl">${c.taxAdvisorLabel}</span><span class="val">${taxInfo.taxAdvisor || "&#8211;"}</span></div>
-      <div class="meta-row"><span class="lbl">No. of Accounts</span><span class="val">${accountCount}</span></div>
+      <div class="meta-row"><span class="lbl">Accounts</span><span class="val">${accountCount}</span></div>
     </div>
   </div>
 
   <div class="summary">
-    <div class="sc exp">
-      <div class="sc-lbl">Business Expenses</div>
+    <div class="sc">
+      <div class="sc-lbl">Expenses</div>
       <div class="sc-val">- ${fmtAmt(totalExpenses)}</div>
     </div>
-    <div class="sc pay">
+    <div class="sc">
       <div class="sc-lbl">Income (Payouts)</div>
       <div class="sc-val">+ ${fmtAmt(totalPayouts)}</div>
     </div>
-    <div class="sc net">
+    <div class="sc">
       <div class="sc-lbl">Net Profit / Loss</div>
       <div class="sc-val">${isProfit ? "+" : ""}${fmtAmt(netProfit)}</div>
     </div>
-    <div class="sc roi">
-      <div class="sc-lbl">Return on Investment</div>
+    <div class="sc">
+      <div class="sc-lbl">ROI</div>
       <div class="sc-val">${roi} %</div>
     </div>
   </div>
@@ -511,19 +512,19 @@ export function PropFirmSummary() {
       <thead>
         <tr>
           <th>Prop Firm</th>
-          <th>Account Number</th>
+          <th>Account No.</th>
           <th class="num">Expenses</th>
           <th class="num">Income</th>
-          <th class="num">Result</th>
+          <th class="num">Net</th>
         </tr>
       </thead>
       <tbody>
-        ${accountRows || '<tr><td colspan="5" style="text-align:center;color:#aaa;padding:16px">No accounts recorded</td></tr>'}
+        ${accountRows || '<tr><td colspan="5" style="text-align:center;color:#aaa;padding:14px">No accounts recorded</td></tr>'}
         <tr class="total-row">
           <td colspan="2">Total</td>
-          <td class="num neg">- ${fmtAmt(totalExpenses)}</td>
-          <td class="num pos">+ ${fmtAmt(totalPayouts)}</td>
-          <td class="num ${isProfit ? "pos" : "neg"}">${isProfit ? "+" : ""}${fmtAmt(netProfit)}</td>
+          <td class="num">- ${fmtAmt(totalExpenses)}</td>
+          <td class="num">+ ${fmtAmt(totalPayouts)}</td>
+          <td class="num">${isProfit ? "+" : ""}${fmtAmt(netProfit)}</td>
         </tr>
       </tbody>
     </table>
@@ -535,7 +536,7 @@ export function PropFirmSummary() {
       <thead>
         <tr>
           <th>Prop Firm</th>
-          <th>Account Number</th>
+          <th>Account No.</th>
           <th>Date</th>
           <th class="num">Amount</th>
         </tr>
@@ -547,12 +548,10 @@ export function PropFirmSummary() {
   </section>
 
   <div class="footer">
-    <span>&#169; ${new Date().getFullYear()} CycleWise &nbsp;&#183;&nbsp; ${taxInfo.fullName || "Trader"}</span>
-    <span>Tax Year ${taxInfo.taxYear}</span>
+    <span>${taxInfo.fullName || "Trader"} &nbsp;&#183;&nbsp; Tax Year ${taxInfo.taxYear}</span>
+    <span>Generated by CycleWise &nbsp;&#183;&nbsp; ${dateStr}</span>
   </div>
-  <p class="disclaimer">
-    ${c.disclaimer}
-  </p>
+  <p class="disclaimer">${c.disclaimer}</p>
 </div>
 </body>
 </html>`;
