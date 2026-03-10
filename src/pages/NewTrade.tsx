@@ -223,11 +223,12 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
 
   const strategyRequirements = useMemo(() => {
     const requirements = Object.fromEntries(DEFAULT_STRATEGIES.map((s) => [s.name, s.minConfirmations]));
-    // Add custom strategies with their confirmations
+    // Add custom strategies with their min confirmations
     customStrategies.forEach((s: any) => {
-      const confs = s.setupConfirmations || s.confirmations;
-      if (s.name && confs) {
-        requirements[s.name] = confs.length || 0;
+      if (s.name) {
+        // Use explicit minConfirmations if set, else fall back to total confirmations count
+        const confs = s.setupConfirmations || s.confirmations;
+        requirements[s.name] = s.minConfirmations ?? (confs ? confs.length : 0);
       }
     });
     return requirements;
@@ -1567,10 +1568,12 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
                                 <img
                                   src={reflectionScreenshot}
                                   alt="ideal-setup"
-                                  className="w-full h-40 object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                                  className="w-full rounded-lg cursor-zoom-in hover:opacity-95 transition-opacity"
+                                  style={{ maxHeight: '480px', objectFit: 'contain', background: 'var(--muted)' }}
                                   onClick={() => setPreviewImage(reflectionScreenshot)}
                                 />
                                 <button type="button" aria-label="Remove" onClick={() => setReflectionScreenshot(null)} className="absolute top-2 right-2 inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-sm font-bold shadow">×</button>
+                                <p className="text-[10px] text-muted-foreground mt-1 text-center">Click to enlarge</p>
                               </div>
                             )}
                             {!reflectionScreenshot && (

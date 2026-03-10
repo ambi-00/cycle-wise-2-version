@@ -58,6 +58,7 @@ export default function StrategyEdit() {
   // Setup Confirmations
   const [setupConfirmations, setSetupConfirmations] = useState<string[]>([]);
   const [newSetupConfirmation, setNewSetupConfirmation] = useState("");
+  const [minConfirmations, setMinConfirmations] = useState<number>(1);
   
   // Entry Trigger
   const [entryTrigger, setEntryTrigger] = useState("");
@@ -97,6 +98,7 @@ export default function StrategyEdit() {
           setSelectedMarkets(found.markets || []);
           setSelectedTimeframes(found.timeframes || []);
           setSetupConfirmations(found.setupConfirmations || found.confirmations || []);
+          setMinConfirmations(found.minConfirmations ?? 1);
           setEntryTrigger(found.entryTrigger || "");
           setSlType(found.slType || "");
           setSlDistance(found.slDistance || "");
@@ -192,8 +194,7 @@ export default function StrategyEdit() {
         description: description.trim(),
         markets: selectedMarkets,
         timeframes: selectedTimeframes,
-        setupConfirmations,
-        entryTrigger,
+        setupConfirmations,        minConfirmations,        entryTrigger,
         slType,
         slDistance,
         tpType,
@@ -397,13 +398,28 @@ export default function StrategyEdit() {
                 </p>
               )}
             </div>
+
+            {setupConfirmations.length > 0 && (
+              <div className="flex items-center gap-3 rounded-lg border border-primary/30 bg-primary/5 px-4 py-3">
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-foreground">Minimum required to enter a trade</p>
+                  <p className="text-xs text-muted-foreground">How many of the {setupConfirmations.length} confirmations must be checked before you can log the trade?</p>
+                </div>
+                <Input
+                  type="number"
+                  min={1}
+                  max={setupConfirmations.length}
+                  value={minConfirmations}
+                  onChange={(e) => setMinConfirmations(Math.min(setupConfirmations.length, Math.max(1, Number(e.target.value))))}
+                  className="w-20 text-center font-semibold text-base"
+                />
+              </div>
+            )}
           </CardContent>
         </Card>
 
         {/* Entry Trigger */}
         <Card>
-          <CardHeader>
-            <CardTitle>Entry Trigger 🎯</CardTitle>
             <p className="text-sm text-muted-foreground mt-1">
               The ONE specific signal that triggers you to enter this trade
             </p>
