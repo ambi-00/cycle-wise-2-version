@@ -59,6 +59,13 @@ export interface TradeInsert {
   execution_score?: number | null;
   execution_notes?: string | null;
   exit_criteria_used?: string | null;
+  trade_reflection?: {
+    mistakeCategory?: string;
+    whatWentWrong?: string;
+    whatToDifferently?: string;
+    keyLesson?: string;
+    screenshot?: string | null;
+  } | null;
 }
 
 /**
@@ -78,9 +85,11 @@ export async function saveTrade(trade: TradeInsert) {
   // Save with offline-first strategy (only if user is authenticated)
   if (navigator.onLine && user) {
     try {
+      // Strip fields not in Supabase schema
+      const { trade_reflection: _refl, ...supabaseTradeData } = tradeData;
       const { data, error } = await supabase
         .from('trades')
-        .insert(tradeData)
+        .insert(supabaseTradeData)
         .select()
         .single();
 
@@ -213,9 +222,10 @@ export async function updateTrade(id: string, updates: Partial<TradeInsert>) {
   // Try online update first
   if (navigator.onLine) {
     try {
+      const { trade_reflection: _refl, ...supabaseUpdates } = updates as any;
       const { data, error } = await supabase
         .from('trades')
-        .update(updates)
+        .update(supabaseUpdates)
         .eq('id', id)
         .select()
         .single();

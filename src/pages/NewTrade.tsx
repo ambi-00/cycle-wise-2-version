@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
-import { Info } from 'lucide-react';
+import { Info, ChevronDown } from 'lucide-react';
 import { loadCycleSettings } from '@/lib/demoDataLoaders';
 import { saveTrade, updateTrade, uploadTradeImage, type TradeInsert } from '@/lib/supabaseHelpers';
 import { useToast } from '@/hooks/use-toast';
@@ -155,6 +155,15 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
   const [imageBeforeLarge, setImageBeforeLarge] = useState<string | null>(null);
   const [imageAfterSmall, setImageAfterSmall] = useState<string | null>(null);
   const [imageAfterLarge, setImageAfterLarge] = useState<string | null>(null);
+
+  // Trade Reflection
+  const [showReflection, setShowReflection] = useState(false);
+  const [mistakeCategory, setMistakeCategory] = useState('');
+  const [whatWentWrong, setWhatWentWrong] = useState('');
+  const [whatToDifferently, setWhatToDifferently] = useState('');
+  const [keyLesson, setKeyLesson] = useState('');
+  const [reflectionScreenshot, setReflectionScreenshot] = useState<string | null>(null);
+  const [reflectionScreenshotUrl, setReflectionScreenshotUrl] = useState('');
 
   // Trade Review Modal State (NEW)
   const [showTradeReview, setShowTradeReview] = useState(false);
@@ -418,6 +427,16 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
       setTradesCount(found.trades_count ?? 0);
       setSessionQuality(found.session_quality || '');
       setConcentrationLevel(found.concentration_level ?? 5);
+
+      // Load trade reflection
+      if (found.trade_reflection) {
+        setShowReflection(true);
+        setMistakeCategory(found.trade_reflection.mistakeCategory || '');
+        setWhatWentWrong(found.trade_reflection.whatWentWrong || '');
+        setWhatToDifferently(found.trade_reflection.whatToDifferently || '');
+        setKeyLesson(found.trade_reflection.keyLesson || '');
+        setReflectionScreenshot(found.trade_reflection.screenshot || null);
+      }
     } catch (e) {
       console.error('Error loading trade:', e);
     }
@@ -503,7 +522,7 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
     }
   }, [strategy, isEditing, idParam]);
 
-  const handleFile = async (file?: File, target?: 'preSmall' | 'preLarge' | 'postSmall' | 'postLarge' | 'midTrade') => {
+  const handleFile = async (file?: File, target?: 'preSmall' | 'preLarge' | 'postSmall' | 'postLarge' | 'midTrade' | 'reflection') => {
     if (!file || !target) return;
     try {
       const dataUrl = await fileToDataUrl(file);
@@ -513,6 +532,7 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
       if (target === 'postSmall') setImageAfterSmall(compressed);
       if (target === 'postLarge') setImageAfterLarge(compressed);
       if (target === 'midTrade') setMidTradeScreenshot(compressed);
+      if (target === 'reflection') setReflectionScreenshot(compressed);
     } catch (e) {
       console.error(e);
     }
@@ -710,6 +730,9 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
         status: (close ? 'closed' : result ? 'closed' : 'open') as 'open' | 'closed',
         cycle_day: cycleDay,
         cycle_phase: cyclePhase,
+        trade_reflection: showReflection && (mistakeCategory || whatWentWrong || whatToDifferently || keyLesson)
+          ? { mistakeCategory, whatWentWrong, whatToDifferently, keyLesson, screenshot: reflectionScreenshot }
+          : null,
       };
 
       // Check if trade is being closed - if so, show review modal
@@ -1447,6 +1470,128 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
                         </div>
                       )}
                     </section>
+
+                    {/* Trade Reflection — collapsible */}
+                    <div>
+                      <button
+                        type="button"
+                        onClick={() => setShowReflection(!showReflection)}
+                        className="w-full flex items-center justify-between gap-3 rounded-xl border border-amber-500/40 bg-amber-500/5 px-4 py-3 text-sm font-medium text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 transition-colors"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="text-base">🔍</span>
+                          <span>Trade Reflection</span>
+                          {(mistakeCategory || whatWentWrong || keyLesson) && (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-600 font-semibold">saved</span>
+                          )}
+                        </div>
+                        <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${showReflection ? 'rotate-180' : ''}`} />
+                      </button>
+
+                      {showReflection && (
+                        <section className="mt-2 rounded-2xl border border-amber-500/30 p-4 space-y-4 bg-amber-500/5">
+                          <p className="text-xs text-muted-foreground">What would you do differently? Be specific — this is your personal playbook for next time.</p>
+
+                          {/* Mistake Category */}
+                          <div>
+                            <label className="text-xs text-muted-foreground mb-1.5 block">Mistake Category</label>
+                            <Select onValueChange={setMistakeCategory} value={mistakeCategory}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="What went wrong?" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="entered_too_early">Entered too early</SelectItem>
+                                <SelectItem value="entered_too_late">Entered too late</SelectItem>
+                                <SelectItem value="sl_too_tight">Stop loss too tight</SelectItem>
+                                <SelectItem value="sl_too_wide">Stop loss too wide</SelectItem>
+                                <SelectItem value="tp_too_early">Took profit too early</SelectItem>
+                                <SelectItem value="tp_too_late">Waited too long to exit</SelectItem>
+                                <SelectItem value="no_valid_setup">No valid setup</SelectItem>
+                                <SelectItem value="emotional_trade">Emotional trade</SelectItem>
+                                <SelectItem value="didnt_follow_plan">Didn't follow the plan</SelectItem>
+                                <SelectItem value="position_too_large">Position size too large</SelectItem>
+                                <SelectItem value="overtrading">Overtrading</SelectItem>
+                                <SelectItem value="good_execution">Good execution — no mistake</SelectItem>
+                                <SelectItem value="other">Other</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          {/* What went wrong */}
+                          <div>
+                            <label className="text-xs text-muted-foreground mb-1.5 block">What exactly went wrong?</label>
+                            <Textarea
+                              value={whatWentWrong}
+                              onChange={(e) => setWhatWentWrong(e.target.value)}
+                              placeholder='e.g., "Entered before price retested the level — should have waited for confirmation"'
+                              className="min-h-[80px] text-sm"
+                            />
+                          </div>
+
+                          {/* What to do differently */}
+                          <div>
+                            <label className="text-xs text-muted-foreground mb-1.5 block">What would you do differently?</label>
+                            <Textarea
+                              value={whatToDifferently}
+                              onChange={(e) => setWhatToDifferently(e.target.value)}
+                              placeholder='e.g., "Wait for the 15m close above the level before entering"'
+                              className="min-h-[80px] text-sm"
+                            />
+                          </div>
+
+                          {/* Key Lesson */}
+                          <div>
+                            <label className="text-xs text-muted-foreground mb-1.5 flex items-center gap-1.5">
+                              <span>⭐</span> Key Lesson
+                              <span className="opacity-60 font-normal">(1 sentence — make it stick)</span>
+                            </label>
+                            <Input
+                              value={keyLesson}
+                              onChange={(e) => setKeyLesson(e.target.value)}
+                              placeholder='e.g., "Always wait for structure confirmation before entering"'
+                              className="text-sm"
+                            />
+                          </div>
+
+                          {/* Ideal Setup Screenshot */}
+                          <div>
+                            <label className="text-xs text-muted-foreground mb-1.5 block">
+                              Ideal Setup Screenshot <span className="opacity-60">(optional)</span>
+                            </label>
+                            {!reflectionScreenshot ? (
+                              <div className="rounded-lg border-dashed border-2 border-amber-500/30 p-6 text-center text-sm text-muted-foreground bg-muted/5 min-h-[100px] flex flex-col items-center justify-center gap-1.5">
+                                <span className="text-2xl">📸</span>
+                                <span>Upload your ideal chart setup</span>
+                              </div>
+                            ) : (
+                              <div className="relative">
+                                <img
+                                  src={reflectionScreenshot}
+                                  alt="ideal-setup"
+                                  className="w-full h-40 object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                                  onClick={() => setPreviewImage(reflectionScreenshot)}
+                                />
+                                <button type="button" aria-label="Remove" onClick={() => setReflectionScreenshot(null)} className="absolute top-2 right-2 inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-sm font-bold shadow">×</button>
+                              </div>
+                            )}
+                            {!reflectionScreenshot && (
+                              <div className="mt-2 grid gap-2">
+                                <div className="flex gap-2">
+                                  <Input className="flex-1 min-w-0" placeholder="Paste chart image URL" value={reflectionScreenshotUrl} onChange={(e) => setReflectionScreenshotUrl(e.target.value)} />
+                                  <Button type="button" onClick={() => { if (reflectionScreenshotUrl) setReflectionScreenshot(reflectionScreenshotUrl); }} className="px-3 whitespace-nowrap">Use</Button>
+                                </div>
+                                <div>
+                                  <label className="cursor-pointer inline-flex items-center px-3 py-1.5 text-sm border rounded-md hover:bg-muted/50 transition-colors">
+                                    <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFile(e.target.files?.[0], 'reflection')} />
+                                    Choose File
+                                  </label>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </section>
+                      )}
+                    </div>
                   </>
                 )}
               </div>
