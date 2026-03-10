@@ -99,6 +99,7 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
   const [checklist, setChecklist] = useState<{ id: string; text: string; done: boolean }[]>([]);
   const [strategyExitOptions, setStrategyExitOptions] = useState<string[]>([]); // Exit options from strategy
   const [strategyEntryTrigger, setStrategyEntryTrigger] = useState<string>(""); // Entry trigger from strategy
+  const [strategyEntryTriggers, setStrategyEntryTriggers] = useState<string[]>([]); // Entry triggers array from strategy
 
   const [preNote, setPreNote] = useState('');
   const [postNote, setPostNote] = useState('');
@@ -431,6 +432,7 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
       setChecklist([]);
       setStrategyExitOptions([]);
       setStrategyEntryTrigger("");
+      setStrategyEntryTriggers([]);
       return;
     }
     
@@ -464,6 +466,12 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
         } else {
           setStrategyEntryTrigger("");
         }
+        // Load entry triggers array
+        if (selectedStrategy.entryTriggers && selectedStrategy.entryTriggers.length > 0) {
+          setStrategyEntryTriggers(selectedStrategy.entryTriggers);
+        } else {
+          setStrategyEntryTriggers([]);
+        }
       } else {
         // Fallback to default checklist if strategy not found
         const defs = [
@@ -476,6 +484,7 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
         setChecklist(items);
         setStrategyExitOptions([]);
         setStrategyEntryTrigger("");
+        setStrategyEntryTriggers([]);
       }
     } catch (e) {
       console.error('Error loading strategy:', e);
@@ -490,6 +499,7 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
       setChecklist(items);
       setStrategyExitOptions([]);
       setStrategyEntryTrigger("");
+      setStrategyEntryTriggers([]);
     }
   }, [strategy, isEditing, idParam]);
 
@@ -875,6 +885,26 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
                         )}
 
                         {strategy && <div className="text-sm text-muted-foreground">Min confirmations required: <strong>{minRequired}</strong></div>}
+
+                        {/* Entry Trigger Display */}
+                        {(strategyEntryTrigger || strategyEntryTriggers.length > 0) && (
+                          <div className="rounded-lg bg-primary/10 border border-primary/20 p-3">
+                            <div className="flex items-center gap-1.5 mb-2">
+                              <span className="text-sm">⚡</span>
+                              <span className="text-xs font-semibold text-primary uppercase tracking-wide">Entry Trigger</span>
+                            </div>
+                            {strategyEntryTrigger && (
+                              <p className="text-sm text-foreground font-medium">{strategyEntryTrigger}</p>
+                            )}
+                            {strategyEntryTriggers.length > 0 && (
+                              <div className="flex flex-wrap gap-1.5 mt-1">
+                                {strategyEntryTriggers.map((t, i) => (
+                                  <span key={i} className="text-xs px-2 py-1 rounded-md bg-primary/20 text-primary font-medium">{t}</span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
 
                         {/* Session Timing - For AI Insights */}
                         <div>
