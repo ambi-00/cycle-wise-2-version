@@ -242,6 +242,7 @@ export function PropFirmSummary() {
   const [newPayoutDate, setNewPayoutDate] = useState(new Date().toISOString().split("T")[0]);
   const [newFirmName, setNewFirmName] = useState("");
   const [newAccountNumber, setNewAccountNumber] = useState("");
+  const [newAccountCost, setNewAccountCost] = useState("");
   const [countryCode, setCountryCode] = useState("US");
   const country = COUNTRIES.find((c) => c.code === countryCode) ?? COUNTRIES[3];
   const [taxInfo, setTaxInfo] = useState<TaxInfo>({
@@ -286,17 +287,19 @@ export function PropFirmSummary() {
 
   const addManualAccount = () => {
     if (!newFirmName.trim()) return;
+    const cost = parseFloat(newAccountCost);
     const newAcc: PropFirmAccount = {
       id: Date.now().toString(),
       propFirm: newFirmName.trim(),
       accountNumber: newAccountNumber.trim() || "–",
-      initialCost: 0,
+      initialCost: isNaN(cost) || cost < 0 ? 0 : cost,
       payoutHistory: [],
       status: "disconnected",
     };
     saveAccountsAndRecalc([...accounts, newAcc]);
     setNewFirmName("");
     setNewAccountNumber("");
+    setNewAccountCost("");
   };
 
   const removeManualAccount = (id: string) => {
@@ -805,15 +808,28 @@ export function PropFirmSummary() {
                     value={newFirmName}
                     onChange={(e) => setNewFirmName(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && addManualAccount()}
-                    className="flex-1 min-w-[140px]"
+                    className="flex-1 min-w-[130px]"
                   />
                   <Input
                     placeholder="Account # (optional)"
                     value={newAccountNumber}
                     onChange={(e) => setNewAccountNumber(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && addManualAccount()}
-                    className="flex-1 min-w-[140px]"
+                    className="flex-1 min-w-[130px]"
                   />
+                  <div className="relative min-w-[120px] flex-1">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">{country.currencySymbol}</span>
+                    <Input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      placeholder="Cost"
+                      value={newAccountCost}
+                      onChange={(e) => setNewAccountCost(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && addManualAccount()}
+                      className="pl-7"
+                    />
+                  </div>
                   <Button onClick={addManualAccount} className="gap-1.5 shrink-0">
                     <Plus className="h-4 w-4" />
                     Add
