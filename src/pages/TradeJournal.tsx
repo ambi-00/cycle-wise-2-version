@@ -936,7 +936,7 @@ export default function TradeJournal() {
                       {trade.isMTTrade && trade.mtData?.rrr ? (
                         <>1:{trade.mtData.rrr}</>
                       ) : trade.rMultiple != null ? (
-                        <>{trade.rMultiple > 0 ? "+" : ""}{Number(trade.rMultiple).toFixed(2)}R</>
+                        <>{trade.rMultiple > 0 ? "+" : ""}{Number(trade.rMultiple).toFixed(1)}R</>
                       ) : (
                         <span className="text-muted-foreground font-normal">—</span>
                       )}
