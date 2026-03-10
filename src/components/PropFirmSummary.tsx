@@ -13,6 +13,10 @@ import {
   Briefcase,
   Printer,
   Globe,
+  Plus,
+  Trash2,
+  PlusCircle,
+  MinusCircle,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import {
@@ -232,6 +236,12 @@ export function PropFirmSummary() {
   const [accountCount, setAccountCount] = useState(0);
   const [accounts, setAccounts] = useState<PropFirmAccount[]>([]);
   const [open, setOpen] = useState(false);
+  const [openFinanceId, setOpenFinanceId] = useState<string | null>(null);
+  const [editCost, setEditCost] = useState("");
+  const [newPayoutAmount, setNewPayoutAmount] = useState("");
+  const [newPayoutDate, setNewPayoutDate] = useState(new Date().toISOString().split("T")[0]);
+  const [newFirmName, setNewFirmName] = useState("");
+  const [newAccountNumber, setNewAccountNumber] = useState("");
   const [countryCode, setCountryCode] = useState("US");
   const country = COUNTRIES.find((c) => c.code === countryCode) ?? COUNTRIES[3];
   const [taxInfo, setTaxInfo] = useState<TaxInfo>({
@@ -261,24 +271,82 @@ export function PropFirmSummary() {
     localStorage.setItem(TAX_STORAGE_KEY, JSON.stringify(updated));
   };
 
-  // Load prop firm accounts
+  const saveAccountsAndRecalc = (updated: PropFirmAccount[]) => {
+    localStorage.setItem("cw_propfirm_accounts", JSON.stringify(updated));
+    let expenses = 0, payouts = 0;
+    updated.forEach((acc) => {
+      if (acc.initialCost) expenses += acc.initialCost;
+      (acc.payoutHistory || []).forEach((p) => { payouts += p.amount || 0; });
+    });
+    setAccounts(updated);
+    setTotalExpenses(expenses);
+    setTotalPayouts(payouts);
+    setAccountCount(updated.length);
+  };
+
+  const addManualAccount = () => {
+    if (!newFirmName.trim()) return;
+    const newAcc: PropFirmAccount = {
+      id: Date.now().toString(),
+      propFirm: newFirmName.trim(),
+      accountNumber: newAccountNumber.trim() || "–",
+      initialCost: 0,
+      payoutHistory: [],
+      status: "disconnected",
+    };
+    saveAccountsAndRecalc([...accounts, newAcc]);
+    setNewFirmName("");
+    setNewAccountNumber("");
+  };
+
+  const removeManualAccount = (id: string) => {
+    saveAccountsAndRecalc(accounts.filter((a) => a.id !== id));
+    if (openFinanceId === id) setOpenFinanceId(null);
+  };
+
+  const saveCost = (id: string) => {
+    const cost = parseFloat(editCost);
+    if (isNaN(cost) || cost < 0) return;
+    saveAccountsAndRecalc(accounts.map((a) => a.id === id ? { ...a, initialCost: cost } : a));
+  };
+
+  const addPayout = (id: string) => {
+    const amount = parseFloat(newPayoutAmount);
+    if (isNaN(amount) || amount <= 0 || !newPayoutDate) return;
+    saveAccountsAndRecalc(
+      accounts.map((a) =>
+        a.id === id
+          ? { ...a, payoutHistory: [...(a.payoutHistory || []), { date: newPayoutDate, amount }].sort((x, y) => x.date < y.date ? 1 : -1) }
+          : a
+      )
+    );
+    setNewPayoutAmount("");
+  };
+
+  const removePayout = (accountId: string, idx: number) => {
+    saveAccountsAndRecalc(
+      accounts.map((a) =>
+        a.id === accountId
+          ? { ...a, payoutHistory: (a.payoutHistory || []).filter((_, i) => i !== idx) }
+          : a
+      )
+    );
+  };
+
+  // Load prop firm accounts on mount
   useEffect(() => {
     try {
-      const accs: PropFirmAccount[] = JSON.parse(
-        localStorage.getItem("cw_propfirm_accounts") || "[]"
-      );
-      let expenses = 0;
-      let payouts = 0;
+      const raw = localStorage.getItem("cw_propfirm_accounts");
+      const accs: PropFirmAccount[] = raw ? JSON.parse(raw) : [];
+      let expenses = 0, payouts = 0;
       accs.forEach((acc) => {
         if (acc.initialCost) expenses += acc.initialCost;
-        if (acc.payoutHistory && Array.isArray(acc.payoutHistory)) {
-          acc.payoutHistory.forEach((p) => { payouts += p.amount || 0; });
-        }
+        (acc.payoutHistory || []).forEach((p) => { payouts += p.amount || 0; });
       });
+      setAccounts(accs);
       setTotalExpenses(expenses);
       setTotalPayouts(payouts);
       setAccountCount(accs.length);
-      setAccounts(accs);
     } catch (err) {
       console.error("Error loading prop firm accounts:", err);
     }
@@ -587,17 +655,172 @@ export function PropFirmSummary() {
             </div>
           </DialogHeader>
 
-          <Tabs defaultValue="data" className="flex flex-col flex-1 min-h-0">
-            <TabsList className="mx-6 mt-4 mb-0 grid grid-cols-2">
-              <TabsTrigger value="data" className="gap-2">
+          <Tabs defaultValue="accounts" className="flex flex-col flex-1 min-h-0">
+            <TabsList className="mx-6 mt-4 mb-0 grid grid-cols-3">
+              <TabsTrigger value="accounts" className="gap-1.5">
+                <Wallet className="h-3.5 w-3.5" />
+                Accounts
+              </TabsTrigger>
+              <TabsTrigger value="data" className="gap-1.5">
                 <User className="h-3.5 w-3.5" />
                 My Details
               </TabsTrigger>
-              <TabsTrigger value="preview" className="gap-2">
+              <TabsTrigger value="preview" className="gap-1.5">
                 <FileText className="h-3.5 w-3.5" />
                 Preview
               </TabsTrigger>
             </TabsList>
+
+            {/* TAB: Accounts */}
+            <TabsContent value="accounts" className="overflow-auto px-6 pb-4 mt-0">
+              <p className="text-xs text-muted-foreground mt-4 mb-4">
+                Add your prop firm accounts manually and enter costs &amp; payouts. No MT4/MT5 connection needed.
+              </p>
+
+              {/* Account list */}
+              <div className="space-y-3 mb-4">
+                {accounts.length === 0 && (
+                  <div className="rounded-xl border border-dashed border-border p-6 text-center">
+                    <div className="text-3xl mb-2">🏦</div>
+                    <p className="text-sm text-muted-foreground">No accounts yet. Add one below.</p>
+                  </div>
+                )}
+                {accounts.map((acc) => {
+                  const totalPay = (acc.payoutHistory || []).reduce((s, p) => s + (p.amount || 0), 0);
+                  const net = totalPay - (acc.initialCost || 0);
+                  return (
+                    <div key={acc.id} className="rounded-xl border bg-card">
+                      {/* Account header */}
+                      <div className="flex items-center justify-between px-4 py-3">
+                        <div>
+                          <p className="font-semibold text-sm text-foreground">{acc.propFirm}</p>
+                          <p className="text-xs text-muted-foreground">{acc.accountNumber}</p>
+                        </div>
+                        <div className="flex items-center gap-3 text-xs">
+                          <span className="text-destructive tabular-nums">-{fmtCurrency(acc.initialCost || 0, country)}</span>
+                          <span className="text-green-600 tabular-nums">+{fmtCurrency(totalPay, country)}</span>
+                          <span className={`font-bold tabular-nums ${net >= 0 ? "text-primary" : "text-destructive"}`}>
+                            {net >= 0 ? "+" : ""}{fmtCurrency(net, country)}
+                          </span>
+                          <button
+                            onClick={() => {
+                              if (openFinanceId === acc.id) {
+                                setOpenFinanceId(null);
+                              } else {
+                                setOpenFinanceId(acc.id);
+                                setEditCost(acc.initialCost != null ? String(acc.initialCost) : "");
+                                setNewPayoutAmount("");
+                                setNewPayoutDate(new Date().toISOString().split("T")[0]);
+                              }
+                            }}
+                            className="rounded-lg bg-muted px-2 py-1 hover:bg-muted/80 transition-colors text-muted-foreground hover:text-foreground"
+                          >
+                            {openFinanceId === acc.id ? "▲ Close" : "✎ Edit"}
+                          </button>
+                          <button
+                            onClick={() => removeManualAccount(acc.id)}
+                            className="text-muted-foreground hover:text-destructive transition-colors"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Finance panel */}
+                      {openFinanceId === acc.id && (
+                        <div className="border-t border-border/60 px-4 pb-4 pt-3 space-y-4 bg-muted/20 rounded-b-xl">
+                          {/* Cost */}
+                          <div>
+                            <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Challenge / Account Cost</Label>
+                            <div className="flex gap-2 mt-1.5">
+                              <Input
+                                type="number" min="0" step="0.01"
+                                value={editCost}
+                                onChange={(e) => setEditCost(e.target.value)}
+                                placeholder="e.g. 149.00"
+                                className="max-w-[160px] h-8 text-sm"
+                              />
+                              <Button size="sm" className="h-8" onClick={() => saveCost(acc.id)}>Save</Button>
+                            </div>
+                          </div>
+
+                          {/* Payouts */}
+                          <div>
+                            <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Payouts Received</Label>
+                            {(acc.payoutHistory || []).length > 0 ? (
+                              <div className="mt-1.5 space-y-1">
+                                {(acc.payoutHistory || []).map((p, i) => (
+                                  <div key={i} className="flex items-center justify-between rounded-lg bg-green-500/10 border border-green-500/20 px-3 py-1.5">
+                                    <span className="text-sm font-semibold text-green-600">+{fmtCurrency(p.amount, country)}</span>
+                                    <span className="text-xs text-muted-foreground">
+                                      {new Date(p.date).toLocaleDateString(country.dateLocale, { year: "numeric", month: "short", day: "numeric" })}
+                                    </span>
+                                    <button onClick={() => removePayout(acc.id, i)} className="text-muted-foreground hover:text-destructive transition-colors">
+                                      <MinusCircle className="h-3.5 w-3.5" />
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="text-xs text-muted-foreground mt-1 italic">No payouts yet.</p>
+                            )}
+                            <div className="flex gap-2 mt-2 flex-wrap">
+                              <Input
+                                type="number" min="0" step="0.01"
+                                value={newPayoutAmount}
+                                onChange={(e) => setNewPayoutAmount(e.target.value)}
+                                placeholder="Amount"
+                                className="w-[110px] h-8 text-sm"
+                              />
+                              <Input
+                                type="date"
+                                value={newPayoutDate}
+                                onChange={(e) => setNewPayoutDate(e.target.value)}
+                                className="w-[140px] h-8 text-sm"
+                              />
+                              <Button
+                                size="sm" variant="outline" className="h-8 gap-1.5 text-green-600 border-green-500/40 hover:bg-green-500/10"
+                                onClick={() => addPayout(acc.id)}
+                              >
+                                <PlusCircle className="h-3.5 w-3.5" />
+                                Add Payout
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              <Separator className="mb-4" />
+
+              {/* Add new account */}
+              <div>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Add Account</p>
+                <div className="flex gap-2 flex-wrap">
+                  <Input
+                    placeholder="Prop Firm (e.g. FTMO)"
+                    value={newFirmName}
+                    onChange={(e) => setNewFirmName(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && addManualAccount()}
+                    className="flex-1 min-w-[140px]"
+                  />
+                  <Input
+                    placeholder="Account # (optional)"
+                    value={newAccountNumber}
+                    onChange={(e) => setNewAccountNumber(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && addManualAccount()}
+                    className="flex-1 min-w-[140px]"
+                  />
+                  <Button onClick={addManualAccount} className="gap-1.5 shrink-0">
+                    <Plus className="h-4 w-4" />
+                    Add
+                  </Button>
+                </div>
+              </div>
+            </TabsContent>
 
             {/* TAB: Personal Data */}
             <TabsContent value="data" className="overflow-auto px-6 pb-2 mt-0">
