@@ -29,6 +29,7 @@ const loadStoredTrades = (dateFilter: string) => {
         cyclePhase: t.cyclePhase || t.cycle_phase || t.phase,
         tfSmall: t.tfSmall || t.timeframe_small || t.timeframe || null,
         tfLarge: t.tfLarge || t.timeframe_large || t.higher_timeframe || null,
+        rMultiple: t.rMultiple ?? t.closed_rrr ?? t.r_multiple ?? null,
       }));
     }
 
@@ -46,6 +47,7 @@ const loadStoredTrades = (dateFilter: string) => {
             cyclePhase: t.cyclePhase || t.cycle_phase || t.phase,
             tfSmall: t.tfSmall || t.timeframe_small || t.timeframe || null,
             tfLarge: t.tfLarge || t.timeframe_large || t.higher_timeframe || null,
+            rMultiple: t.rMultiple ?? t.closed_rrr ?? t.r_multiple ?? null,
           }));
         } catch (e) {
           // ignore parse errors
@@ -929,12 +931,14 @@ export default function TradeJournal() {
                     </td>
                     <td className="px-4 py-4">{getResultBadge(trade.result, trade.pnl)}</td>
                     <td className={`px-4 py-4 text-sm font-bold ${
-                      trade.rMultiple > 0 ? "text-accent-foreground" : trade.rMultiple < 0 ? "text-destructive" : "text-muted-foreground"
+                      (trade.rMultiple ?? 0) > 0 ? "text-accent-foreground" : (trade.rMultiple ?? 0) < 0 ? "text-destructive" : "text-muted-foreground"
                     }`}>
                       {trade.isMTTrade && trade.mtData?.rrr ? (
                         <>1:{trade.mtData.rrr}</>
+                      ) : trade.rMultiple != null ? (
+                        <>{trade.rMultiple > 0 ? "+" : ""}{Number(trade.rMultiple).toFixed(2)}R</>
                       ) : (
-                        <>{trade.rMultiple > 0 ? "+" : ""}{trade.rMultiple}R</>
+                        <span className="text-muted-foreground font-normal">—</span>
                       )}
                     </td>
                     <td className="px-4 py-4 text-sm text-foreground hidden lg:table-cell">{trade.strategy}</td>
