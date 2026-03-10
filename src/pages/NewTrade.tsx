@@ -1442,8 +1442,8 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
                         </div>
 
                         <div className="mt-4">
-                          <label className="text-xs text-muted-foreground mb-1.5 block">Learnings / Improvements</label>
-                          <Textarea value={learnings} onChange={(e) => setLearnings(e.target.value)} className="min-h-[120px]" placeholder="What would you do differently next time?" />
+                          <label className="text-xs text-muted-foreground mb-1.5 block">Thoughts &amp; Comments</label>
+                          <Textarea value={learnings} onChange={(e) => setLearnings(e.target.value)} className="min-h-[120px]" placeholder="General thoughts, observations or emotions after this trade — how did it feel, what stood out?" />
                         </div>
                       </div>
                     </section>
@@ -1476,42 +1476,41 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
                       <button
                         type="button"
                         onClick={() => setShowReflection(!showReflection)}
-                        className="w-full flex items-center justify-between gap-3 rounded-xl border border-amber-500/40 bg-amber-500/5 px-4 py-3 text-sm font-medium text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 transition-colors"
+                        className="w-full flex items-center justify-between gap-3 rounded-xl border border-violet-500/40 bg-violet-500/5 px-4 py-3 text-sm font-medium text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 transition-colors"
                       >
                         <div className="flex items-center gap-2">
                           <span className="text-base">🔍</span>
                           <span>Trade Reflection</span>
                           {(mistakeCategory || whatWentWrong || keyLesson) && (
-                            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-600 font-semibold">saved</span>
+                            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-violet-500/20 text-violet-600 font-semibold">saved</span>
                           )}
                         </div>
                         <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${showReflection ? 'rotate-180' : ''}`} />
                       </button>
 
                       {showReflection && (
-                        <section className="mt-2 rounded-2xl border border-amber-500/30 p-4 space-y-4 bg-amber-500/5">
+                        <section className="mt-2 rounded-2xl border border-violet-500/30 p-4 space-y-4 bg-violet-500/5">
                           <p className="text-xs text-muted-foreground">What would you do differently? Be specific — this is your personal playbook for next time.</p>
 
                           {/* Mistake Category */}
                           <div>
-                            <label className="text-xs text-muted-foreground mb-1.5 block">Mistake Category</label>
+                            <label className="text-xs text-muted-foreground mb-1.5 block">Root Cause</label>
                             <Select onValueChange={setMistakeCategory} value={mistakeCategory}>
                               <SelectTrigger>
-                                <SelectValue placeholder="What went wrong?" />
+                                <SelectValue placeholder="Why did this go wrong?" />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="entered_too_early">Entered too early</SelectItem>
-                                <SelectItem value="entered_too_late">Entered too late</SelectItem>
-                                <SelectItem value="sl_too_tight">Stop loss too tight</SelectItem>
-                                <SelectItem value="sl_too_wide">Stop loss too wide</SelectItem>
-                                <SelectItem value="tp_too_early">Took profit too early</SelectItem>
-                                <SelectItem value="tp_too_late">Waited too long to exit</SelectItem>
-                                <SelectItem value="no_valid_setup">No valid setup</SelectItem>
-                                <SelectItem value="emotional_trade">Emotional trade</SelectItem>
-                                <SelectItem value="didnt_follow_plan">Didn't follow the plan</SelectItem>
-                                <SelectItem value="position_too_large">Position size too large</SelectItem>
-                                <SelectItem value="overtrading">Overtrading</SelectItem>
-                                <SelectItem value="good_execution">Good execution — no mistake</SelectItem>
+                                <SelectItem value="good_execution">✅ Good execution — no mistake</SelectItem>
+                                <SelectItem value="analysis_error">📉 Technical analysis error — misread structure, levels or trend</SelectItem>
+                                <SelectItem value="setup_not_met">🚫 Setup criteria not met — forced a trade that wasn't there</SelectItem>
+                                <SelectItem value="confirmation_skipped">⏩ Skipped confirmation — entered without waiting for the signal</SelectItem>
+                                <SelectItem value="deviated_from_plan">📋 Deviated from plan — changed SL, TP or size after entry</SelectItem>
+                                <SelectItem value="closed_early">🏃 Closed/modified too early — didn't let the trade play out</SelectItem>
+                                <SelectItem value="emotional_trade">😤 Emotional decision — fear, greed or tilt influenced the trade</SelectItem>
+                                <SelectItem value="revenge_trade">🔁 Revenge trade — entered to recover a previous loss</SelectItem>
+                                <SelectItem value="sized_too_large">⚖️ Oversized position — too much risk forced a premature exit</SelectItem>
+                                <SelectItem value="news_ignored">📰 News/event ignored — traded into a scheduled catalyst</SelectItem>
+                                <SelectItem value="overtrading">🔄 Overtrading — outside session, too many trades or no clear bias</SelectItem>
                                 <SelectItem value="other">Other</SelectItem>
                               </SelectContent>
                             </Select>
@@ -1559,7 +1558,7 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
                               Ideal Setup Screenshot <span className="opacity-60">(optional)</span>
                             </label>
                             {!reflectionScreenshot ? (
-                              <div className="rounded-lg border-dashed border-2 border-amber-500/30 p-6 text-center text-sm text-muted-foreground bg-muted/5 min-h-[100px] flex flex-col items-center justify-center gap-1.5">
+                              <div className="rounded-lg border-dashed border-2 border-violet-500/30 p-6 text-center text-sm text-muted-foreground bg-muted/5 min-h-[100px] flex flex-col items-center justify-center gap-1.5">
                                 <span className="text-2xl">📸</span>
                                 <span>Upload your ideal chart setup</span>
                               </div>
