@@ -122,6 +122,7 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
   const [maxRReached, setMaxRReached] = useState<number | ''>(''); // Maximum R achieved before reversal
   const [idealSlSize, setIdealSlSize] = useState<number | ''>(''); // Ideal SL size that would have worked
   const [plannedSlSize, setPlannedSlSize] = useState<number | ''>(''); // Planned SL size before trade
+  const [slSizeUnit, setSlSizeUnit] = useState<string>('pips'); // Unit for SL size (pips, ticks, points, etc.)
   const [learnings, setLearnings] = useState('');
   const [tradeRating, setTradeRating] = useState<number>(0);
 
@@ -414,6 +415,7 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
       setMaxRReached(found.max_r_reached ?? found.maxRReached ?? '');
       setIdealSlSize(found.ideal_sl_size ?? found.idealSlSize ?? '');
       setPlannedSlSize(found.planned_sl_size ?? found.plannedSlSize ?? '');
+      setSlSizeUnit(found.sl_size_unit || 'pips');
       setLearnings(found.learnings || '');
       
       // Load new Mid-Trade & Advanced fields
@@ -725,6 +727,7 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
         max_r_reached: maxRReached === '' ? null : Number(maxRReached),
         ideal_sl_size: idealSlSize === '' ? null : Number(idealSlSize),
         planned_sl_size: plannedSlSize === '' ? null : Number(plannedSlSize),
+        sl_size_unit: slSizeUnit || 'pips',
         // Note: r_multiple is for localStorage only, Supabase uses closed_rrr
         learnings: learnings || null,
         rating: tradeRating || null,
@@ -1006,13 +1009,26 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
                             Plan SL
                             <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/20 text-primary font-semibold">PLAN</span>
                           </label>
-                          <Input 
-                            type="number" 
-                            step="0.1"
-                            value={plannedSlSize as any} 
-                            onChange={(e) => setPlannedSlSize(e.target.value === '' ? '' : Number(e.target.value))} 
-                            placeholder="e.g., 15" 
-                          />
+                          <div className="flex gap-1">
+                            <Input 
+                              type="number" 
+                              step="0.1"
+                              value={plannedSlSize as any} 
+                              onChange={(e) => setPlannedSlSize(e.target.value === '' ? '' : Number(e.target.value))} 
+                              placeholder="e.g., 15"
+                              className="min-w-0"
+                            />
+                            <Select value={slSizeUnit} onValueChange={setSlSizeUnit}>
+                              <SelectTrigger className="w-[82px] shrink-0 text-xs px-2">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="pips">Pips</SelectItem>
+                                <SelectItem value="ticks">Ticks</SelectItem>
+                                <SelectItem value="points">Points</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
                         </div>
                         <div>
                           <label className="text-xs text-muted-foreground mb-1.5 block">Risk %</label>
@@ -1371,7 +1387,7 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
                             {(exitReason === 'SL Too Tight' || exitReason?.toLowerCase().includes('sl') && exitReason?.toLowerCase().includes('klein')) && (
                               <div className="mt-3">
                                 <label className="text-xs text-muted-foreground mb-1.5 block flex items-center gap-2">
-                                  Ideal SL Size (pips/points)
+                                  Ideal SL Size ({slSizeUnit === 'pips' ? 'Pips' : slSizeUnit === 'ticks' ? 'Ticks' : slSizeUnit === 'points' ? 'Points' : slSizeUnit})
                                   <div className="group relative">
                                     <Info className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground cursor-help transition-colors" />
                                     <div className="invisible group-hover:visible absolute left-0 top-5 z-50 w-72 rounded-lg bg-popover p-3 text-xs text-popover-foreground shadow-lg border border-border">

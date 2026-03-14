@@ -26,6 +26,7 @@ export interface TradeInsert {
   risk_percent?: number | null;
   planned_rrr?: number | null;
   planned_sl_size?: number | null;
+  sl_size_unit?: string | null;
   closed_rrr?: number | null;
   max_r_reached?: number | null;
   ideal_sl_size?: number | null;
