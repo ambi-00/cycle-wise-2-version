@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { Trophy, Award, Medal, Shield, Calendar, RefreshCw, Zap, Star,
   Sparkles, BarChart2, TrendingUp, CalendarDays, LineChart, Flame,
-  CheckCircle2, Target, ClipboardList, Wind, CalendarCheck, Lock } from "lucide-react";
+  CheckCircle2, Target, ClipboardList, Wind, CalendarCheck, Lock, ChevronDown } from "lucide-react";
 import { ChallengePrivacySettings } from "@/components/ChallengePrivacySettings";
 import ChallengesTour from "@/components/ChallengesTour";
 import React, { useEffect, useState } from "react";
@@ -606,6 +606,14 @@ function AchievementsTab({ isDemoMode }: { isDemoMode: boolean }) {
   const realStored = loadUnlockedAchievements();
   const stored = isDemoMode ? DEMO_ACHIEVEMENT_STORED : realStored;
   const unlockedSet = new Set(stored.unlocked);
+  const [expandedTiers, setExpandedTiers] = React.useState<Set<string>>(new Set());
+
+  const toggleTier = (key: string) =>
+    setExpandedTiers(prev => {
+      const next = new Set(prev);
+      next.has(key) ? next.delete(key) : next.add(key);
+      return next;
+    });
 
   const categories = Object.keys(CATEGORY_META) as AchievementCategory[];
   const totalUnlocked = stored.unlocked.length;
@@ -704,26 +712,35 @@ function AchievementsTab({ isDemoMode }: { isDemoMode: boolean }) {
                 const tierLocked   = tierAchs.filter(a => !unlockedSet.has(a.id));
                 const tierPct = Math.round((tierUnlocked.length / tierAchs.length) * 100);
                 const tierComplete = tierUnlocked.length === tierAchs.length;
-                // A tier is accessible if the previous tier is fully complete (or it's beginner)
                 const tierIdx = TIER_ORDER.indexOf(tier);
                 const prevTierAchs = tierIdx > 0 ? catAchs.filter(a => a.tier === TIER_ORDER[tierIdx - 1]) : [];
                 const prevComplete = tierIdx === 0 || prevTierAchs.every(a => unlockedSet.has(a.id));
+                const expandKey = `${cat}-${tier}`;
+                const isExpanded = expandedTiers.has(expandKey);
 
                 return (
                   <div
                     key={tier}
-                    className={`rounded-xl border p-4 transition-opacity ${
+                    className={`rounded-xl border transition-opacity ${
                       prevComplete ? 'opacity-100' : 'opacity-40'
                     } ${tierMeta.borderColor} bg-gradient-to-r ${tierMeta.color}`}
                   >
-                    {/* Tier label row */}
-                    <div className="flex items-center justify-between mb-2">
+                    {/* Tier label row — clickable to expand */}
+                    <button
+                      onClick={() => toggleTier(expandKey)}
+                      className="w-full flex items-center justify-between px-4 py-3 text-left"
+                    >
                       <div className="flex items-center gap-2">
                         {!prevComplete && <Lock className="w-3.5 h-3.5 text-muted-foreground" />}
                         {tierComplete && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
                         <span className={`text-xs font-semibold uppercase tracking-wide ${tierMeta.badgeColor.split(' ').filter(c => c.startsWith('text-')).join(' ')}`}>
                           {tierMeta.label}
                         </span>
+                        {tierLocked.length > 0 && (
+                          <span className="text-[10px] text-muted-foreground">
+                            {isExpanded ? 'hide all' : `show all ${tierAchs.length}`}
+                          </span>
+                        )}
                       </div>
                       <div className="flex items-center gap-2">
                         <div className="w-20 bg-muted/40 rounded-full h-1 overflow-hidden">
@@ -733,57 +750,82 @@ function AchievementsTab({ isDemoMode }: { isDemoMode: boolean }) {
                           />
                         </div>
                         <span className="text-[10px] text-muted-foreground tabular-nums">{tierUnlocked.length}/{tierAchs.length}</span>
+                        <ChevronDown
+                          className={`w-3.5 h-3.5 text-muted-foreground transition-transform duration-200 ${
+                            isExpanded ? 'rotate-180' : ''
+                          }`}
+                        />
                       </div>
-                    </div>
+                    </button>
 
                     {/* Achievements grid */}
-                    <div className="grid gap-2 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-                      {tierUnlocked.map((a, i) => {
-                        const AIcon = CATEGORY_ICONS[a.category];
-                        return (
-                          <motion.div
-                            key={a.id}
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            transition={{ delay: catIdx * 0.04 + i * 0.02 }}
-                            className="rounded-lg p-3 text-center bg-background/60"
+                    <div className="px-4 pb-4">
+                      <div className="grid gap-2 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+                        {/* Unlocked achievements — always visible */}
+                        {tierUnlocked.map((a, i) => {
+                          const AIcon = CATEGORY_ICONS[a.category];
+                          return (
+                            <motion.div
+                              key={a.id}
+                              initial={{ opacity: 0, scale: 0.9 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              transition={{ delay: catIdx * 0.04 + i * 0.02 }}
+                              className="rounded-lg p-3 text-center bg-background/60"
+                            >
+                              <div className="flex justify-center">
+                                <AIcon className="w-6 h-6 text-foreground/80" />
+                              </div>
+                              <h4 className="mt-1 text-[11px] font-semibold text-foreground leading-tight">{a.title}</h4>
+                              <p className="mt-0.5 text-[10px] text-muted-foreground leading-tight">{a.description}</p>
+                              <span className="mt-1 inline-block rounded-full bg-primary/20 px-2 py-0.5 text-[10px] font-medium text-primary">
+                                {stored.unlockedDates[a.id]
+                                  ? new Date(stored.unlockedDates[a.id]).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' })
+                                  : 'Earned'}
+                              </span>
+                            </motion.div>
+                          );
+                        })}
+
+                        {/* Locked achievements — next target always visible, rest only when expanded */}
+                        {tierLocked.map((a, i) => {
+                          const AIcon = CATEGORY_ICONS[a.category];
+                          const showCard = i === 0 && prevComplete ? true : isExpanded;
+                          if (!showCard) return null;
+                          const isNext = i === 0 && prevComplete && !isExpanded;
+                          return (
+                            <div
+                              key={a.id}
+                              className={`rounded-lg p-3 text-center border border-border/30 ${
+                                isNext
+                                  ? 'bg-muted/20 opacity-60'
+                                  : 'bg-muted/10 opacity-50'
+                              }`}
+                            >
+                              <div className="flex justify-center">
+                                <AIcon className="w-6 h-6 text-foreground/40" />
+                              </div>
+                              <h4 className="mt-1 text-[11px] font-semibold text-foreground leading-tight">{a.title}</h4>
+                              <p className="mt-0.5 text-[10px] text-muted-foreground leading-tight">{a.description}</p>
+                              <span className="mt-1 inline-block text-[10px] text-muted-foreground">
+                                {isNext ? 'Next target' : <Lock className="w-3 h-3 inline" />}
+                              </span>
+                            </div>
+                          );
+                        })}
+
+                        {/* Collapsed count pill */}
+                        {!isExpanded && tierLocked.length > (prevComplete ? 1 : 0) && (
+                          <button
+                            onClick={() => toggleTier(expandKey)}
+                            className="rounded-lg p-3 text-center bg-muted/10 opacity-40 flex flex-col items-center justify-center gap-1 hover:opacity-60 transition-opacity"
                           >
-                            <div className="flex justify-center">
-                              <AIcon className="w-6 h-6 text-foreground/80" />
-                            </div>
-                            <h4 className="mt-1 text-[11px] font-semibold text-foreground leading-tight">{a.title}</h4>
-                            <p className="mt-0.5 text-[10px] text-muted-foreground leading-tight">{a.description}</p>
-                            <span className="mt-1 inline-block rounded-full bg-primary/20 px-2 py-0.5 text-[10px] font-medium text-primary">
-                              {stored.unlockedDates[a.id]
-                                ? new Date(stored.unlockedDates[a.id]).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' })
-                                : 'Earned'}
-                            </span>
-                          </motion.div>
-                        );
-                      })}
-
-                      {/* Next locked target */}
-                      {prevComplete && tierLocked.slice(0, 1).map(a => {
-                        const AIcon = CATEGORY_ICONS[a.category];
-                        return (
-                          <div key={a.id} className="rounded-lg p-3 text-center bg-muted/20 border border-border/30 opacity-60">
-                            <div className="flex justify-center">
-                              <AIcon className="w-6 h-6 text-foreground/50" />
-                            </div>
-                            <h4 className="mt-1 text-[11px] font-semibold text-foreground leading-tight">{a.title}</h4>
-                            <p className="mt-0.5 text-[10px] text-muted-foreground leading-tight">{a.description}</p>
-                            <span className="mt-1 inline-block text-[10px] text-muted-foreground">Next target</span>
-                          </div>
-                        );
-                      })}
-
-                      {/* Remaining locked */}
-                      {tierLocked.length > 1 && (
-                        <div className="rounded-lg p-3 text-center bg-muted/10 opacity-40 flex flex-col items-center justify-center gap-1">
-                          <Lock className="w-4 h-4 text-muted-foreground" />
-                          <p className="text-[10px] text-muted-foreground">{tierLocked.length - (prevComplete ? 1 : 0)} more locked</p>
-                        </div>
-                      )}
+                            <Lock className="w-4 h-4 text-muted-foreground" />
+                            <p className="text-[10px] text-muted-foreground">
+                              +{tierLocked.length - (prevComplete ? 1 : 0)} more
+                            </p>
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 );
