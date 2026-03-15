@@ -661,7 +661,7 @@ function AchievementsTab({ isDemoMode }: { isDemoMode: boolean }) {
           initial={{ width: 0 }}
           animate={{ width: `${pct}%` }}
           transition={{ duration: 0.8, ease: 'easeOut' }}
-          className="h-full bg-gradient-to-r from-amber-400 to-yellow-500 rounded-full"
+          className="h-full bg-gradient-to-r from-pink-400 to-rose-400 rounded-full"
         />
       </div>
 
@@ -780,10 +780,10 @@ function AchievementsTab({ isDemoMode }: { isDemoMode: boolean }) {
                               className="rounded-lg p-3 text-center bg-background/60"
                             >
                               <div className="flex justify-center">
-                                <AIcon className="w-7 h-7 text-foreground/80" />
+                                <AIcon className="w-5 h-5 text-foreground/80" />
                               </div>
-                              <h4 className="mt-1.5 text-xs font-semibold text-foreground leading-tight">{a.title}</h4>
-                              <p className="mt-0.5 text-[11px] text-muted-foreground leading-tight">{a.description}</p>
+                              <h4 className="mt-1.5 text-sm font-semibold text-foreground leading-tight">{a.title}</h4>
+                              <p className="mt-0.5 text-xs text-muted-foreground leading-tight">{a.description}</p>
                               <span className="mt-1.5 inline-block rounded-full bg-primary/20 px-2 py-0.5 text-[10px] font-medium text-primary">
                                 {stored.unlockedDates[a.id]
                                   ? new Date(stored.unlockedDates[a.id]).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' })

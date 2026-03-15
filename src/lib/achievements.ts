@@ -62,7 +62,7 @@ export const CATEGORY_META: Record<AchievementCategory, { label: string; emoji: 
 // ─── Tier meta ────────────────────────────────────────────────────────────────
 
 export const TIER_META: Record<AchievementTier, { label: string; color: string; borderColor: string; badgeColor: string }> = {
-  beginner:     { label: 'Beginner',     color: 'from-pink-200/20 to-rose-100/10',         borderColor: 'border-pink-300/40',     badgeColor: 'bg-pink-200/30 text-pink-500 dark:text-pink-300' },
+  beginner:     { label: 'Beginner',     color: 'from-pink-200/30 to-rose-100/20',         borderColor: 'border-pink-400/60',     badgeColor: 'bg-pink-200/30 text-pink-500 dark:text-pink-300' },
   intermediate: { label: 'Intermediate', color: 'from-blue-500/20 to-cyan-400/10',         borderColor: 'border-blue-400/40',     badgeColor: 'bg-blue-500/15 text-blue-600 dark:text-blue-400' },
   pro:          { label: 'Pro',          color: 'from-violet-500/20 to-purple-400/10',     borderColor: 'border-violet-400/40',   badgeColor: 'bg-violet-500/15 text-violet-600 dark:text-violet-400' },
   elite:        { label: 'Elite',        color: 'from-amber-500/20 to-yellow-400/10',      borderColor: 'border-amber-400/40',    badgeColor: 'bg-amber-500/15 text-amber-600 dark:text-amber-400' },
