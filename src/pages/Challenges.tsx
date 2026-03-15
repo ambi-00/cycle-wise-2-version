@@ -773,11 +773,11 @@ function AchievementsTab({ isDemoMode }: { isDemoMode: boolean }) {
                               className="rounded-lg p-3 text-center bg-background/60"
                             >
                               <div className="flex justify-center">
-                                <AIcon className="w-6 h-6 text-foreground/80" />
+                                <AIcon className="w-7 h-7 text-foreground/80" />
                               </div>
-                              <h4 className="mt-1 text-[11px] font-semibold text-foreground leading-tight">{a.title}</h4>
-                              <p className="mt-0.5 text-[10px] text-muted-foreground leading-tight">{a.description}</p>
-                              <span className="mt-1 inline-block rounded-full bg-primary/20 px-2 py-0.5 text-[10px] font-medium text-primary">
+                              <h4 className="mt-1.5 text-xs font-semibold text-foreground leading-tight">{a.title}</h4>
+                              <p className="mt-0.5 text-[11px] text-muted-foreground leading-tight">{a.description}</p>
+                              <span className="mt-1.5 inline-block rounded-full bg-primary/20 px-2 py-0.5 text-[10px] font-medium text-primary">
                                 {stored.unlockedDates[a.id]
                                   ? new Date(stored.unlockedDates[a.id]).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' })
                                   : 'Earned'}
