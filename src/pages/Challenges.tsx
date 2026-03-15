@@ -54,10 +54,104 @@ const badgeDefinitions = [
   { name: "Comeback Girl", icon: "🔥", description: "Recovered from 10%+ drawdown" },
 ];
 
+// ─── Demo data ───────────────────────────────────────────────────────────────
+
+const DEMO_USER_ID = 'demo-you';
+
+const DEMO_LEADERBOARDS = [
+  // profit
+  [
+    { id: '1', user_id: 'u1', rank: 1, score: 3847, total_trades: 64, profiles: { name: 'Luna_T', avatar_url: '🌙' } },
+    { id: '2', user_id: DEMO_USER_ID, rank: 2, score: 2614, total_trades: 48, profiles: { name: 'You', avatar_url: '✨' } },
+    { id: '3', user_id: 'u3', rank: 3, score: 1980, total_trades: 37, profiles: { name: 'Maya_FX', avatar_url: '🦋' } },
+    { id: '4', user_id: 'u4', rank: 4, score: 1243, total_trades: 29, profiles: { name: 'Sarah_W', avatar_url: '🌸' } },
+    { id: '5', user_id: 'u5', rank: 5, score: 876,  total_trades: 22, profiles: { name: 'Kim_Pro', avatar_url: '💎' } },
+  ],
+  // discipline
+  [
+    { id: '6', user_id: 'u4', rank: 1, score: 94, total_trades: 29, profiles: { name: 'Sarah_W', avatar_url: '🌸' } },
+    { id: '7', user_id: 'u3', rank: 2, score: 88, total_trades: 37, profiles: { name: 'Maya_FX', avatar_url: '🦋' } },
+    { id: '8', user_id: DEMO_USER_ID, rank: 3, score: 83, total_trades: 48, profiles: { name: 'You', avatar_url: '✨' } },
+    { id: '9', user_id: 'u1', rank: 4, score: 71, total_trades: 64, profiles: { name: 'Luna_T', avatar_url: '🌙' } },
+    { id: '10', user_id: 'u5', rank: 5, score: 64, total_trades: 22, profiles: { name: 'Kim_Pro', avatar_url: '💎' } },
+  ],
+  // risk (lower = better drawdown)
+  [
+    { id: '11', user_id: 'u5', rank: 1, score: 180, total_trades: 22, profiles: { name: 'Kim_Pro', avatar_url: '💎' } },
+    { id: '12', user_id: DEMO_USER_ID, rank: 2, score: 240, total_trades: 48, profiles: { name: 'You', avatar_url: '✨' } },
+    { id: '13', user_id: 'u3', rank: 3, score: 410, total_trades: 37, profiles: { name: 'Maya_FX', avatar_url: '🦋' } },
+    { id: '14', user_id: 'u1', rank: 4, score: 680, total_trades: 64, profiles: { name: 'Luna_T', avatar_url: '🌙' } },
+    { id: '15', user_id: 'u4', rank: 5, score: 920, total_trades: 29, profiles: { name: 'Sarah_W', avatar_url: '🌸' } },
+  ],
+  // cycle
+  [
+    { id: '16', user_id: DEMO_USER_ID, rank: 1, score: 2.8, total_trades: 48, profiles: { name: 'You', avatar_url: '✨' } },
+    { id: '17', user_id: 'u1', rank: 2, score: 2.1, total_trades: 64, profiles: { name: 'Luna_T', avatar_url: '🌙' } },
+    { id: '18', user_id: 'u4', rank: 3, score: 1.4, total_trades: 29, profiles: { name: 'Sarah_W', avatar_url: '🌸' } },
+    { id: '19', user_id: 'u5', rank: 4, score: 0.6, total_trades: 22, profiles: { name: 'Kim_Pro', avatar_url: '💎' } },
+    { id: '20', user_id: 'u3', rank: 5, score: -0.3, total_trades: 37, profiles: { name: 'Maya_FX', avatar_url: '🦋' } },
+  ],
+];
+
+const DEMO_XP_LEADERBOARDS = {
+  weekly: [
+    { id: 'u1', name: 'Luna_T', avatar_url: '🌙', weekly_xp: 840, monthly_xp: 2410, total_xp: 8210, current_rank: 'gold' },
+    { id: DEMO_USER_ID, name: 'You', avatar_url: '✨', weekly_xp: 720, monthly_xp: 3240, total_xp: 9840, current_rank: 'gold' },
+    { id: 'u3', name: 'Maya_FX', avatar_url: '🦋', weekly_xp: 590, monthly_xp: 1980, total_xp: 6540, current_rank: 'silver' },
+    { id: 'u4', name: 'Sarah_W', avatar_url: '🌸', weekly_xp: 450, monthly_xp: 2860, total_xp: 12480, current_rank: 'platinum' },
+    { id: 'u5', name: 'Kim_Pro', avatar_url: '💎', weekly_xp: 310, monthly_xp: 1640, total_xp: 5120, current_rank: 'silver' },
+  ],
+  monthly: [
+    { id: DEMO_USER_ID, name: 'You', avatar_url: '✨', weekly_xp: 720, monthly_xp: 3240, total_xp: 9840, current_rank: 'gold' },
+    { id: 'u4', name: 'Sarah_W', avatar_url: '🌸', weekly_xp: 450, monthly_xp: 2860, total_xp: 12480, current_rank: 'platinum' },
+    { id: 'u1', name: 'Luna_T', avatar_url: '🌙', weekly_xp: 840, monthly_xp: 2410, total_xp: 8210, current_rank: 'gold' },
+    { id: 'u3', name: 'Maya_FX', avatar_url: '🦋', weekly_xp: 590, monthly_xp: 1980, total_xp: 6540, current_rank: 'silver' },
+    { id: 'u5', name: 'Kim_Pro', avatar_url: '💎', weekly_xp: 310, monthly_xp: 1640, total_xp: 5120, current_rank: 'silver' },
+  ],
+  alltime: [
+    { id: 'u4', name: 'Sarah_W', avatar_url: '🌸', weekly_xp: 450, monthly_xp: 2860, total_xp: 12480, current_rank: 'platinum' },
+    { id: DEMO_USER_ID, name: 'You', avatar_url: '✨', weekly_xp: 720, monthly_xp: 3240, total_xp: 9840, current_rank: 'gold' },
+    { id: 'u1', name: 'Luna_T', avatar_url: '🌙', weekly_xp: 840, monthly_xp: 2410, total_xp: 8210, current_rank: 'gold' },
+    { id: 'u3', name: 'Maya_FX', avatar_url: '🦋', weekly_xp: 590, monthly_xp: 1980, total_xp: 6540, current_rank: 'silver' },
+    { id: 'u5', name: 'Kim_Pro', avatar_url: '💎', weekly_xp: 310, monthly_xp: 1640, total_xp: 5120, current_rank: 'silver' },
+  ],
+};
+
+const DEMO_EARNED_BADGES = ['Miss Discipline', 'Risk Queen', 'Cycle Master'];
+
+const DEMO_UNLOCKED_IDS = [
+  'first_trade','first_note','first_screenshot','first_reflection','first_checklist',
+  'first_strategy','first_day_profit','first_week_profit','first_month_profit',
+  'first_win_streak','first_perfect_trade','first_rrr2',
+  'trades_5','trades_10','trades_25','trades_50','trades_100',
+  'best_day_100','best_day_250','best_day_500','best_day_1000',
+  'best_week_100','best_week_250','best_week_500',
+  'best_month_100','best_month_250',
+  'total_pnl_100','total_pnl_250','total_pnl_500','total_pnl_1000','total_pnl_1500',
+  'win_streak_2','win_streak_3','win_streak_5','win_streak_7',
+  'green_days_2','green_days_3','green_days_5',
+  'perfect_total_1','perfect_total_5','perfect_total_10','perfect_streak_3',
+  'rule_streak_5','rule_streak_10','rule_streak_20',
+  'rule_total_5','rule_total_10','rule_total_25',
+  'zen_streak_5','zen_streak_10',
+  'multi_strategy','strategy_loyal_20',
+  'months_active_1','months_active_3',
+];
+const DEMO_DATES: Record<string, string> = {};
+DEMO_UNLOCKED_IDS.forEach((id, i) => {
+  const d = new Date('2026-03-15');
+  d.setDate(d.getDate() - i * 2);
+  DEMO_DATES[id] = d.toISOString().slice(0, 10);
+});
+const DEMO_ACHIEVEMENT_STORED = { unlocked: [...new Set(DEMO_UNLOCKED_IDS)], unlockedDates: DEMO_DATES };
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 export default function Challenges() {
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
   const defaultTab = searchParams.get('tab') || 'performance';
+  const [isDemoMode, setIsDemoMode] = useState(false);
   const [leaderboards, setLeaderboards] = useState<any[]>([]);
   const [myPositions, setMyPositions] = useState<any[]>([]);
   const [earnedBadges, setEarnedBadges] = useState<string[]>([]);
@@ -146,6 +240,13 @@ export default function Challenges() {
   };
 
   const timeRemaining = getTimeRemaining();
+
+  // Demo-aware data
+  const activeLeaderboards   = isDemoMode ? DEMO_LEADERBOARDS   : leaderboards;
+  const activeXpLeaderboards = isDemoMode ? DEMO_XP_LEADERBOARDS : xpLeaderboards;
+  const activeEarnedBadges   = isDemoMode ? DEMO_EARNED_BADGES   : earnedBadges;
+  const activeDemoCurrentId  = isDemoMode ? DEMO_USER_ID         : currentUser?.id;
+
   return (
     <main className="pb-24 pt-20 lg:pl-64 lg:pt-8">
       <ChallengesTour />
@@ -176,6 +277,35 @@ export default function Challenges() {
             </div>
           </div>
         </div>
+
+        {/* Demo mode banner */}
+        {isDemoMode ? (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 flex items-center justify-between rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3"
+          >
+            <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+              <span className="text-base">🎭</span>
+              <span className="text-sm font-medium">Demo-Vorschau — so sieht die Seite mit echten Daten aus.</span>
+            </div>
+            <button
+              onClick={() => setIsDemoMode(false)}
+              className="ml-4 shrink-0 rounded-lg border border-amber-500/40 px-3 py-1 text-xs font-medium text-amber-600 hover:bg-amber-500/10 transition-colors dark:text-amber-400"
+            >
+              ✕ Demo beenden
+            </button>
+          </motion.div>
+        ) : (
+          <div className="mb-6 flex justify-end">
+            <button
+              onClick={() => setIsDemoMode(true)}
+              className="rounded-lg border border-border/60 px-3 py-1 text-xs font-medium text-muted-foreground hover:bg-muted/50 transition-colors"
+            >
+              🎭 Demo-Vorschau
+            </button>
+          </div>
+        )}
 
         {/* Challenge Timer */}
         <motion.div
@@ -222,7 +352,7 @@ export default function Challenges() {
               <h3 className="font-serif text-lg font-semibold text-foreground mb-6">Your Badges</h3>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
                 {badgeDefinitions.map((badge, index) => {
-                  const earned = earnedBadges.includes(badge.name);
+                  const earned = activeEarnedBadges.includes(badge.name);
                   
                   return (
                     <motion.div
@@ -271,7 +401,7 @@ export default function Challenges() {
               <TabsContent value="performance">
                 <div className="grid gap-6 lg:grid-cols-2">
                   {leaderboardConfigs.map((config, boardIndex) => {
-                    const boardData = leaderboards[boardIndex] || [];
+                    const boardData = activeLeaderboards[boardIndex] || [];
                     
                     return (
                       <motion.div
@@ -295,7 +425,7 @@ export default function Challenges() {
                             </p>
                           ) : (
                             boardData.map((entry: any, index: number) => {
-                              const isCurrentUser = entry.user_id === currentUser?.id;
+                              const isCurrentUser = entry.user_id === activeDemoCurrentId;
                               const profile = entry.profiles;
                               const displayName = profile?.name || 'Anonym';
                               
@@ -350,7 +480,7 @@ export default function Challenges() {
                     { key: 'monthly', title: 'This Month', icon: Star, gradient: 'from-purple-400/20 to-pink-300/20' },
                     { key: 'alltime', title: 'All-Time', icon: Trophy, gradient: 'from-amber-400/20 to-yellow-300/20' },
                   ].map((period, periodIndex) => {
-                    const boardData = xpLeaderboards[period.key as keyof typeof xpLeaderboards] || [];
+                    const boardData = activeXpLeaderboards[period.key as keyof typeof activeXpLeaderboards] || [];
                     
                     return (
                       <motion.div
@@ -377,7 +507,7 @@ export default function Challenges() {
                             </p>
                           ) : (
                             boardData.map((entry: any, index: number) => {
-                              const isCurrentUser = entry.id === currentUser?.id;
+                              const isCurrentUser = entry.id === activeDemoCurrentId;
                               const displayName = entry.name || 'Anonym';
                               const rankData = RANKS[entry.current_rank as keyof typeof RANKS] || RANKS.bronze;
                               const xpAmount = period.key === 'weekly' 
@@ -435,7 +565,7 @@ export default function Challenges() {
 
               {/* Achievements */}
               <TabsContent value="achievements">
-                <AchievementsTab />
+                <AchievementsTab isDemoMode={isDemoMode} />
               </TabsContent>
             </Tabs>
           </>
@@ -445,10 +575,11 @@ export default function Challenges() {
   );
 }
 
-// ─── Achievements Tab Component ───────────────────────────────────────────────
+// ─── Achievements Tab ────────────────────────────────────────────────────────
 
-function AchievementsTab() {
-  const stored = loadUnlockedAchievements();
+function AchievementsTab({ isDemoMode }: { isDemoMode: boolean }) {
+  const realStored = loadUnlockedAchievements();
+  const stored = isDemoMode ? DEMO_ACHIEVEMENT_STORED : realStored;
   const trades = loadTradesFromLocalStorage();
   const unlockedSet = new Set(stored.unlocked);
 
@@ -471,7 +602,11 @@ function AchievementsTab() {
 
   return (
     <div className="space-y-6">
-      {/* Stats banner */}
+      {!isDemoMode && realStored.unlocked.length === 0 && (
+        <div className="rounded-xl border border-border/50 bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
+          Noch keine Achievements — logge deinen ersten Trade! Du kannst oben die Demo-Vorschau aktivieren.
+        </div>
+      )}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
