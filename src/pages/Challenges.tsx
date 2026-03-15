@@ -3,11 +3,17 @@ import { Trophy, Award, Medal, Shield, Calendar, RefreshCw, Zap, Star } from "lu
 import { ChallengePrivacySettings } from "@/components/ChallengePrivacySettings";
 import ChallengesTour from "@/components/ChallengesTour";
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { loadLeaderboard, loadMyChallengPositions, updateChallengeScores, checkAndAwardBadges, getXPLeaderboard, RANKS } from "@/lib/supabaseHelpers";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  ALL_ACHIEVEMENTS, CATEGORY_META, loadUnlockedAchievements,
+  type Achievement, type AchievementCategory,
+} from "@/lib/achievements";
+import { loadTradesFromLocalStorage } from "@/lib/tradeLoaders";
 
 const leaderboardConfigs = [
   {
@@ -50,6 +56,8 @@ const badgeDefinitions = [
 
 export default function Challenges() {
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
+  const defaultTab = searchParams.get('tab') || 'performance';
   const [leaderboards, setLeaderboards] = useState<any[]>([]);
   const [myPositions, setMyPositions] = useState<any[]>([]);
   const [earnedBadges, setEarnedBadges] = useState<string[]>([]);
@@ -243,8 +251,8 @@ export default function Challenges() {
             </motion.div>
 
             {/* Tabbed Leaderboards */}
-            <Tabs defaultValue="performance" className="mb-8 leaderboard-tabs">
-              <TabsList className="grid w-full grid-cols-2 mb-6">
+            <Tabs defaultValue={defaultTab} className="mb-8 leaderboard-tabs">
+              <TabsList className="grid w-full grid-cols-3 mb-6">
                 <TabsTrigger value="performance" className="flex items-center gap-2">
                   <Trophy className="h-4 w-4" />
                   Performance
@@ -252,6 +260,10 @@ export default function Challenges() {
                 <TabsTrigger value="xp" className="flex items-center gap-2">
                   <Zap className="h-4 w-4" />
                   XP Rankings
+                </TabsTrigger>
+                <TabsTrigger value="achievements" className="flex items-center gap-2">
+                  <Medal className="h-4 w-4" />
+                  Achievements
                 </TabsTrigger>
               </TabsList>
 
@@ -420,10 +432,152 @@ export default function Challenges() {
                   })}
                 </div>
               </TabsContent>
+
+              {/* Achievements */}
+              <TabsContent value="achievements">
+                <AchievementsTab />
+              </TabsContent>
             </Tabs>
           </>
         )}
       </motion.div>
     </main>
+  );
+}
+
+// ─── Achievements Tab Component ───────────────────────────────────────────────
+
+function AchievementsTab() {
+  const stored = loadUnlockedAchievements();
+  const trades = loadTradesFromLocalStorage();
+  const unlockedSet = new Set(stored.unlocked);
+
+  // Group achievements by category
+  const categories = Object.keys(CATEGORY_META) as AchievementCategory[];
+
+  const totalUnlocked = stored.unlocked.length;
+  const totalCount = ALL_ACHIEVEMENTS.length;
+  const pct = totalCount > 0 ? Math.round((totalUnlocked / totalCount) * 100) : 0;
+
+  // Best category by unlock ratio
+  const bestCat = categories.reduce((best, cat) => {
+    const catAchs = ALL_ACHIEVEMENTS.filter(a => a.category === cat);
+    const unlocked = catAchs.filter(a => unlockedSet.has(a.id)).length;
+    const ratio = catAchs.length > 0 ? unlocked / catAchs.length : 0;
+    const bestRatio = ALL_ACHIEVEMENTS.filter(a => a.category === best).filter(a => unlockedSet.has(a.id)).length
+      / (ALL_ACHIEVEMENTS.filter(a => a.category === best).length || 1);
+    return ratio > bestRatio ? cat : best;
+  }, categories[0]);
+
+  return (
+    <div className="space-y-6">
+      {/* Stats banner */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="grid grid-cols-3 gap-4 rounded-2xl bg-card p-6 shadow-card"
+      >
+        <div className="text-center">
+          <p className="text-2xl font-bold text-foreground">{totalUnlocked}</p>
+          <p className="text-xs text-muted-foreground mt-1">Achieved</p>
+        </div>
+        <div className="text-center border-x border-border/40">
+          <p className="text-2xl font-bold text-foreground">{totalCount}</p>
+          <p className="text-xs text-muted-foreground mt-1">Total</p>
+        </div>
+        <div className="text-center">
+          <p className="text-2xl font-bold text-foreground">{pct}%</p>
+          <p className="text-xs text-muted-foreground mt-1">Completed</p>
+        </div>
+      </motion.div>
+
+      {/* Overall progress bar */}
+      <div className="w-full bg-muted/40 rounded-full h-2 overflow-hidden">
+        <motion.div
+          initial={{ width: 0 }}
+          animate={{ width: `${pct}%` }}
+          transition={{ duration: 0.8, ease: 'easeOut' }}
+          className="h-full bg-gradient-to-r from-amber-400 to-yellow-500 rounded-full"
+        />
+      </div>
+
+      {/* Categories */}
+      {categories.map((cat, catIdx) => {
+        const meta = CATEGORY_META[cat];
+        const catAchs = ALL_ACHIEVEMENTS.filter(a => a.category === cat);
+        const unlocked = catAchs.filter(a => unlockedSet.has(a.id));
+        const locked = catAchs.filter(a => !unlockedSet.has(a.id));
+        const catPct = catAchs.length > 0 ? Math.round((unlocked.length / catAchs.length) * 100) : 0;
+
+        return (
+          <motion.div
+            key={cat}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: catIdx * 0.04 }}
+            className="rounded-2xl bg-card p-6 shadow-card"
+          >
+            {/* Category header */}
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">{meta.emoji}</span>
+                <h3 className="font-serif text-base font-semibold text-foreground">{meta.label}</h3>
+              </div>
+              <span className="text-xs text-muted-foreground">{unlocked.length} / {catAchs.length}</span>
+            </div>
+
+            {/* Category progress bar */}
+            <div className="w-full bg-muted/40 rounded-full h-1.5 mb-5 overflow-hidden">
+              <div
+                className={`h-full bg-gradient-to-r ${meta.gradient.replace('/20', '')} rounded-full transition-all duration-700`}
+                style={{ width: `${catPct}%` }}
+              />
+            </div>
+
+            {/* Achievements grid */}
+            <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+              {/* Unlocked */}
+              {unlocked.map((a, i) => (
+                <motion.div
+                  key={a.id}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: catIdx * 0.04 + i * 0.03 }}
+                  className="rounded-xl p-3 text-center bg-gradient-to-br from-secondary/50 to-accent/30"
+                >
+                  <span className="text-2xl">{a.emoji}</span>
+                  <h4 className="mt-1.5 text-xs font-semibold text-foreground leading-tight">{a.title}</h4>
+                  <p className="mt-0.5 text-[10px] text-muted-foreground leading-tight">{a.description}</p>
+                  <span className="mt-1.5 inline-block rounded-full bg-primary/20 px-2 py-0.5 text-[10px] font-medium text-primary">
+                    {stored.unlockedDates[a.id] ? new Date(stored.unlockedDates[a.id]).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' }) : 'Earned'}
+                  </span>
+                </motion.div>
+              ))}
+
+              {/* Next target (first locked) — slightly visible */}
+              {locked.slice(0, 1).map(a => (
+                <div
+                  key={a.id}
+                  className="rounded-xl p-3 text-center bg-muted/20 border border-border/40 opacity-60"
+                >
+                  <span className="text-2xl">{a.emoji}</span>
+                  <h4 className="mt-1.5 text-xs font-semibold text-foreground leading-tight">{a.title}</h4>
+                  <p className="mt-0.5 text-[10px] text-muted-foreground leading-tight">{a.description}</p>
+                  <span className="mt-1.5 inline-block text-[10px] text-muted-foreground">Next target</span>
+                </div>
+              ))}
+
+              {/* Remaining locked count */}
+              {locked.length > 1 && (
+                <div className="rounded-xl p-3 text-center bg-muted/10 opacity-40 flex flex-col items-center justify-center gap-1">
+                  <span className="text-xl">🔒</span>
+                  <p className="text-xs text-muted-foreground">{locked.length - 1} more locked</p>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        );
+      })}
+    </div>
   );
 }

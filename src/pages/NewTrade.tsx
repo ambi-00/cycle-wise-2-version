@@ -11,6 +11,8 @@ import { Badge } from '@/components/ui/badge';
 import { Info, ChevronDown } from 'lucide-react';
 import { loadCycleSettings } from '@/lib/demoDataLoaders';
 import { saveTrade, updateTrade, uploadTradeImage, type TradeInsert } from '@/lib/supabaseHelpers';
+import { checkAndUnlockAchievements } from '@/lib/achievements';
+import { showAchievementNotification } from '@/components/AchievementToast';
 import { useToast } from '@/hooks/use-toast';
 import { useSubscription } from '@/hooks/use-subscription';
 import TradeReviewModal, { type TradeExecutionReview } from '@/components/TradeReviewModal';
@@ -760,7 +762,11 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
 
       // Note: localStorage caching is handled automatically by saveTrade() via syncManager
       // This ensures offline-first functionality without redundant writes
-      
+
+      // Check for newly unlocked achievements
+      const newAchievements = checkAndUnlockAchievements();
+      newAchievements.forEach(a => showAchievementNotification(a));
+
       navigate('/journal');
     } catch (e: any) {
       console.error('Save error:', e);
@@ -790,6 +796,10 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
       setPendingTradeData(null);
       setPendingTradeId(null);
       setPendingIsEdit(false);
+
+      // Check for newly unlocked achievements
+      const newAchievements = checkAndUnlockAchievements();
+      newAchievements.forEach(a => showAchievementNotification(a));
 
       navigate('/journal');
     } catch (e: any) {

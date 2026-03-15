@@ -8,6 +8,7 @@ import { Navigation } from "@/components/Navigation";
 import AIChatbot from "@/components/AIChatbot";
 import AIInsightsNotification from "@/components/AIInsightsNotification";
 import { XPToastContainer } from "@/components/XPToast";
+import { AchievementToastContainer } from "@/components/AchievementToast";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { useEffect } from "react";
 import { initializeSyncManager } from "@/lib/syncManager";
@@ -80,6 +81,9 @@ const AppContent = () => {
       {/* XP Toast Notifications */}
       <XPToastContainer />
 
+      {/* Achievement Toast Notifications */}
+      <AchievementToastContainer />
+
       {/* Error Boundary wrapping all routes */}
       <ErrorBoundary>
         <Routes>
@@ -140,6 +144,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <XPToastContainer />
+      <AchievementToastContainer />
       <ThemeProvider attribute="class" defaultTheme="light">
         <BrowserRouter>
           <AppContent />
