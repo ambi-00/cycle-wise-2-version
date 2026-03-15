@@ -603,10 +603,10 @@ const CATEGORY_ICONS: Record<AchievementCategory, React.ComponentType<{ classNam
 const TIER_ORDER: AchievementTier[] = ['beginner', 'intermediate', 'pro', 'elite'];
 
 const TIER_BAR_COLOR: Record<AchievementTier, string> = {
-  beginner:     'bg-pink-400',
-  intermediate: 'bg-blue-500',
-  pro:          'bg-violet-500',
-  elite:        'bg-amber-500',
+  beginner:     'bg-rose-300',
+  intermediate: 'bg-sky-300',
+  pro:          'bg-violet-300',
+  elite:        'bg-amber-300',
 };
 
 function AchievementsTab({ isDemoMode }: { isDemoMode: boolean }) {
@@ -661,7 +661,7 @@ function AchievementsTab({ isDemoMode }: { isDemoMode: boolean }) {
           initial={{ width: 0 }}
           animate={{ width: `${pct}%` }}
           transition={{ duration: 0.8, ease: 'easeOut' }}
-          className="h-full bg-gradient-to-r from-pink-400 to-rose-400 rounded-full"
+          className="h-full bg-primary/80 rounded-full"
         />
       </div>
 

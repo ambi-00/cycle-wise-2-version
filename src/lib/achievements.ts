@@ -62,10 +62,10 @@ export const CATEGORY_META: Record<AchievementCategory, { label: string; emoji: 
 // ─── Tier meta ────────────────────────────────────────────────────────────────
 
 export const TIER_META: Record<AchievementTier, { label: string; color: string; borderColor: string; badgeColor: string }> = {
-  beginner:     { label: 'Beginner',     color: 'from-pink-200/30 to-rose-100/20',         borderColor: 'border-pink-400/60',     badgeColor: 'bg-pink-200/30 text-pink-500 dark:text-pink-300' },
-  intermediate: { label: 'Intermediate', color: 'from-blue-500/20 to-cyan-400/10',         borderColor: 'border-blue-400/40',     badgeColor: 'bg-blue-500/15 text-blue-600 dark:text-blue-400' },
-  pro:          { label: 'Pro',          color: 'from-violet-500/20 to-purple-400/10',     borderColor: 'border-violet-400/40',   badgeColor: 'bg-violet-500/15 text-violet-600 dark:text-violet-400' },
-  elite:        { label: 'Elite',        color: 'from-amber-500/20 to-yellow-400/10',      borderColor: 'border-amber-400/40',    badgeColor: 'bg-amber-500/15 text-amber-600 dark:text-amber-400' },
+  beginner:     { label: 'Beginner',     color: 'from-rose-200/30 to-pink-100/20',         borderColor: 'border-rose-300/60',     badgeColor: 'bg-rose-200/30 text-rose-500 dark:text-rose-300' },
+  intermediate: { label: 'Intermediate', color: 'from-sky-400/20 to-cyan-300/10',         borderColor: 'border-sky-300/50',     badgeColor: 'bg-sky-400/15 text-sky-600 dark:text-sky-300' },
+  pro:          { label: 'Pro',          color: 'from-violet-400/20 to-purple-300/10',     borderColor: 'border-violet-300/50',   badgeColor: 'bg-violet-400/15 text-violet-500 dark:text-violet-300' },
+  elite:        { label: 'Elite',        color: 'from-amber-400/20 to-yellow-300/10',      borderColor: 'border-amber-300/50',    badgeColor: 'bg-amber-400/15 text-amber-500 dark:text-amber-300' },
 };
 
 // How many milestones per tier (roughly quarter splits — overridden per category in buildAchievements)
