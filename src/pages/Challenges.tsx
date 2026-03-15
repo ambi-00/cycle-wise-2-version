@@ -1,8 +1,10 @@
 import { motion } from "framer-motion";
-import { Trophy, Award, Medal, Shield, Calendar, RefreshCw, Zap, Star } from "lucide-react";
+import { Trophy, Award, Medal, Shield, Calendar, RefreshCw, Zap, Star,
+  Sparkles, BarChart2, TrendingUp, CalendarDays, LineChart, Flame,
+  CheckCircle2, Target, ClipboardList, Wind, CalendarCheck, Lock } from "lucide-react";
 import { ChallengePrivacySettings } from "@/components/ChallengePrivacySettings";
 import ChallengesTour from "@/components/ChallengesTour";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { loadLeaderboard, loadMyChallengPositions, updateChallengeScores, checkAndAwardBadges, getXPLeaderboard, RANKS } from "@/lib/supabaseHelpers";
 import { Button } from "@/components/ui/button";
@@ -576,6 +578,25 @@ export default function Challenges() {
   );
 }
 
+// ─── Category icon map ──────────────────────────────────────────────────────
+
+const CATEGORY_ICONS: Record<AchievementCategory, React.ComponentType<{ className?: string }>> = {
+  first_ever:     Sparkles,
+  trade_count:    BarChart2,
+  best_day:       TrendingUp,
+  best_week:      CalendarDays,
+  best_month:     Calendar,
+  total_pnl:      LineChart,
+  win_streak:     Flame,
+  green_days:     CheckCircle2,
+  perfect_trades: Star,
+  rule_streak:    Target,
+  rule_total:     ClipboardList,
+  zen_streak:     Wind,
+  strategy:       Trophy,
+  consistency:    CalendarCheck,
+};
+
 // ─── Achievements Tab ────────────────────────────────────────────────────────
 
 function AchievementsTab({ isDemoMode }: { isDemoMode: boolean }) {
@@ -656,7 +677,7 @@ function AchievementsTab({ isDemoMode }: { isDemoMode: boolean }) {
             {/* Category header */}
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <span className="text-xl">{meta.emoji}</span>
+                {(() => { const CatIcon = CATEGORY_ICONS[cat]; return <CatIcon className="w-5 h-5 text-foreground/70" />; })()}
                 <h3 className="font-serif text-base font-semibold text-foreground">{meta.label}</h3>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -683,7 +704,9 @@ function AchievementsTab({ isDemoMode }: { isDemoMode: boolean }) {
             {/* Achievements grid */}
             <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
               {/* Unlocked */}
-              {unlocked.map((a, i) => (
+              {unlocked.map((a, i) => {
+                const AIcon = CATEGORY_ICONS[a.category];
+                return (
                 <motion.div
                   key={a.id}
                   initial={{ opacity: 0, scale: 0.9 }}
@@ -691,32 +714,40 @@ function AchievementsTab({ isDemoMode }: { isDemoMode: boolean }) {
                   transition={{ delay: catIdx * 0.04 + i * 0.03 }}
                   className="rounded-xl p-3 text-center bg-gradient-to-br from-secondary/50 to-accent/30"
                 >
-                  <span className="text-2xl">{a.emoji}</span>
+                  <div className="flex justify-center">
+                    <AIcon className="w-7 h-7 text-foreground/80" />
+                  </div>
                   <h4 className="mt-1.5 text-xs font-semibold text-foreground leading-tight">{a.title}</h4>
                   <p className="mt-0.5 text-[10px] text-muted-foreground leading-tight">{a.description}</p>
                   <span className="mt-1.5 inline-block rounded-full bg-primary/20 px-2 py-0.5 text-[10px] font-medium text-primary">
                     {stored.unlockedDates[a.id] ? new Date(stored.unlockedDates[a.id]).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' }) : 'Earned'}
                   </span>
                 </motion.div>
-              ))}
+                );
+              })}
 
               {/* Next target (first locked) — slightly visible */}
-              {locked.slice(0, 1).map(a => (
+              {locked.slice(0, 1).map(a => {
+                const AIcon = CATEGORY_ICONS[a.category];
+                return (
                 <div
                   key={a.id}
                   className="rounded-xl p-3 text-center bg-muted/20 border border-border/40 opacity-60"
                 >
-                  <span className="text-2xl">{a.emoji}</span>
+                  <div className="flex justify-center">
+                    <AIcon className="w-7 h-7 text-foreground/60" />
+                  </div>
                   <h4 className="mt-1.5 text-xs font-semibold text-foreground leading-tight">{a.title}</h4>
                   <p className="mt-0.5 text-[10px] text-muted-foreground leading-tight">{a.description}</p>
                   <span className="mt-1.5 inline-block text-[10px] text-muted-foreground">Next target</span>
                 </div>
-              ))}
+                );
+              })}
 
               {/* Remaining locked count */}
               {locked.length > 1 && (
                 <div className="rounded-xl p-3 text-center bg-muted/10 opacity-40 flex flex-col items-center justify-center gap-1">
-                  <span className="text-xl">🔒</span>
+                  <Lock className="w-5 h-5 text-muted-foreground" />
                   <p className="text-xs text-muted-foreground">{locked.length - 1} more locked</p>
                 </div>
               )}
