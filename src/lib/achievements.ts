@@ -8,12 +8,15 @@ import { loadTradesFromLocalStorage } from '@/lib/tradeLoaders';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
+export type AchievementTier = 'beginner' | 'intermediate' | 'pro' | 'elite';
+
 export interface Achievement {
   id: string;
   title: string;
   description: string;
   emoji: string;
   category: AchievementCategory;
+  tier: AchievementTier;
 }
 
 export type AchievementCategory =
@@ -40,23 +43,51 @@ export interface UnlockedAchievements {
 // ─── Category meta ────────────────────────────────────────────────────────────
 
 export const CATEGORY_META: Record<AchievementCategory, { label: string; emoji: string; gradient: string; description: string }> = {
-  first_ever:     { label: 'First Ever',           emoji: '🐣', gradient: 'from-violet-500/20 to-purple-400/20', description: 'Deine allerersten Meilensteine: erster Trade, erste Notiz, erste Reflexion & mehr.' },
-  trade_count:    { label: 'Trade Count',           emoji: '📊', gradient: 'from-blue-500/20 to-cyan-400/20',    description: 'Wie viele Trades du insgesamt eingeloggt hast.' },
-  best_day:       { label: 'Best Day',              emoji: '💰', gradient: 'from-amber-500/20 to-yellow-400/20', description: 'Dein höchstes PnL an einem einzelnen Handelstag.' },
-  best_week:      { label: 'Best Week',             emoji: '📅', gradient: 'from-emerald-500/20 to-green-400/20',description: 'Dein höchstes PnL in einer einzelnen Handelswoche.' },
-  best_month:     { label: 'Best Month',            emoji: '📆', gradient: 'from-teal-500/20 to-emerald-400/20', description: 'Dein höchstes PnL in einem einzigen Handelsmonat.' },
-  total_pnl:      { label: 'Total PnL',             emoji: '📈', gradient: 'from-green-500/20 to-lime-400/20',   description: 'Dein kumuliertes Gesamt-PnL über alle eingeloggten Trades.' },
-  win_streak:     { label: 'Win Streak',            emoji: '🔥', gradient: 'from-orange-500/20 to-red-400/20',   description: 'Wie viele Gewinntrades du hintereinander erzielt hast.' },
-  green_days:     { label: 'Profit Days in a Row',  emoji: '💚', gradient: 'from-green-500/20 to-emerald-400/20',description: 'Wie viele profitable Handelstage du in Folge hattest.' },
-  perfect_trades: { label: '5-Star Trades',         emoji: '⭐', gradient: 'from-yellow-500/20 to-amber-400/20', description: 'Trades, die du mit 5 Sternen bewertet hast — perfekte Ausführung & Mindset.' },
-  rule_streak:    { label: 'Rule Streak',           emoji: '🎯', gradient: 'from-pink-500/20 to-rose-400/20',    description: 'Wie viele Trades du hintereinander mit vollständig eingehaltenen Regeln abgeschlossen hast.' },
-  rule_total:     { label: 'Rule Following',        emoji: '📋', gradient: 'from-fuchsia-500/20 to-pink-400/20', description: 'Gesamtzahl deiner Trades, bei denen du alle Trading-Regeln befolgt hast.' },
-  zen_streak:     { label: 'Zen Streak',            emoji: '🧘', gradient: 'from-sky-500/20 to-blue-400/20',     description: 'Trades in Folge mit einem Emotional-Rating über 2 — kein Stress-, Rache- oder FOMO-Trading.' },
-  strategy:       { label: 'Strategy',              emoji: '🏆', gradient: 'from-indigo-500/20 to-violet-400/20',description: 'Mehrere Strategien nutzen & einer Strategie über viele Trades treu bleiben.' },
-  consistency:    { label: 'Consistency',           emoji: '🗓️', gradient: 'from-indigo-500/20 to-blue-400/20',  description: 'Wie lange du über mehrere Monate hinweg regelmäßig tradest und im Journal aktiv bleibst.' },
+  first_ever:     { label: 'First Ever',           emoji: '🐣', gradient: 'from-violet-500/20 to-purple-400/20', description: 'Your very first milestones: first trade, first note, first reflection & more.' },
+  trade_count:    { label: 'Trade Count',           emoji: '📊', gradient: 'from-blue-500/20 to-cyan-400/20',    description: 'Total number of trades you have logged in your journal.' },
+  best_day:       { label: 'Best Day',              emoji: '💰', gradient: 'from-amber-500/20 to-yellow-400/20', description: 'Your highest PnL achieved on a single trading day.' },
+  best_week:      { label: 'Best Week',             emoji: '📅', gradient: 'from-emerald-500/20 to-green-400/20',description: 'Your highest PnL achieved within a single trading week.' },
+  best_month:     { label: 'Best Month',            emoji: '📆', gradient: 'from-teal-500/20 to-emerald-400/20', description: 'Your highest PnL achieved within a single trading month.' },
+  total_pnl:      { label: 'Total PnL',             emoji: '📈', gradient: 'from-green-500/20 to-lime-400/20',   description: 'Your cumulative all-time PnL across every logged trade.' },
+  win_streak:     { label: 'Win Streak',            emoji: '🔥', gradient: 'from-orange-500/20 to-red-400/20',   description: 'How many winning trades you closed back-to-back without a loss.' },
+  green_days:     { label: 'Profit Days in a Row',  emoji: '💚', gradient: 'from-green-500/20 to-emerald-400/20',description: 'How many consecutive trading days ended in profit.' },
+  perfect_trades: { label: '5-Star Trades',         emoji: '⭐', gradient: 'from-yellow-500/20 to-amber-400/20', description: 'Trades you rated 5 stars — perfect execution, entry, and mindset.' },
+  rule_streak:    { label: 'Rule Streak',           emoji: '🎯', gradient: 'from-pink-500/20 to-rose-400/20',    description: 'How many trades in a row you closed while following all your trading rules.' },
+  rule_total:     { label: 'Rule Following',        emoji: '📋', gradient: 'from-fuchsia-500/20 to-pink-400/20', description: 'Total number of trades where you followed every rule in your checklist.' },
+  zen_streak:     { label: 'Zen Streak',            emoji: '🧘', gradient: 'from-sky-500/20 to-blue-400/20',     description: 'Consecutive trades with an emotional rating above 2 — no revenge, stress, or FOMO trading.' },
+  strategy:       { label: 'Strategy',              emoji: '🏆', gradient: 'from-indigo-500/20 to-violet-400/20',description: 'Using multiple strategies and staying loyal to one strategy across many trades.' },
+  consistency:    { label: 'Consistency',           emoji: '🗓️', gradient: 'from-indigo-500/20 to-blue-400/20',  description: 'How long you keep trading and journalling actively across multiple months.' },
 };
 
-// ─── Milestone generators ─────────────────────────────────────────────────────
+// ─── Tier meta ────────────────────────────────────────────────────────────────
+
+export const TIER_META: Record<AchievementTier, { label: string; color: string; borderColor: string; badgeColor: string }> = {
+  beginner:     { label: 'Beginner',     color: 'from-slate-400/20 to-slate-300/10',       borderColor: 'border-slate-400/40',    badgeColor: 'bg-slate-400/20 text-slate-500 dark:text-slate-400' },
+  intermediate: { label: 'Intermediate', color: 'from-blue-500/20 to-cyan-400/10',         borderColor: 'border-blue-400/40',     badgeColor: 'bg-blue-500/15 text-blue-600 dark:text-blue-400' },
+  pro:          { label: 'Pro',          color: 'from-violet-500/20 to-purple-400/10',     borderColor: 'border-violet-400/40',   badgeColor: 'bg-violet-500/15 text-violet-600 dark:text-violet-400' },
+  elite:        { label: 'Elite',        color: 'from-amber-500/20 to-yellow-400/10',      borderColor: 'border-amber-400/40',    badgeColor: 'bg-amber-500/15 text-amber-600 dark:text-amber-400' },
+};
+
+// How many milestones per tier (roughly quarter splits — overridden per category in buildAchievements)
+export const TIER_THRESHOLDS: AchievementTier[] = ['beginner', 'intermediate', 'pro', 'elite'];
+
+/** Assign tiers to a flat list: first 25% → beginner, 50% → intermediate, 75% → pro, rest → elite */
+export function assignTiers(list: Omit<Achievement, 'tier'>[], tierSplits?: number[]): Achievement[] {
+  const n = list.length;
+  const splits = tierSplits ?? [
+    Math.ceil(n * 0.25),
+    Math.ceil(n * 0.5),
+    Math.ceil(n * 0.75),
+    n,
+  ];
+  return list.map((a, i) => ({
+    ...a,
+    tier: i < splits[0] ? 'beginner'
+        : i < splits[1] ? 'intermediate'
+        : i < splits[2] ? 'pro'
+        : 'elite',
+  }));
+}
 
 function milestones(fixed: number[], step: number, max = 200_000): number[] {
   const result = [...fixed];
@@ -97,12 +128,13 @@ function buildAchievements(
   descFn: (n: number) => string,
   emoji: string
 ): Achievement[] {
-  return list.map(n => ({ id: `${prefix}_${n}`, title: titleFn(n), description: descFn(n), emoji, category: cat }));
+  const raw = list.map(n => ({ id: `${prefix}_${n}`, title: titleFn(n), description: descFn(n), emoji, category: cat }));
+  return assignTiers(raw);
 }
 
 // ─── Static "First Ever" ─────────────────────────────────────────────────────
 
-export const FIRST_EVER_ACHIEVEMENTS: Achievement[] = [
+export const FIRST_EVER_ACHIEVEMENTS: Achievement[] = assignTiers([
   { id: 'first_trade',         title: 'First Trade',           description: 'Logged your very first trade',                 emoji: '🐣', category: 'first_ever' },
   { id: 'first_note',          title: 'First Note',            description: 'Wrote your first post-trade note',             emoji: '📝', category: 'first_ever' },
   { id: 'first_screenshot',    title: 'First Screenshot',      description: 'Uploaded your first chart screenshot',         emoji: '📸', category: 'first_ever' },
@@ -118,7 +150,7 @@ export const FIRST_EVER_ACHIEVEMENTS: Achievement[] = [
   { id: 'first_perfect_trade', title: 'First Perfect Trade',   description: 'Rated your first trade with 5 stars',         emoji: '⭐', category: 'first_ever' },
   { id: 'first_rrr2',          title: 'First RRR 2+',          description: 'First trade with closed RRR >= 2.0',          emoji: '🎯', category: 'first_ever' },
   { id: 'first_cycle',         title: 'First Cycle Tracked',   description: 'Logged your first cycle check-in',            emoji: '🌙', category: 'first_ever' },
-];
+]);
 
 // ─── Dynamic achievements ─────────────────────────────────────────────────────
 
@@ -137,10 +169,10 @@ export const ZEN_STREAK_ACHIEVEMENTS     = buildAchievements(ZEN_STREAK_MILESTON
 export const STRATEGY_LOYAL_ACHIEVEMENTS = buildAchievements(STRATEGY_LOYAL_MILESTONES, 'strategy',       'strategy_loyal', n => `Strategy Loyal ${fmt(n)}`,    n => `${n} trades with the same strategy`,           '🏆');
 export const CONSISTENCY_ACHIEVEMENTS    = buildAchievements(CONSISTENCY_MILESTONES,    'consistency',    'months_active',  n => n === 1 ? '1 Month Active' : n === 12 ? '1 Year Active' : n === 24 ? '2 Years Active' : `${n} Months Active`, n => `Traded actively for ${n} month${n > 1 ? 's' : ''}`, '🗓️');
 
-export const STRATEGY_EXTRA_ACHIEVEMENTS: Achievement[] = [
+export const STRATEGY_EXTRA_ACHIEVEMENTS: Achievement[] = assignTiers([
   { id: 'multi_strategy',      title: 'Multi-Strategy',      description: 'Created 3 different strategies',                      emoji: '📋', category: 'strategy' },
   { id: 'strategy_profitable', title: 'Strategy Profitable', description: 'One strategy with win rate >= 60% (min 20 trades)',   emoji: '📈', category: 'strategy' },
-];
+]);
 
 // ─── Combined list ────────────────────────────────────────────────────────────
 

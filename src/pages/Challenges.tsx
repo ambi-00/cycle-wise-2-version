@@ -13,8 +13,9 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  ALL_ACHIEVEMENTS, CATEGORY_META, loadUnlockedAchievements,
-  type Achievement, type AchievementCategory,
+  ALL_ACHIEVEMENTS, CATEGORY_META, TIER_META,
+  loadUnlockedAchievements,
+  type Achievement, type AchievementCategory, type AchievementTier,
 } from "@/lib/achievements";
 import { loadTradesFromLocalStorage } from "@/lib/tradeLoaders";
 
@@ -599,36 +600,27 @@ const CATEGORY_ICONS: Record<AchievementCategory, React.ComponentType<{ classNam
 
 // ─── Achievements Tab ────────────────────────────────────────────────────────
 
+const TIER_ORDER: AchievementTier[] = ['beginner', 'intermediate', 'pro', 'elite'];
+
 function AchievementsTab({ isDemoMode }: { isDemoMode: boolean }) {
   const realStored = loadUnlockedAchievements();
   const stored = isDemoMode ? DEMO_ACHIEVEMENT_STORED : realStored;
-  const trades = loadTradesFromLocalStorage();
   const unlockedSet = new Set(stored.unlocked);
 
-  // Group achievements by category
   const categories = Object.keys(CATEGORY_META) as AchievementCategory[];
-
   const totalUnlocked = stored.unlocked.length;
   const totalCount = ALL_ACHIEVEMENTS.length;
   const pct = totalCount > 0 ? Math.round((totalUnlocked / totalCount) * 100) : 0;
-
-  // Best category by unlock ratio
-  const bestCat = categories.reduce((best, cat) => {
-    const catAchs = ALL_ACHIEVEMENTS.filter(a => a.category === cat);
-    const unlocked = catAchs.filter(a => unlockedSet.has(a.id)).length;
-    const ratio = catAchs.length > 0 ? unlocked / catAchs.length : 0;
-    const bestRatio = ALL_ACHIEVEMENTS.filter(a => a.category === best).filter(a => unlockedSet.has(a.id)).length
-      / (ALL_ACHIEVEMENTS.filter(a => a.category === best).length || 1);
-    return ratio > bestRatio ? cat : best;
-  }, categories[0]);
 
   return (
     <div className="space-y-6">
       {!isDemoMode && realStored.unlocked.length === 0 && (
         <div className="rounded-xl border border-border/50 bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
-          Noch keine Achievements — logge deinen ersten Trade! Du kannst oben die Demo-Vorschau aktivieren.
+          No achievements yet — log your first trade! You can enable Demo Preview above.
         </div>
       )}
+
+      {/* Overall stats */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
@@ -661,10 +653,10 @@ function AchievementsTab({ isDemoMode }: { isDemoMode: boolean }) {
       {/* Categories */}
       {categories.map((cat, catIdx) => {
         const meta = CATEGORY_META[cat];
+        const CatIcon = CATEGORY_ICONS[cat];
         const catAchs = ALL_ACHIEVEMENTS.filter(a => a.category === cat);
-        const unlocked = catAchs.filter(a => unlockedSet.has(a.id));
-        const locked = catAchs.filter(a => !unlockedSet.has(a.id));
-        const catPct = catAchs.length > 0 ? Math.round((unlocked.length / catAchs.length) * 100) : 0;
+        const unlockedCount = catAchs.filter(a => unlockedSet.has(a.id)).length;
+        const catPct = catAchs.length > 0 ? Math.round((unlockedCount / catAchs.length) * 100) : 0;
 
         return (
           <motion.div
@@ -677,7 +669,7 @@ function AchievementsTab({ isDemoMode }: { isDemoMode: boolean }) {
             {/* Category header */}
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                {(() => { const CatIcon = CATEGORY_ICONS[cat]; return <CatIcon className="w-5 h-5 text-foreground/70" />; })()}
+                <CatIcon className="w-5 h-5 text-foreground/70" />
                 <h3 className="font-serif text-base font-semibold text-foreground">{meta.label}</h3>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -690,7 +682,7 @@ function AchievementsTab({ isDemoMode }: { isDemoMode: boolean }) {
                   </TooltipContent>
                 </Tooltip>
               </div>
-              <span className="text-xs text-muted-foreground">{unlocked.length} / {catAchs.length}</span>
+              <span className="text-xs text-muted-foreground">{unlockedCount} / {catAchs.length}</span>
             </div>
 
             {/* Category progress bar */}
@@ -701,56 +693,101 @@ function AchievementsTab({ isDemoMode }: { isDemoMode: boolean }) {
               />
             </div>
 
-            {/* Achievements grid */}
-            <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-              {/* Unlocked */}
-              {unlocked.map((a, i) => {
-                const AIcon = CATEGORY_ICONS[a.category];
+            {/* Tier rows */}
+            <div className="space-y-3">
+              {TIER_ORDER.map(tier => {
+                const tierMeta = TIER_META[tier];
+                const tierAchs = catAchs.filter(a => a.tier === tier);
+                if (tierAchs.length === 0) return null;
+
+                const tierUnlocked = tierAchs.filter(a => unlockedSet.has(a.id));
+                const tierLocked   = tierAchs.filter(a => !unlockedSet.has(a.id));
+                const tierPct = Math.round((tierUnlocked.length / tierAchs.length) * 100);
+                const tierComplete = tierUnlocked.length === tierAchs.length;
+                // A tier is accessible if the previous tier is fully complete (or it's beginner)
+                const tierIdx = TIER_ORDER.indexOf(tier);
+                const prevTierAchs = tierIdx > 0 ? catAchs.filter(a => a.tier === TIER_ORDER[tierIdx - 1]) : [];
+                const prevComplete = tierIdx === 0 || prevTierAchs.every(a => unlockedSet.has(a.id));
+
                 return (
-                <motion.div
-                  key={a.id}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: catIdx * 0.04 + i * 0.03 }}
-                  className="rounded-xl p-3 text-center bg-gradient-to-br from-secondary/50 to-accent/30"
-                >
-                  <div className="flex justify-center">
-                    <AIcon className="w-7 h-7 text-foreground/80" />
+                  <div
+                    key={tier}
+                    className={`rounded-xl border p-4 transition-opacity ${
+                      prevComplete ? 'opacity-100' : 'opacity-40'
+                    } ${tierMeta.borderColor} bg-gradient-to-r ${tierMeta.color}`}
+                  >
+                    {/* Tier label row */}
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        {!prevComplete && <Lock className="w-3.5 h-3.5 text-muted-foreground" />}
+                        {tierComplete && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
+                        <span className={`text-xs font-semibold uppercase tracking-wide ${tierMeta.badgeColor.split(' ').filter(c => c.startsWith('text-')).join(' ')}`}>
+                          {tierMeta.label}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-20 bg-muted/40 rounded-full h-1 overflow-hidden">
+                          <div
+                            className="h-full bg-current rounded-full transition-all duration-500"
+                            style={{ width: `${tierPct}%` }}
+                          />
+                        </div>
+                        <span className="text-[10px] text-muted-foreground tabular-nums">{tierUnlocked.length}/{tierAchs.length}</span>
+                      </div>
+                    </div>
+
+                    {/* Achievements grid */}
+                    <div className="grid gap-2 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+                      {tierUnlocked.map((a, i) => {
+                        const AIcon = CATEGORY_ICONS[a.category];
+                        return (
+                          <motion.div
+                            key={a.id}
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ delay: catIdx * 0.04 + i * 0.02 }}
+                            className="rounded-lg p-3 text-center bg-background/60"
+                          >
+                            <div className="flex justify-center">
+                              <AIcon className="w-6 h-6 text-foreground/80" />
+                            </div>
+                            <h4 className="mt-1 text-[11px] font-semibold text-foreground leading-tight">{a.title}</h4>
+                            <p className="mt-0.5 text-[10px] text-muted-foreground leading-tight">{a.description}</p>
+                            <span className="mt-1 inline-block rounded-full bg-primary/20 px-2 py-0.5 text-[10px] font-medium text-primary">
+                              {stored.unlockedDates[a.id]
+                                ? new Date(stored.unlockedDates[a.id]).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' })
+                                : 'Earned'}
+                            </span>
+                          </motion.div>
+                        );
+                      })}
+
+                      {/* Next locked target */}
+                      {prevComplete && tierLocked.slice(0, 1).map(a => {
+                        const AIcon = CATEGORY_ICONS[a.category];
+                        return (
+                          <div key={a.id} className="rounded-lg p-3 text-center bg-muted/20 border border-border/30 opacity-60">
+                            <div className="flex justify-center">
+                              <AIcon className="w-6 h-6 text-foreground/50" />
+                            </div>
+                            <h4 className="mt-1 text-[11px] font-semibold text-foreground leading-tight">{a.title}</h4>
+                            <p className="mt-0.5 text-[10px] text-muted-foreground leading-tight">{a.description}</p>
+                            <span className="mt-1 inline-block text-[10px] text-muted-foreground">Next target</span>
+                          </div>
+                        );
+                      })}
+
+                      {/* Remaining locked */}
+                      {tierLocked.length > 1 && (
+                        <div className="rounded-lg p-3 text-center bg-muted/10 opacity-40 flex flex-col items-center justify-center gap-1">
+                          <Lock className="w-4 h-4 text-muted-foreground" />
+                          <p className="text-[10px] text-muted-foreground">{tierLocked.length - (prevComplete ? 1 : 0)} more locked</p>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <h4 className="mt-1.5 text-xs font-semibold text-foreground leading-tight">{a.title}</h4>
-                  <p className="mt-0.5 text-[10px] text-muted-foreground leading-tight">{a.description}</p>
-                  <span className="mt-1.5 inline-block rounded-full bg-primary/20 px-2 py-0.5 text-[10px] font-medium text-primary">
-                    {stored.unlockedDates[a.id] ? new Date(stored.unlockedDates[a.id]).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' }) : 'Earned'}
-                  </span>
-                </motion.div>
                 );
               })}
-
-              {/* Next target (first locked) — slightly visible */}
-              {locked.slice(0, 1).map(a => {
-                const AIcon = CATEGORY_ICONS[a.category];
-                return (
-                <div
-                  key={a.id}
-                  className="rounded-xl p-3 text-center bg-muted/20 border border-border/40 opacity-60"
-                >
-                  <div className="flex justify-center">
-                    <AIcon className="w-7 h-7 text-foreground/60" />
-                  </div>
-                  <h4 className="mt-1.5 text-xs font-semibold text-foreground leading-tight">{a.title}</h4>
-                  <p className="mt-0.5 text-[10px] text-muted-foreground leading-tight">{a.description}</p>
-                  <span className="mt-1.5 inline-block text-[10px] text-muted-foreground">Next target</span>
-                </div>
-                );
-              })}
-
-              {/* Remaining locked count */}
-              {locked.length > 1 && (
-                <div className="rounded-xl p-3 text-center bg-muted/10 opacity-40 flex flex-col items-center justify-center gap-1">
-                  <Lock className="w-5 h-5 text-muted-foreground" />
-                  <p className="text-xs text-muted-foreground">{locked.length - 1} more locked</p>
-                </div>
-              )}
             </div>
           </motion.div>
         );
