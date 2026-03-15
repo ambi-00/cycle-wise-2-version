@@ -96,19 +96,19 @@ function milestones(fixed: number[], step: number, max = 200_000): number[] {
   return result;
 }
 
-export const TRADE_COUNT_MILESTONES    = milestones([5,10,25,50,100,250,500,1000,2000,3000,5000,10000], 5000);
-export const PNL_DAY_MILESTONES        = milestones([100,250,500,1000,1500,2000,2500,3000,3500,4000,4500,5000], 1000);
-export const PNL_WEEK_MILESTONES       = milestones([100,250,500,1000,1500,2000,2500,3000], 500);
-export const PNL_MONTH_MILESTONES      = milestones([100,250,500,1000,1500,2000,2500,3000], 500);
-export const TOTAL_PNL_MILESTONES      = milestones([100,250,500,1000,1500,2000,2500,3000,5000,10000], 10000);
-export const WIN_STREAK_MILESTONES     = milestones([2,3,5,7,10,15,20,25,30], 10);
-export const GREEN_DAYS_MILESTONES     = milestones([2,3,5,7,14,21,30], 30);
-export const PERFECT_TOTAL_MILESTONES  = milestones([1,5,10,25,50,100,250,500], 500);
-export const PERFECT_STREAK_MILESTONES = milestones([3,5,10,15,20], 10);
-export const RULE_STREAK_MILESTONES    = milestones([5,10,20,30,50,75,100], 100);
-export const RULE_TOTAL_MILESTONES     = milestones([5,10,25,50,100,250,500], 500);
-export const ZEN_STREAK_MILESTONES     = milestones([5,10,20,30,50], 50);
-export const STRATEGY_LOYAL_MILESTONES = milestones([20,50,100,200,500], 500);
+export const TRADE_COUNT_MILESTONES    = milestones([5,10,25,50,100,250,500,1000,2000,3000,5000,10000], 5000, 20000);
+export const PNL_DAY_MILESTONES        = milestones([100,250,500,1000,1500,2000,2500,3000,3500,4000,4500,5000], 1000, 10000);
+export const PNL_WEEK_MILESTONES       = milestones([100,250,500,1000,1500,2000,2500,3000], 500, 10000);
+export const PNL_MONTH_MILESTONES      = milestones([100,250,500,1000,1500,2000,2500,3000], 500, 15000);
+export const TOTAL_PNL_MILESTONES      = milestones([100,250,500,1000,1500,2000,2500,3000,5000,10000], 10000, 50000);
+export const WIN_STREAK_MILESTONES     = [2, 3, 5, 7, 10, 15, 20, 25, 30, 40, 50, 75, 100];
+export const GREEN_DAYS_MILESTONES     = [2, 3, 5, 7, 10, 14, 21, 30, 50, 75, 100];
+export const PERFECT_TOTAL_MILESTONES  = milestones([1,5,10,25,50,100,250,500], 500, 500);
+export const PERFECT_STREAK_MILESTONES = [3, 5, 10, 15, 20, 30, 50, 75, 100];
+export const RULE_STREAK_MILESTONES    = [5, 10, 20, 30, 50, 75, 100];
+export const RULE_TOTAL_MILESTONES     = milestones([5,10,25,50,100,250,500], 500, 1000);
+export const ZEN_STREAK_MILESTONES     = [5, 10, 20, 30, 50, 75, 100];
+export const STRATEGY_LOYAL_MILESTONES = milestones([20,50,100,200,500], 500, 500);
 export const CONSISTENCY_MILESTONES    = [1,3,6,12,18,24,36,48,60];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
