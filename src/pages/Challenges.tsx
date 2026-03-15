@@ -602,6 +602,13 @@ const CATEGORY_ICONS: Record<AchievementCategory, React.ComponentType<{ classNam
 
 const TIER_ORDER: AchievementTier[] = ['beginner', 'intermediate', 'pro', 'elite'];
 
+const TIER_BAR_COLOR: Record<AchievementTier, string> = {
+  beginner:     'bg-pink-400',
+  intermediate: 'bg-blue-500',
+  pro:          'bg-violet-500',
+  elite:        'bg-amber-500',
+};
+
 function AchievementsTab({ isDemoMode }: { isDemoMode: boolean }) {
   const realStored = loadUnlockedAchievements();
   const stored = isDemoMode ? DEMO_ACHIEVEMENT_STORED : realStored;
@@ -696,7 +703,7 @@ function AchievementsTab({ isDemoMode }: { isDemoMode: boolean }) {
             {/* Category progress bar */}
             <div className="w-full bg-muted/40 rounded-full h-1.5 mb-5 overflow-hidden">
               <div
-                className={`h-full bg-gradient-to-r ${meta.gradient.replace('/20', '')} rounded-full transition-all duration-700`}
+                className={`h-full bg-gradient-to-r ${meta.gradient.replaceAll('/20', '')} rounded-full transition-all duration-700`}
                 style={{ width: `${catPct}%` }}
               />
             </div>
@@ -745,7 +752,7 @@ function AchievementsTab({ isDemoMode }: { isDemoMode: boolean }) {
                       <div className="flex items-center gap-2">
                         <div className="w-20 bg-muted/40 rounded-full h-1 overflow-hidden">
                           <div
-                            className="h-full bg-current rounded-full transition-all duration-500"
+                            className={`h-full ${TIER_BAR_COLOR[tier]} rounded-full transition-all duration-500`}
                             style={{ width: `${tierPct}%` }}
                           />
                         </div>
