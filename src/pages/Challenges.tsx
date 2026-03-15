@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { loadLeaderboard, loadMyChallengPositions, updateChallengeScores, checkAndAwardBadges, getXPLeaderboard, RANKS } from "@/lib/supabaseHelpers";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -657,6 +658,16 @@ function AchievementsTab({ isDemoMode }: { isDemoMode: boolean }) {
               <div className="flex items-center gap-2">
                 <span className="text-xl">{meta.emoji}</span>
                 <h3 className="font-serif text-base font-semibold text-foreground">{meta.label}</h3>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button className="flex items-center justify-center w-4 h-4 rounded-full text-[10px] font-bold leading-none text-muted-foreground/60 border border-muted-foreground/30 hover:text-muted-foreground hover:border-muted-foreground transition-colors shrink-0">
+                      i
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="max-w-[220px] text-center text-xs">
+                    {meta.description}
+                  </TooltipContent>
+                </Tooltip>
               </div>
               <span className="text-xs text-muted-foreground">{unlocked.length} / {catAchs.length}</span>
             </div>

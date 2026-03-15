@@ -39,21 +39,21 @@ export interface UnlockedAchievements {
 
 // ─── Category meta ────────────────────────────────────────────────────────────
 
-export const CATEGORY_META: Record<AchievementCategory, { label: string; emoji: string; gradient: string }> = {
-  first_ever:     { label: 'First Ever',           emoji: '🐣', gradient: 'from-violet-500/20 to-purple-400/20' },
-  trade_count:    { label: 'Trade Count',           emoji: '📊', gradient: 'from-blue-500/20 to-cyan-400/20' },
-  best_day:       { label: 'Best Day',              emoji: '💰', gradient: 'from-amber-500/20 to-yellow-400/20' },
-  best_week:      { label: 'Best Week',             emoji: '📅', gradient: 'from-emerald-500/20 to-green-400/20' },
-  best_month:     { label: 'Best Month',            emoji: '📆', gradient: 'from-teal-500/20 to-emerald-400/20' },
-  total_pnl:      { label: 'Total PnL',             emoji: '📈', gradient: 'from-green-500/20 to-lime-400/20' },
-  win_streak:     { label: 'Win Streak',            emoji: '🔥', gradient: 'from-orange-500/20 to-red-400/20' },
-  green_days:     { label: 'Profit Days in a Row',  emoji: '💚', gradient: 'from-green-500/20 to-emerald-400/20' },
-  perfect_trades: { label: '5-Star Trades',         emoji: '⭐', gradient: 'from-yellow-500/20 to-amber-400/20' },
-  rule_streak:    { label: 'Rule Streak',           emoji: '🎯', gradient: 'from-pink-500/20 to-rose-400/20' },
-  rule_total:     { label: 'Rule Following',        emoji: '📋', gradient: 'from-fuchsia-500/20 to-pink-400/20' },
-  zen_streak:     { label: 'Zen Streak',            emoji: '🧘', gradient: 'from-sky-500/20 to-blue-400/20' },
-  strategy:       { label: 'Strategy',              emoji: '🏆', gradient: 'from-indigo-500/20 to-violet-400/20' },
-  consistency:    { label: 'Consistency',           emoji: '🗓️', gradient: 'from-indigo-500/20 to-blue-400/20' },
+export const CATEGORY_META: Record<AchievementCategory, { label: string; emoji: string; gradient: string; description: string }> = {
+  first_ever:     { label: 'First Ever',           emoji: '🐣', gradient: 'from-violet-500/20 to-purple-400/20', description: 'Deine allerersten Meilensteine: erster Trade, erste Notiz, erste Reflexion & mehr.' },
+  trade_count:    { label: 'Trade Count',           emoji: '📊', gradient: 'from-blue-500/20 to-cyan-400/20',    description: 'Wie viele Trades du insgesamt eingeloggt hast.' },
+  best_day:       { label: 'Best Day',              emoji: '💰', gradient: 'from-amber-500/20 to-yellow-400/20', description: 'Dein höchstes PnL an einem einzelnen Handelstag.' },
+  best_week:      { label: 'Best Week',             emoji: '📅', gradient: 'from-emerald-500/20 to-green-400/20',description: 'Dein höchstes PnL in einer einzelnen Handelswoche.' },
+  best_month:     { label: 'Best Month',            emoji: '📆', gradient: 'from-teal-500/20 to-emerald-400/20', description: 'Dein höchstes PnL in einem einzigen Handelsmonat.' },
+  total_pnl:      { label: 'Total PnL',             emoji: '📈', gradient: 'from-green-500/20 to-lime-400/20',   description: 'Dein kumuliertes Gesamt-PnL über alle eingeloggten Trades.' },
+  win_streak:     { label: 'Win Streak',            emoji: '🔥', gradient: 'from-orange-500/20 to-red-400/20',   description: 'Wie viele Gewinntrades du hintereinander erzielt hast.' },
+  green_days:     { label: 'Profit Days in a Row',  emoji: '💚', gradient: 'from-green-500/20 to-emerald-400/20',description: 'Wie viele profitable Handelstage du in Folge hattest.' },
+  perfect_trades: { label: '5-Star Trades',         emoji: '⭐', gradient: 'from-yellow-500/20 to-amber-400/20', description: 'Trades, die du mit 5 Sternen bewertet hast — perfekte Ausführung & Mindset.' },
+  rule_streak:    { label: 'Rule Streak',           emoji: '🎯', gradient: 'from-pink-500/20 to-rose-400/20',    description: 'Wie viele Trades du hintereinander mit vollständig eingehaltenen Regeln abgeschlossen hast.' },
+  rule_total:     { label: 'Rule Following',        emoji: '📋', gradient: 'from-fuchsia-500/20 to-pink-400/20', description: 'Gesamtzahl deiner Trades, bei denen du alle Trading-Regeln befolgt hast.' },
+  zen_streak:     { label: 'Zen Streak',            emoji: '🧘', gradient: 'from-sky-500/20 to-blue-400/20',     description: 'Trades in Folge mit einem Emotional-Rating über 2 — kein Stress-, Rache- oder FOMO-Trading.' },
+  strategy:       { label: 'Strategy',              emoji: '🏆', gradient: 'from-indigo-500/20 to-violet-400/20',description: 'Mehrere Strategien nutzen & einer Strategie über viele Trades treu bleiben.' },
+  consistency:    { label: 'Consistency',           emoji: '🗓️', gradient: 'from-indigo-500/20 to-blue-400/20',  description: 'Wie lange du über mehrere Monate hinweg regelmäßig tradest und im Journal aktiv bleibst.' },
 };
 
 // ─── Milestone generators ─────────────────────────────────────────────────────
