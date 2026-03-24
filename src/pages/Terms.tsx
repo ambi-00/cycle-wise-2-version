@@ -68,14 +68,46 @@ export default function Terms() {
 
             {/* Pricing & Payment */}
             <section>
-              <h2 className="text-xl font-semibold text-foreground mb-4">4. Pricing and Payment</h2>
-              <div className="space-y-2 text-muted-foreground">
+              <h2 className="text-xl font-semibold text-foreground mb-4">4. Pricing, Payment &amp; Right of Withdrawal</h2>
+              <div className="space-y-3 text-muted-foreground">
                 <p>
-                  <strong className="text-foreground">4.1 Free use:</strong> The platform is currently available free of charge.
+                  <strong className="text-foreground">4.1 Prices:</strong> All prices are quoted in Euros (€) and are{" "}
+                  <strong className="text-foreground">inclusive of applicable VAT</strong> (inkl. MwSt.) unless stated
+                  otherwise. The exact VAT amount is shown at checkout.
                 </p>
                 <p>
-                  <strong className="text-foreground">4.2 Future pricing:</strong> We reserve the right to offer premium features for a fee in the future. Existing users will be notified in advance.
+                  <strong className="text-foreground">4.2 Payment:</strong> Payments are processed by Stripe, Inc. By
+                  subscribing, you authorise Stripe to charge your payment method on a recurring basis according to
+                  the selected billing cycle.
                 </p>
+                <p>
+                  <strong className="text-foreground">4.3 Cancellation:</strong> You may cancel your subscription at any
+                  time via Settings → Manage Subscription. Your access continues until the end of the current billing
+                  period.
+                </p>
+                <div className="rounded-xl border border-blue-300 bg-blue-50 dark:bg-blue-950/20 p-4 mt-2">
+                  <p className="font-semibold text-foreground mb-2">
+                    4.4 EU Right of Withdrawal (§ 312g BGB / Directive 2011/83/EU)
+                  </p>
+                  <p className="text-sm">
+                    As a consumer in the EU, you have the right to withdraw from this contract within{" "}
+                    <strong>14 days</strong> without giving any reason (Widerrufsrecht). The withdrawal period begins on
+                    the day the contract is concluded.
+                  </p>
+                  <p className="text-sm mt-2">
+                    <strong>Exception:</strong> The right of withdrawal expires early if we have fully performed the
+                    service and you expressly agreed that we may begin performance before the withdrawal period expired
+                    and acknowledged the loss of the right of withdrawal upon full performance (§ 356 (5) BGB).
+                  </p>
+                  <p className="text-sm mt-2">
+                    To exercise the right of withdrawal, notify us by email at{" "}
+                    <a href="mailto:privacy@cyclewise-trades.com" className="underline">
+                      privacy@cyclewise-trades.com
+                    </a>{" "}
+                    with a clear declaration of your decision to withdraw. We will confirm receipt immediately and
+                    process any refund within 14 days.
+                  </p>
+                </div>
               </div>
             </section>
 
@@ -165,10 +197,28 @@ export default function Terms() {
 
             {/* Applicable Law */}
             <section>
-              <h2 className="text-xl font-semibold text-foreground mb-4">10. Applicable Law</h2>
-              <p className="text-muted-foreground">
-                The laws of the applicable jurisdiction govern these Terms. The place of jurisdiction is [your location], to the extent permitted by law.
-              </p>
+              <h2 className="text-xl font-semibold text-foreground mb-4">10. Applicable Law &amp; Jurisdiction</h2>
+              <div className="space-y-2 text-muted-foreground">
+                <p>
+                  These Terms are governed by the law of the <strong className="text-foreground">Federal Republic of Germany</strong>,
+                  excluding its conflict-of-law provisions. The UN Convention on Contracts for the International Sale of
+                  Goods (CISG) does not apply.
+                </p>
+                <p>
+                  If you are a consumer resident in the EU, you also benefit from any mandatory protective provisions of
+                  the law of your country of residence.
+                </p>
+                <p>
+                  The exclusive place of jurisdiction for disputes arising from these Terms is the registered office of
+                  CycleWise Trades, Germany, to the extent permitted by applicable law.
+                </p>
+                <p>
+                  The European Commission provides an Online Dispute Resolution (ODR) platform at{" "}
+                  <a href="https://ec.europa.eu/consumers/odr" target="_blank" rel="noopener noreferrer" className="underline">
+                    ec.europa.eu/consumers/odr
+                  </a>. We are not obligated to participate in ADR proceedings.
+                </p>
+              </div>
             </section>
 
             {/* Severability */}

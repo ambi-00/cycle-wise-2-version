@@ -173,6 +173,10 @@ export default function Pricing() {
                     <span className="text-4xl font-bold">{tier.price}</span>
                     <span className="text-muted-foreground">/{tier.period}</span>
                   </div>
+                  {/* VAT notice – required by German law for paid tiers */}
+                  {tier.price !== '€0' && (
+                    <p className="text-xs text-muted-foreground mt-0.5">inkl. MwSt.</p>
+                  )}
                   
                   <CardDescription className="text-base mb-2">
                     {tier.description}

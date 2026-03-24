@@ -10,6 +10,7 @@ import AIInsightsNotification from "@/components/AIInsightsNotification";
 import { XPToastContainer } from "@/components/XPToast";
 import { AchievementToastContainer } from "@/components/AchievementToast";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import CookieBanner from "@/components/CookieBanner";
 import { useEffect, lazy, Suspense } from "react";
 import { initializeSyncManager } from "@/lib/syncManager";
 import { usePaymentSuccess } from "@/hooks/use-payment-success";
@@ -82,6 +83,9 @@ const AppContent = () => {
 
       {/* Achievement Toast Notifications */}
       <AchievementToastContainer />
+
+      {/* GDPR Cookie Consent Banner */}
+      <CookieBanner />
 
       {/* Error Boundary wrapping all routes */}
       <ErrorBoundary>

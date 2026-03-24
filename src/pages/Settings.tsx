@@ -10,6 +10,17 @@ import ThemeCustomizer from "@/components/ThemeCustomizer";
 import { supabase } from "@/integrations/supabase/client";
 import { useAppMode } from "@/hooks/use-app-mode";
 import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export default function Settings() {
   const { theme, setTheme } = useTheme();
@@ -82,6 +93,42 @@ export default function Settings() {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate('/login');
+  };
+
+  const handleDeleteAccount = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Delete all user data from every table (DSGVO Art. 17 – right to erasure)
+      const userTables = [
+        'trades', 'cycle_logs', 'ai_insights', 'strategies',
+        'weekly_challenges', 'xp_logs', 'user_settings',
+        'prop_firm_accounts', 'metatrader_accounts', 'mt_trades',
+        'subscriptions', 'follows',
+      ] as const;
+
+      for (const table of userTables) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (supabase.from(table as any) as any).delete().eq('user_id', user.id);
+      }
+      // Profile uses 'id' as the user identifier
+      await supabase.from('profiles').delete().eq('id', user.id);
+
+      await supabase.auth.signOut();
+
+      toast({
+        title: "Account deleted",
+        description: "All your data has been permanently deleted. Goodbye 👋",
+      });
+      navigate('/');
+    } catch (_e) {
+      toast({
+        title: "Deletion failed",
+        description: "Please contact privacy@cyclewise-trades.com to request manual deletion.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -369,10 +416,42 @@ export default function Settings() {
               <Download className="h-4 w-4 mr-2" />
               Generate Monthly Report (PDF)
             </Button>
-            <Button variant="outline" className="w-full justify-start text-destructive hover:text-destructive">
-              <Trash2 className="h-4 w-4 mr-2" />
-              Delete Account
-            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline" className="w-full justify-start text-destructive hover:text-destructive">
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete Account
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Permanently delete your account?</AlertDialogTitle>
+                  <AlertDialogDescription className="space-y-2">
+                    <span className="block">
+                      This will <strong>permanently delete</strong> all your data:
+                    </span>
+                    <ul className="list-disc list-inside text-sm space-y-0.5">
+                      <li>All trades &amp; journal entries</li>
+                      <li>Cycle tracking data</li>
+                      <li>AI insights &amp; statistics</li>
+                      <li>Strategies &amp; prop firm accounts</li>
+                    </ul>
+                    <span className="block mt-2 text-destructive font-medium">
+                      This action cannot be undone.
+                    </span>
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleDeleteAccount}
+                    className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+                  >
+                    Yes, delete everything
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </motion.section>
 
