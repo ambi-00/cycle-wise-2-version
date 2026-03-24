@@ -684,7 +684,7 @@ export default function TradeJournal() {
                   }
                 }}
                 disabled={dateFilter >= new Date().toISOString().slice(0, 10)}
-                title="Nächster Tag"
+                title="Next day"
               >
                 <ChevronRight className="h-4 w-4" />
               </Button>

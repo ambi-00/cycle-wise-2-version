@@ -94,7 +94,7 @@ export default function MetaTraderConnect() {
   const handleConnect = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!accountNumber || !password || !server) {
-      toast({ title: 'Fehler', description: 'Bitte alle Felder ausfüllen', variant: 'destructive' });
+      toast({ title: 'Error', description: 'Please fill in all fields', variant: 'destructive' });
       return;
     }
 
@@ -180,7 +180,7 @@ export default function MetaTraderConnect() {
       loadAccounts();
       toast({
         title: 'Erfolg',
-        description: !currentValue ? 'Account zu Analysen hinzugefügt' : 'Account aus Analysen entfernt',
+        description: !currentValue ? 'Account added to analytics' : 'Account removed from analytics',
       });
     } catch (error) {
       toast({ title: 'Fehler', description: 'Konnte Setting nicht aktualisieren', variant: 'destructive' });
@@ -207,7 +207,7 @@ export default function MetaTraderConnect() {
 
   const handleSync = async () => {
     if (syncOption === 'none') {
-      toast({ title: 'Info', description: 'Bitte eine Sync-Option wählen', variant: 'destructive' });
+      toast({ title: 'Info', description: 'Please select a sync option', variant: 'destructive' });
       return;
     }
 
@@ -238,7 +238,7 @@ export default function MetaTraderConnect() {
         >
           <h1 className="text-3xl font-bold mb-2">MetaTrader Connection</h1>
           <p className="text-muted-foreground">
-            Verbinde deine MetaTrader 4 & 5 Accounts für automatische Trade-Synchronisierung
+            Connect your MetaTrader 4 & 5 accounts for automatic trade synchronization
           </p>
         </motion.div>
 
@@ -340,7 +340,7 @@ export default function MetaTraderConnect() {
                       }}
                       className="w-full mt-1.5 px-3 py-2 rounded-md border border-input bg-background"
                     >
-                      <option value="">Wähle einen Server</option>
+                      <option value="">Select a server</option>
                       {MT_SERVERS[platform]?.map((s) => (
                         <option key={s.value} value={s.value}>
                           {s.name}
@@ -522,7 +522,7 @@ export default function MetaTraderConnect() {
             <Card className="max-w-md w-full">
               <CardHeader>
                 <CardTitle>Trades Synchronisieren</CardTitle>
-                <CardDescription>Wähle welche Trades du laden möchtest</CardDescription>
+                <CardDescription>Choose which trades you want to load</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-3">
@@ -564,7 +564,7 @@ export default function MetaTraderConnect() {
                     Abbrechen
                   </Button>
                   <Button className="flex-1" onClick={handleSync} disabled={isSyncing || syncOption === 'none'}>
-                    {isSyncing ? 'Lädt...' : 'Synchronisieren'}
+                    {isSyncing ? 'Loading...' : 'Synchronize'}
                   </Button>
                 </div>
               </CardContent>

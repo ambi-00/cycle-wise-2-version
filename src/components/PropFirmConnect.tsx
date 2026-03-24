@@ -243,13 +243,13 @@ export function PropFirmConnect() {
 
   const addAccount = async () => {
     if (!selectedPropFirm || !accountNumber || !password) {
-      alert('Bitte fülle alle erforderlichen Felder aus');
+      alert('Please fill in all required fields');
       return;
     }
 
     // MyFXBook doesn't require server/platform
     if (selectedPropFirm !== 'myfxbook' && !actualServer) {
-      alert('Bitte fülle alle erforderlichen Felder aus (Server)');
+      alert('Please fill in all required fields (Server)');
       return;
     }
 
