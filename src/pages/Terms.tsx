@@ -95,17 +95,26 @@ export default function Terms() {
                     the day the contract is concluded.
                   </p>
                   <p className="text-sm mt-2">
-                    <strong>Exception:</strong> The right of withdrawal expires early if we have fully performed the
-                    service and you expressly agreed that we may begin performance before the withdrawal period expired
-                    and acknowledged the loss of the right of withdrawal upon full performance (§ 356 (5) BGB).
+                    <strong>Loss of withdrawal right upon immediate service commencement (§ 356 (5) BGB):</strong>{" "}
+                    By completing your subscription purchase, you expressly request that we begin providing the digital
+                    service <strong>immediately</strong> — before the 14-day withdrawal period has expired. You
+                    acknowledge and agree that your right of withdrawal expires once we have fully commenced the service.
+                    By proceeding with payment, you confirm this agreement.
                   </p>
                   <p className="text-sm mt-2">
-                    To exercise the right of withdrawal, notify us by email at{" "}
+                    <strong>How to exercise your withdrawal right</strong> (if service has not yet fully commenced):
+                    Notify us by email at{" "}
                     <a href="mailto:privacy@cyclewise-trades.com" className="underline">
                       privacy@cyclewise-trades.com
                     </a>{" "}
-                    with a clear declaration of your decision to withdraw. We will confirm receipt immediately and
-                    process any refund within 14 days.
+                    with a clear declaration of your decision to withdraw (e.g. "I hereby withdraw from my contract").
+                    We will confirm receipt promptly and process any eligible refund within 14 days.
+                  </p>
+                  <p className="text-sm mt-3 italic text-muted-foreground">
+                    Model withdrawal form (not required): "I/We (*) hereby give notice that I/We (*) withdraw from my/our
+                    (*) contract of sale of the following goods (*)/for the provision of the following service (*),
+                    ordered on (*)/received on (*), Name of consumer(s), Address of consumer(s), Signature (only if
+                    notified on paper), Date. (*) Delete as appropriate."
                   </p>
                 </div>
               </div>
