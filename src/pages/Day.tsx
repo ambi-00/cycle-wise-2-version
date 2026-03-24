@@ -80,8 +80,10 @@ export default function Day() {
   type TradeEntry = {
     id: string;
     instrument: string;
+    symbol?: string;
     direction: "long" | "short";
     rMultiple?: number | null;
+    r_multiple?: number | null;
     pnl?: number | null;
     strategy?: string;
     // optional fields to align with RecentTradesTable.Trade shape
