@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import * as demoData from '@/data/demo-data';
 
 export type AppMode = 'USER' | 'FILMING' | 'DEMO';
 
@@ -115,8 +116,7 @@ export function useDemoTrades() {
   const { appMode } = useAppMode();
   
   if (appMode === 'DEMO') {
-    // Lazy import to avoid loading demo data in other modes
-    const { generateDemoTrades, getDemoStats } = require('@/data/demo-data');
+    const { generateDemoTrades, getDemoStats } = demoData;
     return {
       trades: generateDemoTrades(),
       stats: getDemoStats(),

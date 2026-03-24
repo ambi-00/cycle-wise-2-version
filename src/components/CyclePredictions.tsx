@@ -74,7 +74,7 @@ export default function CyclePredictions({ mode = "all" }: CyclePredictionsProps
           if (journal.hasPeriod) {
             history.push(key.replace('cw_journal_', ''));
           }
-        } catch {}
+        } catch (_e) { /* invalid JSON – skip */ }
       }
     }
     return history.sort().reverse();

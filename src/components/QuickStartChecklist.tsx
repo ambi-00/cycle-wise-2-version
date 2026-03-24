@@ -36,7 +36,7 @@ export default function QuickStartChecklist() {
             try {
               const journal = JSON.parse(localStorage.getItem(key) || '{}');
               if (journal.hasPeriod) return true;
-            } catch {}
+            } catch (_e) { /* invalid JSON – skip */ }
           }
         }
         return false;

@@ -22,8 +22,6 @@ export default function NaturalLanguageInsights() {
     const patterns: TradePattern[] = [];
     
     const trades = loadTradesFromLocalStorage();
-      }
-    }
 
     if (trades.length < 5) {
       return [{
@@ -113,7 +111,7 @@ export default function NaturalLanguageInsights() {
         if (!dayStats[dayName]) dayStats[dayName] = { wins: 0, total: 0 };
         dayStats[dayName].total++;
         if (trade.result === 'win') dayStats[dayName].wins++;
-      } catch {}
+      } catch (_e) { /* invalid date – skip */ }
     });
 
     let worstDay = '';

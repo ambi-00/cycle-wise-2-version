@@ -263,7 +263,7 @@ export function PropFirmSummary() {
         if (parsed.countryCode) setCountryCode(parsed.countryCode);
         setTaxInfo(parsed);
       }
-    } catch {}
+    } catch (_e) { /* invalid JSON – skip */ }
   }, []);
 
   const updateCountry = (code: string) => {
