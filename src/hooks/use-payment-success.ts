@@ -38,6 +38,7 @@ export function usePaymentSuccess() {
       console.log('>>> TRIGGERING payment success handler, tier:', tier);
       handlePaymentSuccess(tier);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
   async function handlePaymentSuccess(tier: string) {

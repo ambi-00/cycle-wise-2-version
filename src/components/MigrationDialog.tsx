@@ -23,6 +23,7 @@ export default function MigrationDialog() {
 
   useEffect(() => {
     checkIfMigrationNeeded();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function checkIfMigrationNeeded() {

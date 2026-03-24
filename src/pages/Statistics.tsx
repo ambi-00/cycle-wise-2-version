@@ -126,6 +126,7 @@ export default function Statistics() {
 
   useEffect(() => {
     loadAllTradesData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedAccount]);
 
   // All hooks MUST be called unconditionally, before any JSX rendering or early returns

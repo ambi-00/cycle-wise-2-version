@@ -98,6 +98,7 @@ export default function QuickStartChecklist() {
 
     // Update checked items
     updateCheckedItems();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

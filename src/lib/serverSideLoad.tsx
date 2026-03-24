@@ -62,6 +62,7 @@ export function withServerSideLoad<P extends object>(
       return () => {
         isMounted = false;
       };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []); // Empty dependency array - run only once
 
     // While loading, show blank/minimal UI (no flicker)
@@ -122,6 +123,7 @@ export function useServerSideData() {
     return () => {
       isMounted = false;
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Empty dependency array - run only once on mount
 
   return { data, loading };

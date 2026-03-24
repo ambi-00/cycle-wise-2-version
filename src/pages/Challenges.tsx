@@ -174,6 +174,7 @@ export default function Challenges() {
 
   useEffect(() => {
     getCurrentUser();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function getCurrentUser() {

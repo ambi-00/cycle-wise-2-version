@@ -42,6 +42,7 @@ export function PnLMeterWidget({ size }: Props) {
     const monthPnL = monthTrades.reduce((sum, t) => sum + (t.pnl || 0), 0);
     
     return { totalPnL, wins, losses, todayPnL, weekPnL, monthPnL, trades: trades.length };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const formatCurrency = (num: number) => {

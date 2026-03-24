@@ -10,47 +10,46 @@ import AIInsightsNotification from "@/components/AIInsightsNotification";
 import { XPToastContainer } from "@/components/XPToast";
 import { AchievementToastContainer } from "@/components/AchievementToast";
 import ErrorBoundary from "@/components/ErrorBoundary";
-import { useEffect } from "react";
+import { useEffect, lazy, Suspense } from "react";
 import { initializeSyncManager } from "@/lib/syncManager";
 import { usePaymentSuccess } from "@/hooks/use-payment-success";
 
+// Eagerly loaded (small / auth-critical pages)
 import Landing from "./pages/Landing";
-import Dashboard from "./pages/Dashboard";
-import TradeJournal from "./pages/TradeJournal";
-import CycleTracker from "./pages/CycleTracker";
-import Day from "./pages/Day";
-import NewTrade from "./pages/NewTrade";
-import Strategies from "./pages/Strategies";
-import StrategyList from "./pages/strategies/StrategyList";
-import StrategyEdit from "./pages/strategies/StrategyEdit";
-import StrategyDetail from "./pages/strategies/StrategyDetail";
-import StrategyAnalytics from "./pages/strategies/StrategyAnalytics";
-import NewStrategy from "./pages/strategies/NewStrategy";
-import Challenges from "./pages/Challenges";
-import AIInsights from "./pages/AIInsights";
-import Settings from "./pages/Settings";
-import NotFound from "./pages/NotFound";
-import Statistics from "./pages/Statistics";
-import MonthlyReflection from "./pages/MonthlyReflection";
-import PropFirmAccounts from "./pages/PropFirmAccounts";
-import PropFirmCompare from "./pages/PropFirmCompare";
-import MetaTraderConnect from "./pages/MetaTraderConnect";
-import Pricing from "./pages/Pricing";
-import Checkout from "./pages/Checkout";
-import AdminSubscriptions from "./pages/AdminSubscriptions";
-
-// ⭐ NEU: Login & Register importieren
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import Welcome from "./pages/Welcome";
 import ResetPassword from "./pages/ResetPassword";
-import Profile from "./pages/Profile";
-import ProtectedRoute from "@/components/ProtectedRoute";
-
-// Legal Pages
+import Welcome from "./pages/Welcome";
+import NotFound from "./pages/NotFound";
 import Impressum from "./pages/Impressum";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
+import ProtectedRoute from "@/components/ProtectedRoute";
+
+// Lazily loaded (heavy feature pages – split into separate chunks)
+const Dashboard          = lazy(() => import("./pages/Dashboard"));
+const TradeJournal       = lazy(() => import("./pages/TradeJournal"));
+const CycleTracker       = lazy(() => import("./pages/CycleTracker"));
+const Day                = lazy(() => import("./pages/Day"));
+const NewTrade           = lazy(() => import("./pages/NewTrade"));
+const Strategies         = lazy(() => import("./pages/Strategies"));
+const StrategyList       = lazy(() => import("./pages/strategies/StrategyList"));
+const StrategyEdit       = lazy(() => import("./pages/strategies/StrategyEdit"));
+const StrategyDetail     = lazy(() => import("./pages/strategies/StrategyDetail"));
+const StrategyAnalytics  = lazy(() => import("./pages/strategies/StrategyAnalytics"));
+const NewStrategy        = lazy(() => import("./pages/strategies/NewStrategy"));
+const Challenges         = lazy(() => import("./pages/Challenges"));
+const AIInsights         = lazy(() => import("./pages/AIInsights"));
+const Settings           = lazy(() => import("./pages/Settings"));
+const Statistics         = lazy(() => import("./pages/Statistics"));
+const MonthlyReflection  = lazy(() => import("./pages/MonthlyReflection"));
+const PropFirmAccounts   = lazy(() => import("./pages/PropFirmAccounts"));
+const PropFirmCompare    = lazy(() => import("./pages/PropFirmCompare"));
+const MetaTraderConnect  = lazy(() => import("./pages/MetaTraderConnect"));
+const Pricing            = lazy(() => import("./pages/Pricing"));
+const Checkout           = lazy(() => import("./pages/Checkout"));
+const AdminSubscriptions = lazy(() => import("./pages/AdminSubscriptions"));
+const Profile            = lazy(() => import("./pages/Profile"));
 
 const queryClient = new QueryClient();
 
@@ -86,6 +85,7 @@ const AppContent = () => {
 
       {/* Error Boundary wrapping all routes */}
       <ErrorBoundary>
+        <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>}>
         <Routes>
         {/* Landing Page */}
         <Route path="/" element={<Landing />} />
@@ -133,6 +133,7 @@ const AppContent = () => {
         {/* 404 */}
         <Route path="*" element={<NotFound />} />
         </Routes>
+        </Suspense>
       </ErrorBoundary>
     </div>
   );

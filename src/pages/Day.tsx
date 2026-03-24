@@ -187,6 +187,7 @@ export default function Day() {
     } catch (e) {
       setJournal(defaultJournal());
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isoDate]);
 
   // If the app links here with `?journal=1` we could auto-scroll to the journal section.

@@ -29,6 +29,7 @@ export default function NewStrategy() {
       description: "The more detailed your strategy, the better you can track performance. Performance metrics (Win Rate, Avg R, etc.) will be calculated automatically as you log trades using this strategy.",
       duration: 8000,
     });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Basic Info

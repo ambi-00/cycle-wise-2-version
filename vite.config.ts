@@ -19,8 +19,17 @@ export default defineConfig(({ mode }) => ({
   },
   // Improve production chunking and reduce large chunk warnings
   build: {
-    // increase limit to a more generous size (in kB) or adjust as needed
     chunkSizeWarningLimit: 1200,
+    // Remove console.log and debugger statements in production builds
+    minify: "esbuild",
+    ...(mode === "production" && {
+      terserOptions: {
+        compress: {
+          drop_console: true,
+          drop_debugger: true,
+        },
+      },
+    }),
     rollupOptions: {
       output: {
         manualChunks(id: string) {
