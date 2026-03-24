@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Plus, Droplets, Brain, Heart, Frown, Smile, Meh, Zap, Moon, Activity, HeartPulse, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Droplets, Brain, Heart, Frown, Smile, Meh, Zap, Moon, Activity, HeartPulse, ChevronLeft, ChevronRight, TrendingUp } from "lucide-react";
 import { loadCycleSettings, loadPeriodDates } from "@/lib/demoDataLoaders";
 import { localDateStr } from "@/lib/utils";
 
@@ -213,6 +213,13 @@ export default function Day() {
 
   const dayLabel = `January ${dayNum}`;
 
+  const phaseTip = {
+    menstruation: "Consider smaller position sizes today 🔴",
+    follicular: "Great time to try new strategies! 🌱",
+    ovulation: "Your peak performance window – go for it 🚀",
+    luteal: "Stay disciplined, stick to your plan 🎯",
+  }[phase];
+
   return (
     <main className="pb-24 pt-20 lg:pl-64 lg:pt-8">
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mx-auto max-w-7xl p-4 lg:p-8">
@@ -248,8 +255,13 @@ export default function Day() {
           </div>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-3">
-          <div className="lg:col-span-2 space-y-6">
+        {/* ── Two-column layout ── */}
+        <div className="flex flex-col lg:flex-row gap-6 items-start">
+
+          {/* ── LEFT COLUMN ── */}
+          <div className="flex-1 min-w-0 space-y-6">
+
+            {/* Trades section */}
             {journal.trades && journal.trades.length > 0 ? (
               <div className="space-y-4">
                 <Suspense fallback={<div className="rounded-2xl bg-card p-5 shadow-card" />}>
@@ -262,20 +274,193 @@ export default function Day() {
                 </Link>
               </div>
             ) : (
-              <div className="rounded-2xl bg-card p-6 text-center">
-                <p className="text-muted-foreground">No trades logged for this day.</p>
-                <div className="mt-4">
+              <div className="rounded-2xl bg-card p-10 text-center border-2 border-dashed border-border">
+                <div className="flex flex-col items-center gap-5">
+                  <div className="rounded-full bg-primary/10 p-5">
+                    <TrendingUp className="h-10 w-10 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-semibold text-foreground">No trades yet today</h3>
+                    <p className="text-muted-foreground mt-1.5">Ready to capture your performance?</p>
+                  </div>
+                  <div className="rounded-xl bg-muted/60 px-5 py-3 text-sm text-muted-foreground max-w-sm">
+                    <span className="font-medium text-foreground">Phase tip: </span>{phaseTip}
+                  </div>
                   <Link to={`/trade/new?date=${isoDate}`}>
-                    <Button>
-                      <Plus className="mr-2 h-4 w-4" /> Add New Trade
+                    <Button size="lg">
+                      <Plus className="mr-2 h-5 w-5" /> Log your first trade
                     </Button>
                   </Link>
                 </div>
               </div>
             )}
+
+            {/* ── Mindset 2×3 Grid ── */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="rounded-xl bg-cycle-ovulation/20 p-2.5">
+                  <Brain className="h-5 w-5 text-cycle-ovulation" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-foreground">Trading-Mindset</h3>
+                  <p className="text-sm text-muted-foreground">Faktoren die dein Trading beeinflussen</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+
+                {/* Sleep */}
+                <div className="rounded-xl p-4 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 border border-indigo-200/30 dark:border-indigo-800/30 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 rounded-lg bg-indigo-100 dark:bg-indigo-900/30">
+                        <Moon className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                      </div>
+                      <Label className="text-sm font-semibold">Sleep Quality</Label>
+                    </div>
+                    <span className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">{journal.sleepQuality}</span>
+                  </div>
+                  <div className="h-1.5 rounded-full bg-indigo-100 dark:bg-indigo-900/50 overflow-hidden">
+                    <div className="h-full rounded-full bg-indigo-500 transition-all" style={{ width: `${journal.sleepQuality * 10}%` }} />
+                  </div>
+                  <input type="range" min={0} max={10} value={journal.sleepQuality}
+                    onChange={(e) => saveJournal({ sleepQuality: Number(e.target.value) })}
+                    className="w-full h-1.5 rounded-lg appearance-none cursor-pointer"
+                    style={{ background: `linear-gradient(to right, rgb(99,102,241) 0%, rgb(99,102,241) ${journal.sleepQuality * 10}%, rgb(219,222,252) ${journal.sleepQuality * 10}%, rgb(219,222,252) 100%)` }}
+                  />
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>😴 Poor</span><span>😴😴😴 Great</span>
+                  </div>
+                </div>
+
+                {/* Energy */}
+                <div className="rounded-xl p-4 bg-gradient-to-br from-yellow-500/10 to-orange-500/10 border border-yellow-200/30 dark:border-yellow-800/30 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 rounded-lg bg-yellow-100 dark:bg-yellow-900/30">
+                        <Zap className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+                      </div>
+                      <Label className="text-sm font-semibold">Energy Level</Label>
+                    </div>
+                    <span className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{journal.energy}</span>
+                  </div>
+                  <div className="h-1.5 rounded-full bg-yellow-100 dark:bg-yellow-900/50 overflow-hidden">
+                    <div className="h-full rounded-full bg-yellow-500 transition-all" style={{ width: `${journal.energy * 10}%` }} />
+                  </div>
+                  <input type="range" min={0} max={10} value={journal.energy}
+                    onChange={(e) => saveJournal({ energy: Number(e.target.value) })}
+                    className="w-full h-1.5 rounded-lg appearance-none cursor-pointer"
+                    style={{ background: `linear-gradient(to right, rgb(217,119,6) 0%, rgb(217,119,6) ${journal.energy * 10}%, rgb(254,243,199) ${journal.energy * 10}%, rgb(254,243,199) 100%)` }}
+                  />
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>🪫 Drained</span><span>⚡ Energized</span>
+                  </div>
+                </div>
+
+                {/* Focus */}
+                <div className="rounded-xl p-4 bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border border-blue-200/30 dark:border-blue-800/30 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 rounded-lg bg-blue-100 dark:bg-blue-900/30">
+                        <Activity className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <Label className="text-sm font-semibold">Focus/Clarity</Label>
+                    </div>
+                    <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">{journal.focus}</span>
+                  </div>
+                  <div className="h-1.5 rounded-full bg-blue-100 dark:bg-blue-900/50 overflow-hidden">
+                    <div className="h-full rounded-full bg-blue-500 transition-all" style={{ width: `${journal.focus * 10}%` }} />
+                  </div>
+                  <input type="range" min={0} max={10} value={journal.focus}
+                    onChange={(e) => saveJournal({ focus: Number(e.target.value) })}
+                    className="w-full h-1.5 rounded-lg appearance-none cursor-pointer"
+                    style={{ background: `linear-gradient(to right, rgb(6,182,212) 0%, rgb(6,182,212) ${journal.focus * 10}%, rgb(207,250,254) ${journal.focus * 10}%, rgb(207,250,254) 100%)` }}
+                  />
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>🌫️ Foggy</span><span>🎯 Sharp</span>
+                  </div>
+                </div>
+
+                {/* Stress */}
+                <div className="rounded-xl p-4 bg-gradient-to-br from-red-500/10 to-pink-500/10 border border-red-200/30 dark:border-red-800/30 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 rounded-lg bg-red-100 dark:bg-red-900/30">
+                        <HeartPulse className="h-4 w-4 text-red-600 dark:text-red-400" />
+                      </div>
+                      <Label className="text-sm font-semibold">Stress Level</Label>
+                    </div>
+                    <span className="text-2xl font-bold text-red-600 dark:text-red-400">{journal.stress}</span>
+                  </div>
+                  <div className="h-1.5 rounded-full bg-red-100 dark:bg-red-900/50 overflow-hidden">
+                    <div className="h-full rounded-full bg-red-500 transition-all" style={{ width: `${journal.stress * 10}%` }} />
+                  </div>
+                  <input type="range" min={0} max={10} value={journal.stress}
+                    onChange={(e) => saveJournal({ stress: Number(e.target.value) })}
+                    className="w-full h-1.5 rounded-lg appearance-none cursor-pointer"
+                    style={{ background: `linear-gradient(to right, rgb(220,38,38) 0%, rgb(220,38,38) ${journal.stress * 10}%, rgb(254,226,226) ${journal.stress * 10}%, rgb(254,226,226) 100%)` }}
+                  />
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>😌 Calm</span><span>😰 Anxious</span>
+                  </div>
+                </div>
+
+                {/* Mood */}
+                <div className="rounded-xl p-4 bg-gradient-to-br from-green-500/10 to-emerald-500/10 border border-green-200/30 dark:border-green-800/30 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 rounded-lg bg-green-100 dark:bg-green-900/30">
+                        <Heart className="h-4 w-4 text-green-600 dark:text-green-400" />
+                      </div>
+                      <Label className="text-sm font-semibold">Mood</Label>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xl">{journal.mood <= 2 ? '😢' : journal.mood <= 4 ? '😞' : journal.mood <= 6 ? '😐' : journal.mood <= 8 ? '🙂' : '😄'}</span>
+                      <span className="text-2xl font-bold text-green-600 dark:text-green-400">{journal.mood}</span>
+                    </div>
+                  </div>
+                  <div className="h-1.5 rounded-full bg-green-100 dark:bg-green-900/50 overflow-hidden">
+                    <div className="h-full rounded-full bg-green-500 transition-all" style={{ width: `${journal.mood * 10}%` }} />
+                  </div>
+                  <input type="range" min={0} max={10} value={journal.mood}
+                    onChange={(e) => saveJournal({ mood: Number(e.target.value) })}
+                    className="w-full h-1.5 rounded-lg appearance-none cursor-pointer"
+                    style={{ background: `linear-gradient(to right, rgb(34,197,94) 0%, rgb(34,197,94) ${journal.mood * 10}%, rgb(220,252,231) ${journal.mood * 10}%, rgb(220,252,231) 100%)` }}
+                  />
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>😭 Sad</span><span>😄 Happy</span>
+                  </div>
+                </div>
+
+                {/* Confidence */}
+                <div className="rounded-xl p-4 bg-gradient-to-br from-emerald-500/10 to-teal-500/10 border border-emerald-200/30 dark:border-emerald-800/30 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
+                        <Smile className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                      </div>
+                      <Label className="text-sm font-semibold">Selbstvertrauen</Label>
+                    </div>
+                    <span className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{journal.confidence}</span>
+                  </div>
+                  <div className="h-1.5 rounded-full bg-emerald-100 dark:bg-emerald-900/50 overflow-hidden">
+                    <div className="h-full rounded-full bg-emerald-500 transition-all" style={{ width: `${journal.confidence * 10}%` }} />
+                  </div>
+                  <input type="range" min={0} max={10} value={journal.confidence}
+                    onChange={(e) => saveJournal({ confidence: Number(e.target.value) })}
+                    className="w-full h-1.5 rounded-lg appearance-none cursor-pointer accent-emerald-500"
+                  />
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>😟 Low</span><span>💪 High</span>
+                  </div>
+                </div>
+
+              </div>
+            </div>
           </div>
 
-          <div className="space-y-6">
+          {/* ── RIGHT COLUMN ── */}
+          <div className="w-full lg:w-[340px] flex-shrink-0 space-y-6">
 
             <CyclePhaseIndicator
               phase={phase}
@@ -372,218 +557,6 @@ export default function Day() {
               </div>
             </div>
 
-            {/* Trading-Mindset Card */}
-            <div className="rounded-2xl bg-card p-6 shadow-card">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cycle-ovulation/20">
-                  <Brain className="h-5 w-5 text-cycle-ovulation" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-foreground">Trading-Mindset</h3>
-                  <p className="text-sm text-muted-foreground">Faktoren die dein Trading beeinflussen</p>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                {/* Sleep Quality - Enhanced Visual */}
-                <div className="space-y-3 p-4 rounded-xl bg-gradient-to-br from-indigo-500/10 to-purple-500/10 border border-indigo-200/30 dark:border-indigo-800/30">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="p-2 rounded-lg bg-indigo-100 dark:bg-indigo-900/30">
-                        <Moon className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-                      </div>
-                      <div>
-                        <Label className="text-sm font-semibold">Sleep Quality</Label>
-                        <p className="text-xs text-muted-foreground">How well did you sleep?</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">{journal.sleepQuality}</span>
-                      <span className="text-xs text-muted-foreground">/10</span>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <input 
-                      type="range" 
-                      min={0} 
-                      max={10} 
-                      value={journal.sleepQuality} 
-                      onChange={(e) => saveJournal({ sleepQuality: Number(e.target.value) })} 
-                      className="w-full h-2 rounded-lg appearance-none cursor-pointer" 
-                      style={{
-                        background: `linear-gradient(to right, rgb(99, 102, 241) 0%, rgb(99, 102, 241) ${journal.sleepQuality * 10}%, rgb(219, 222, 252) ${journal.sleepQuality * 10}%, rgb(219, 222, 252) 100%)`
-                      }}
-                    />
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>😴 Poor</span>
-                      <span>😴😴😴 Great</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Energie - Enhanced Visual */}
-                <div className="space-y-3 p-4 rounded-xl bg-gradient-to-br from-yellow-500/10 to-orange-500/10 border border-yellow-200/30 dark:border-yellow-800/30">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="p-2 rounded-lg bg-yellow-100 dark:bg-yellow-900/30">
-                        <Zap className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
-                      </div>
-                      <div>
-                        <Label className="text-sm font-semibold">Energy Level</Label>
-                        <p className="text-xs text-muted-foreground">How energized do you feel?</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{journal.energy}</span>
-                      <span className="text-xs text-muted-foreground">/10</span>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <input 
-                      type="range" 
-                      min={0} 
-                      max={10} 
-                      value={journal.energy} 
-                      onChange={(e) => saveJournal({ energy: Number(e.target.value) })} 
-                      className="w-full h-2 rounded-lg appearance-none cursor-pointer" 
-                      style={{
-                        background: `linear-gradient(to right, rgb(217, 119, 6) 0%, rgb(217, 119, 6) ${journal.energy * 10}%, rgb(254, 243, 199) ${journal.energy * 10}%, rgb(254, 243, 199) 100%)`
-                      }}
-                    />
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>🪫 Drained</span>
-                      <span>⚡ Energized</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Fokus - Enhanced Visual */}
-                <div className="space-y-3 p-4 rounded-xl bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border border-blue-200/30 dark:border-blue-800/30">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
-                        <Activity className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                      </div>
-                      <div>
-                        <Label className="text-sm font-semibold">Focus/Clarity</Label>
-                        <p className="text-xs text-muted-foreground">Mental clarity and concentration</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">{journal.focus}</span>
-                      <span className="text-xs text-muted-foreground">/10</span>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <input 
-                      type="range" 
-                      min={0} 
-                      max={10} 
-                      value={journal.focus} 
-                      onChange={(e) => saveJournal({ focus: Number(e.target.value) })} 
-                      className="w-full h-2 rounded-lg appearance-none cursor-pointer" 
-                      style={{
-                        background: `linear-gradient(to right, rgb(6, 182, 212) 0%, rgb(6, 182, 212) ${journal.focus * 10}%, rgb(207, 250, 254) ${journal.focus * 10}%, rgb(207, 250, 254) 100%)`
-                      }}
-                    />
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>🌫️ Foggy</span>
-                      <span>🎯 Sharp</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Stress - Enhanced Visual */}
-                <div className="space-y-3 p-4 rounded-xl bg-gradient-to-br from-red-500/10 to-pink-500/10 border border-red-200/30 dark:border-red-800/30">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="p-2 rounded-lg bg-red-100 dark:bg-red-900/30">
-                        <HeartPulse className="h-5 w-5 text-red-600 dark:text-red-400" />
-                      </div>
-                      <div>
-                        <Label className="text-sm font-semibold">Stress Level</Label>
-                        <p className="text-xs text-muted-foreground">How stressed do you feel?</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-2xl font-bold text-red-600 dark:text-red-400">{journal.stress}</span>
-                      <span className="text-xs text-muted-foreground">/10</span>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <input 
-                      type="range" 
-                      min={0} 
-                      max={10} 
-                      value={journal.stress} 
-                      onChange={(e) => saveJournal({ stress: Number(e.target.value) })} 
-                      className="w-full h-2 rounded-lg appearance-none cursor-pointer" 
-                      style={{
-                        background: `linear-gradient(to right, rgb(220, 38, 38) 0%, rgb(220, 38, 38) ${journal.stress * 10}%, rgb(254, 226, 226) ${journal.stress * 10}%, rgb(254, 226, 226) 100%)`
-                      }}
-                    />
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>😌 Calm</span>
-                      <span>😰 Anxious</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Stimmung - Enhanced Visual */}
-                <div className="space-y-3 p-4 rounded-xl bg-gradient-to-br from-green-500/10 to-emerald-500/10 border border-green-200/30 dark:border-green-800/30">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/30">
-                        <Heart className="h-5 w-5 text-green-600 dark:text-green-400" />
-                      </div>
-                      <div>
-                        <Label className="text-sm font-semibold">Mood</Label>
-                        <p className="text-xs text-muted-foreground">How is your emotional state?</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="text-3xl">
-                        {journal.mood <= 2 ? '😢' : journal.mood <= 4 ? '😞' : journal.mood <= 6 ? '😐' : journal.mood <= 8 ? '🙂' : '😄'}
-                      </div>
-                      <div className="text-right">
-                        <span className="text-2xl font-bold text-green-600 dark:text-green-400">{journal.mood}</span>
-                        <span className="text-xs text-muted-foreground">/10</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <input 
-                      type="range" 
-                      min={0} 
-                      max={10} 
-                      value={journal.mood} 
-                      onChange={(e) => saveJournal({ mood: Number(e.target.value) })} 
-                      className="w-full h-2 rounded-lg appearance-none cursor-pointer" 
-                      style={{
-                        background: `linear-gradient(to right, rgb(34, 197, 94) 0%, rgb(34, 197, 94) ${journal.mood * 10}%, rgb(220, 252, 231) ${journal.mood * 10}%, rgb(220, 252, 231) 100%)`
-                      }}
-                    />
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>😭 Sad</span>
-                      <span>😄 Happy</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Selbstvertrauen */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Smile className="h-4 w-4 text-emerald-500" />
-                      <Label className="text-sm font-medium">Selbstvertrauen</Label>
-                    </div>
-                    <span className="text-sm font-medium">{journal.confidence}/10</span>
-                  </div>
-                  <input type="range" min={0} max={10} value={journal.confidence} onChange={(e) => saveJournal({ confidence: Number(e.target.value) })} className="w-full accent-emerald-500" />
-                </div>
-              </div>
-            </div>
-
             {/* Notizen Card */}
             <div className="rounded-2xl bg-card p-6 shadow-card">
               <div className="flex items-center justify-between mb-4">
@@ -614,7 +587,8 @@ export default function Day() {
               </div>
             </div>
           </div>
-        </div>
+
+        </div>{/* end two-column */}
       </motion.div>
     </main>
   );
