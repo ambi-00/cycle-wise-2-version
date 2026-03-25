@@ -74,8 +74,17 @@ export interface TradeInsert {
  * Works in all modes: USER (Supabase), DEMO (localStorage), FILMING (localStorage)
  */
 export async function saveTrade(trade: TradeInsert) {
-  const { data: { user } } = await supabase.auth.getUser();
-  
+  // Defensive: if the Supabase key changed or session is invalid, getUser() may throw.
+  // We still want to save to localStorage in that case, so catch any auth errors here.
+  let user: any = null;
+  try {
+    const { data } = await supabase.auth.getUser();
+    user = data.user;
+  } catch (_authErr) {
+    // Invalid/changed key or no network — treat as unauthenticated, save locally
+    user = null;
+  }
+
   const tradeData = {
     user_id: user?.id || 'local-user',
     id: crypto.randomUUID(), // Generate ID upfront for offline support
@@ -225,7 +234,7 @@ export async function saveTrade(trade: TradeInsert) {
  * Update einen existierenden Trade (mit Offline-First Support)
  */
 export async function updateTrade(id: string, updates: Partial<TradeInsert>) {
-  // Try online update first
+  // Try online update first (only if we can reach Supabase with a valid session)
   if (navigator.onLine) {
     try {
       const { trade_reflection: _refl, ...supabaseUpdates } = updates as any;

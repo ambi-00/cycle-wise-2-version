@@ -388,8 +388,11 @@ const generateCalendarData = (year: number, monthIndex: number, avgCycleLength: 
             break;
           }
         }
+        // Use max of logged consecutive days and settings-based period length.
+        // This ensures that logging day 1 of a period still colours the expected
+        // following days (based on the user's periodLength setting) — not just day 1.
         if (consecutiveCount > 0) {
-          actualPeriodLength = consecutiveCount;
+          actualPeriodLength = Math.max(consecutiveCount, periodLength);
         }
       }
 
@@ -554,7 +557,14 @@ export default function CycleTracker() {
 
     // Reload when window gets focus (user comes back from Day page)
     window.addEventListener('focus', reloadLoggedPeriods);
-    return () => window.removeEventListener('focus', reloadLoggedPeriods);
+    // Also reload when period is logged via same-tab SPA navigation
+    window.addEventListener('period-updated', reloadLoggedPeriods);
+    window.addEventListener('storage', reloadLoggedPeriods);
+    return () => {
+      window.removeEventListener('focus', reloadLoggedPeriods);
+      window.removeEventListener('period-updated', reloadLoggedPeriods);
+      window.removeEventListener('storage', reloadLoggedPeriods);
+    };
   }, []);
 
   const saveSettings = () => {

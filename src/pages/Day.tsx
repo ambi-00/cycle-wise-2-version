@@ -517,6 +517,8 @@ export default function Day() {
                         setPeriodDays(newPeriodDays);
                         localStorage.setItem('cw_periodDays', JSON.stringify(newPeriodDays));
                       }
+                      // Notify CycleTracker to reload (same-tab SPA navigation)
+                      window.dispatchEvent(new CustomEvent('period-updated'));
                     }}
                   />
                 </div>
