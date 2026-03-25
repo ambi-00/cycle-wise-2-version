@@ -61,8 +61,6 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
   const dateParam = searchParams.get('date');
   const idParam = searchParams.get('id');
   const initialDate = dateProp || dateParam || localDateStr();
-  
-  console.log('NewTrade mounted with dateParam:', dateParam, 'idParam:', idParam);
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [tradeDate, setTradeDate] = useState(initialDate); // Editable trade date
@@ -337,30 +335,24 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
 
   const [isEditing, setIsEditing] = useState(false);
   const initialLoadDone = React.useRef(false);
+  // Guard against double-saves when review modal is completed then onOpenChange fires again
+  const reviewSavedRef = React.useRef(false);
 
   // Load existing trade data
   useEffect(() => {
-    console.log('Load effect running, idParam:', idParam, 'tradeDate:', tradeDate);
     if (!idParam || initialLoadDone.current) {
-      console.log('Skipping load - no idParam or already loaded');
       return;
     }
     
     try {
       const key = `cw_journal_${tradeDate}`;
-      console.log('Looking for trade in:', key);
       const raw = localStorage.getItem(key);
-      console.log('Raw data found:', !!raw);
       if (!raw) {
-        console.log('No data in localStorage for this date');
         return;
       }
       const data = JSON.parse(raw);
-      console.log('Trades in storage:', data.trades?.length);
       const found = (data.trades || []).find((t: any) => t.id === idParam);
-      console.log('Found trade:', found ? 'YES' : 'NO', found?.checklist?.length, 'checklist items');
       if (!found) {
-        console.log('Trade not found with id:', idParam);
         return;
       }
       
@@ -784,7 +776,7 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
       const newAchievements = checkAndUnlockAchievements();
       newAchievements.forEach(a => showAchievementNotification(a));
 
-      navigate('/journal');
+      navigate(dateParam ? `/day/${dateParam}` : '/journal');
     } catch (e: any) {
       console.error('Save error:', e);
       alert(`Failed to save trade: ${e.message || 'Unknown error'}`);
@@ -793,7 +785,8 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
 
   // Handle trade review completion (NEW)
   const handleTradeReviewComplete = async (reviewData: TradeExecutionReview) => {
-    if (!pendingTradeData) return;
+    if (!pendingTradeData || reviewSavedRef.current) return;
+    reviewSavedRef.current = true;
 
     try {
       // Merge review data with trade data
@@ -818,8 +811,9 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
       const newAchievements = checkAndUnlockAchievements();
       newAchievements.forEach(a => showAchievementNotification(a));
 
-      navigate('/journal');
+      navigate(dateParam ? `/day/${dateParam}` : '/journal');
     } catch (e: any) {
+      reviewSavedRef.current = false;
       console.error('Save error after review:', e);
       alert(`Failed to save trade: ${e.message || 'Unknown error'}`);
     }
@@ -1940,7 +1934,22 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
       {pendingTradeData && (
         <TradeReviewModal
           open={showTradeReview}
-          onOpenChange={setShowTradeReview}
+          onOpenChange={(open) => {
+            setShowTradeReview(open);
+            if (!open && pendingTradeData && !reviewSavedRef.current) {
+              // Modal closed via Escape/X without completing or skipping — save trade anyway
+              handleTradeReviewComplete({
+                followed_entry_criteria: false,
+                followed_exit_criteria: false,
+                risk_appropriate: false,
+                emotionally_neutral: false,
+                execution_score: 0,
+                execution_notes: '',
+                exit_criteria_used: 'Review skipped'
+              });
+            }
+            if (!open) reviewSavedRef.current = false;
+          }}
           onComplete={handleTradeReviewComplete}
           tradeData={{
             id: pendingTradeId || 'new',

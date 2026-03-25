@@ -344,7 +344,15 @@ export default function TradeReviewModal({
             <Button
               variant="outline"
               className="flex-1"
-              onClick={() => onOpenChange(false)}
+              onClick={() => onComplete({
+                followed_entry_criteria: false,
+                followed_exit_criteria: false,
+                risk_appropriate: false,
+                emotionally_neutral: false,
+                execution_score: 0,
+                execution_notes: '',
+                exit_criteria_used: 'Review skipped'
+              })}
             >
               Skip Review
             </Button>

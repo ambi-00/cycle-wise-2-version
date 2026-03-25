@@ -222,8 +222,6 @@ export default function TradeJournal() {
   const dateFilter = params.get("date") || "";
   const newOpen = params.get("new") === "1";
   const strategyFilter = params.get("strategy") || "";
-  
-  console.log('TradeJournal dateFilter:', dateFilter, 'URL:', location.search);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [trades, setTrades] = useState<any[]>([]);
@@ -318,9 +316,12 @@ export default function TradeJournal() {
     window.addEventListener('storage', loadTrades);
     // Also listen for focus to catch any changes
     window.addEventListener('focus', loadTrades);
+    // Listen for trades-updated custom event (same-tab saves via saveTrade/updateTrade)
+    window.addEventListener('trades-updated', loadTrades);
     return () => {
       window.removeEventListener('storage', loadTrades);
       window.removeEventListener('focus', loadTrades);
+      window.removeEventListener('trades-updated', loadTrades);
     };
   }, [dateFilter]);
 
@@ -615,13 +616,14 @@ export default function TradeJournal() {
                         };
                         curr.trades = [...(curr.trades || []), newT];
                         localStorage.setItem(key, JSON.stringify(curr));
-                        window.location.href = `/journal?date=${dateFilter}`;
+                        window.dispatchEvent(new CustomEvent('trades-updated'));
+                        navigate(`/journal?date=${dateFilter}`);
                       } catch (e) {
                         console.error(e);
                       }
                     } else {
-                      console.log('New trade', t);
-                      window.location.href = '/journal';
+                      window.dispatchEvent(new CustomEvent('trades-updated'));
+                      navigate('/journal');
                     }
                   }}
                 />

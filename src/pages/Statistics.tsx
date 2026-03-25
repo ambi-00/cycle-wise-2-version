@@ -126,6 +126,13 @@ export default function Statistics() {
 
   useEffect(() => {
     loadAllTradesData();
+    const reload = () => loadAllTradesData();
+    window.addEventListener('trades-updated', reload);
+    window.addEventListener('storage', reload);
+    return () => {
+      window.removeEventListener('trades-updated', reload);
+      window.removeEventListener('storage', reload);
+    };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedAccount]);
 
