@@ -335,8 +335,6 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
 
   const [isEditing, setIsEditing] = useState(false);
   const initialLoadDone = React.useRef(false);
-  // Guard against double-saves when review modal is completed then onOpenChange fires again
-  const reviewSavedRef = React.useRef(false);
 
   // Load existing trade data
   useEffect(() => {
@@ -609,12 +607,8 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
       
       const confirmations = checklist.filter((c) => c.done).length;
       if (minRequired > 0 && confirmations < minRequired) {
-        alert(`Please confirm at least ${minRequired} items for strategy "${strategy}" before saving.`);
-        return;
-      }
-      if (close && !result) {
-        alert('Please select a result before closing the trade.');
-        return;
+        const proceed = window.confirm(`Only ${confirmations}/${minRequired} required checklist items confirmed for strategy "${strategy}". Save anyway?`);
+        if (!proceed) return;
       }
 
       // derive cycle info for this tradeDate from stored cycle settings
@@ -750,31 +744,29 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
           : null,
       };
 
-      // Check if trade is being closed - if so, show review modal
-      const isClosing = tradeData.status === 'closed';
-      
-      if (isClosing) {
-        // Store trade data and show review modal
-        setPendingTradeData(tradeData);
-        setPendingTradeId(editingId);
-        setPendingIsEdit(!!editingId);
-        setShowTradeReview(true);
-        return; // Don't save yet - wait for review completion
-      }
-
-      // If not closing, save immediately (open trade)
+      // Save the trade immediately (always)
+      let savedTradeId: string | null = null;
       if (editingId) {
         await updateTrade(editingId, tradeData);
+        savedTradeId = editingId;
       } else {
-        await saveTrade(tradeData);
+        const saved = await saveTrade(tradeData);
+        savedTradeId = (saved as any)?.id || null;
       }
-
-      // Note: localStorage caching is handled automatically by saveTrade() via syncManager
-      // This ensures offline-first functionality without redundant writes
 
       // Check for newly unlocked achievements
       const newAchievements = checkAndUnlockAchievements();
       newAchievements.forEach(a => showAchievementNotification(a));
+
+      // If closing a trade, show the execution quality review (optional — trade is already saved)
+      const isClosing = tradeData.status === 'closed';
+      if (isClosing) {
+        setPendingTradeData(tradeData);
+        setPendingTradeId(savedTradeId || editingId);
+        setPendingIsEdit(true); // always an update now — trade is already saved
+        setShowTradeReview(true);
+        return; // Stay on page until user closes modal, then navigate in onOpenChange
+      }
 
       navigate(dateParam ? `/day/${dateParam}` : '/journal');
     } catch (e: any) {
@@ -785,38 +777,24 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
 
   // Handle trade review completion (NEW)
   const handleTradeReviewComplete = async (reviewData: TradeExecutionReview) => {
-    if (!pendingTradeData || reviewSavedRef.current) return;
-    reviewSavedRef.current = true;
+    const tradeId = pendingTradeId;
+    // Reset modal state immediately so UI closes
+    setPendingTradeData(null);
+    setPendingTradeId(null);
+    setPendingIsEdit(false);
+    setShowTradeReview(false);
 
-    try {
-      // Merge review data with trade data
-      const finalTradeData: TradeInsert = {
-        ...pendingTradeData,
-        ...reviewData,
-      };
-
-      // Save the trade with execution quality data
-      if (pendingIsEdit && pendingTradeId) {
-        await updateTrade(pendingTradeId, finalTradeData);
-      } else {
-        await saveTrade(finalTradeData);
+    // Best-effort update with execution quality data (trade already saved)
+    if (tradeId && reviewData.execution_score > 0) {
+      try {
+        await updateTrade(tradeId, reviewData as any);
+      } catch (e) {
+        // Non-critical — trade is already saved, just couldn't enrich with review data
+        console.warn('Could not save execution review, but trade is safe:', e);
       }
-
-      // Reset pending state
-      setPendingTradeData(null);
-      setPendingTradeId(null);
-      setPendingIsEdit(false);
-
-      // Check for newly unlocked achievements
-      const newAchievements = checkAndUnlockAchievements();
-      newAchievements.forEach(a => showAchievementNotification(a));
-
-      navigate(dateParam ? `/day/${dateParam}` : '/journal');
-    } catch (e: any) {
-      reviewSavedRef.current = false;
-      console.error('Save error after review:', e);
-      alert(`Failed to save trade: ${e.message || 'Unknown error'}`);
     }
+
+    navigate(dateParam ? `/day/${dateParam}` : '/journal');
   };
 
   return (
@@ -1935,20 +1913,14 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
         <TradeReviewModal
           open={showTradeReview}
           onOpenChange={(open) => {
-            setShowTradeReview(open);
-            if (!open && pendingTradeData && !reviewSavedRef.current) {
-              // Modal closed via Escape/X without completing or skipping — save trade anyway
-              handleTradeReviewComplete({
-                followed_entry_criteria: false,
-                followed_exit_criteria: false,
-                risk_appropriate: false,
-                emotionally_neutral: false,
-                execution_score: 0,
-                execution_notes: '',
-                exit_criteria_used: 'Review skipped'
-              });
+            if (!open) {
+              // Modal closed (Skip, Escape, X) — trade already saved, just navigate
+              setPendingTradeData(null);
+              setPendingTradeId(null);
+              setPendingIsEdit(false);
+              setShowTradeReview(false);
+              navigate(dateParam ? `/day/${dateParam}` : '/journal');
             }
-            if (!open) reviewSavedRef.current = false;
           }}
           onComplete={handleTradeReviewComplete}
           tradeData={{
