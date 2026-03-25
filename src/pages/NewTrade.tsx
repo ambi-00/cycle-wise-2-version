@@ -667,34 +667,51 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
       };
 
       // Upload each image if it's a data URL (not already uploaded)
+      // Wrapped individually: if upload fails, keep as data URL and still save the trade
       if (imageBeforeSmall && imageBeforeSmall.startsWith('data:')) {
-        const file = await dataUrlToFile(imageBeforeSmall, `before-small-${Date.now()}.jpg`);
-        if (file) {
-          const url = await uploadTradeImage(file, 'before' as const);
-          if (url) imageBeforeSmallUrl = url;
+        try {
+          const file = await dataUrlToFile(imageBeforeSmall, `before-small-${Date.now()}.jpg`);
+          if (file) {
+            const url = await uploadTradeImage(file, 'before' as const);
+            if (url) imageBeforeSmallUrl = url;
+          }
+        } catch (e) {
+          console.warn('Image upload failed (before small), keeping as data URL:', e);
         }
       }
       if (imageBeforeLarge && imageBeforeLarge.startsWith('data:')) {
-        const file = await dataUrlToFile(imageBeforeLarge, `before-large-${Date.now()}.jpg`);
-        if (file) {
-          const url = await uploadTradeImage(file, 'before' as const);
-          if (url) imageBeforeLargeUrl = url;
+        try {
+          const file = await dataUrlToFile(imageBeforeLarge, `before-large-${Date.now()}.jpg`);
+          if (file) {
+            const url = await uploadTradeImage(file, 'before' as const);
+            if (url) imageBeforeLargeUrl = url;
+          }
+        } catch (e) {
+          console.warn('Image upload failed (before large), keeping as data URL:', e);
         }
       }
       if (imageAfterSmall && imageAfterSmall.startsWith('data:')) {
-        const file = await dataUrlToFile(imageAfterSmall, `after-small-${Date.now()}.jpg`);
-        if (file) {
-          const url = await uploadTradeImage(file, 'after' as const);
-          if (url) imageAfterSmallUrl = url;
+        try {
+          const file = await dataUrlToFile(imageAfterSmall, `after-small-${Date.now()}.jpg`);
+          if (file) {
+            const url = await uploadTradeImage(file, 'after' as const);
+            if (url) imageAfterSmallUrl = url;
+          }
+        } catch (e) {
+          console.warn('Image upload failed (after small), keeping as data URL:', e);
         }
       }
       // Upload mid-trade image if it exists
       let midTradeImageUrl = midTradeScreenshot;
       if (midTradeScreenshot && midTradeScreenshot.startsWith('data:')) {
-        const file = await dataUrlToFile(midTradeScreenshot, `mid-trade-${Date.now()}.jpg`);
-        if (file) {
-          const url = await uploadTradeImage(file, 'before' as const);
-          if (url) midTradeImageUrl = url;
+        try {
+          const file = await dataUrlToFile(midTradeScreenshot, `mid-trade-${Date.now()}.jpg`);
+          if (file) {
+            const url = await uploadTradeImage(file, 'before' as const);
+            if (url) midTradeImageUrl = url;
+          }
+        } catch (e) {
+          console.warn('Image upload failed (mid-trade), keeping as data URL:', e);
         }
       }
 

@@ -178,17 +178,27 @@ export default function Day() {
 
   // load journal for this isoDate
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(`cw_journal_${isoDate}`);
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        setJournal({ ...defaultJournal(), ...parsed });
-      } else {
+    const loadJournal = () => {
+      try {
+        const raw = localStorage.getItem(`cw_journal_${isoDate}`);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          setJournal({ ...defaultJournal(), ...parsed });
+        } else {
+          setJournal(defaultJournal());
+        }
+      } catch (e) {
         setJournal(defaultJournal());
       }
-    } catch (e) {
-      setJournal(defaultJournal());
-    }
+    };
+    loadJournal();
+    // Reload when a trade is saved (e.g. user returns from NewTrade)
+    window.addEventListener('trades-updated', loadJournal);
+    window.addEventListener('storage', loadJournal);
+    return () => {
+      window.removeEventListener('trades-updated', loadJournal);
+      window.removeEventListener('storage', loadJournal);
+    };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isoDate]);
 
@@ -213,7 +223,8 @@ export default function Day() {
     }
   };
 
-  const dayLabel = `January ${dayNum}`;
+  const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  const dayLabel = `${monthNames[dateObj.getMonth()]} ${dayNum}, ${dateObj.getFullYear()}`;
 
   const phaseTip = {
     menstruation: "Consider smaller position sizes today 🔴",
@@ -253,7 +264,7 @@ export default function Day() {
           </div>
           <div className="flex items-center gap-3">
             <Link to="/cycle" className="text-sm text-primary underline">Back to Cycle Tracker</Link>
-            <Link to={`/journal?date=2025-01-${String(dayNum).padStart(2, "0")}`} className="text-sm text-primary underline">Open in Journal</Link>
+            <Link to={`/journal?date=${isoDate}`} className="text-sm text-primary underline">Open in Journal</Link>
           </div>
         </div>
 

@@ -153,6 +153,11 @@ export async function saveTrade(trade: TradeInsert) {
         localStorage.setItem('cw_sync_status', JSON.stringify(status));
         window.dispatchEvent(new CustomEvent('syncStatusChanged', { detail: status }));
       }
+
+      // Notify Dashboard and Day.tsx of new trade (same as offline path)
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('trades-updated', { detail: { tradeId: tradeData.id } }));
+      }
       
       return data;
     } catch (error) {
