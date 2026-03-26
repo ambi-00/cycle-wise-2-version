@@ -415,11 +415,14 @@ export interface StrategyInsert {
  * Save a new strategy (with Offline-First support)
  */
 export async function saveStrategy(strategy: StrategyInsert) {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Not authenticated');
+  let user: any = null;
+  try {
+    const { data } = await supabase.auth.getUser();
+    user = data.user;
+  } catch { /* rotated key or network error */ }
 
   const strategyData = {
-    user_id: user.id,
+    user_id: user?.id || 'local-user',
     id: crypto.randomUUID(),
     ...strategy,
     created_at: new Date().toISOString(),
@@ -674,7 +677,11 @@ export interface PropFirmAccountInsert {
  * Speichere ein PropFirm-Account
  */
 export async function savePropFirmAccount(account: PropFirmAccountInsert) {
-  const { data: { user } } = await supabase.auth.getUser();
+  let user: any = null;
+  try {
+    const { data } = await supabase.auth.getUser();
+    user = data.user;
+  } catch { /* rotated key or network error */ }
   if (!user) throw new Error('Not authenticated');
 
   const { data, error } = await supabase
@@ -723,7 +730,11 @@ export async function deletePropFirmAccount(id: string) {
  * Upload ein Trade-Screenshot
  */
 export async function uploadTradeImage(file: File, folder: 'before' | 'after' = 'before'): Promise<string> {
-  const { data: { user } } = await supabase.auth.getUser();
+  let user: any = null;
+  try {
+    const { data } = await supabase.auth.getUser();
+    user = data.user;
+  } catch { /* rotated key or network error */ }
   if (!user) throw new Error('Not authenticated');
 
   // Compress image if needed (optional)
@@ -783,11 +794,14 @@ export interface AIInsightInsert {
  * Speichere ein AI Insight (mit Offline-First Support)
  */
 export async function saveAIInsight(insight: AIInsightInsert) {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Not authenticated');
+  let user: any = null;
+  try {
+    const { data } = await supabase.auth.getUser();
+    user = data.user;
+  } catch { /* rotated key or network error */ }
 
   const insightData = {
-    user_id: user.id,
+    user_id: user?.id || 'local-user',
     id: crypto.randomUUID(),
     ...insight,
     created_at: new Date().toISOString(),
@@ -915,8 +929,17 @@ export interface ProfileUpdate {
  * Lade User Profile (mit Offline-First Fallback)
  */
 export async function loadProfile() {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Not authenticated');
+  let user: any = null;
+  try {
+    const { data } = await supabase.auth.getUser();
+    user = data.user;
+  } catch { /* rotated key or network error */ }
+
+  if (!user) {
+    const cached = localStorage.getItem('cw_profile');
+    if (cached) return JSON.parse(cached);
+    throw new Error('Profile not found');
+  }
 
   // Try Supabase first if online
   if (navigator.onLine) {
@@ -959,8 +982,11 @@ export async function loadProfile() {
  * Update User Profile (inkl. Cycle Settings) mit Offline-First Support
  */
 export async function updateProfile(updates: ProfileUpdate) {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Not authenticated');
+  let user: any = null;
+  try {
+    const { data } = await supabase.auth.getUser();
+    user = data.user;
+  } catch { /* rotated key or network error */ }
 
   // Try online update first
   if (navigator.onLine) {
@@ -1004,14 +1030,16 @@ export async function updateProfile(updates: ProfileUpdate) {
   if (updates.variation_days) localStorage.setItem('cw_variationDays', String(updates.variation_days));
   if (updates.period_days) localStorage.setItem('cw_periodDays', JSON.stringify(updates.period_days));
 
-  await syncSave({
-    type: 'profile_update',
-    data: { id: user.id, ...updates },
-    localStorageKey: 'cw_profile',
-    supabaseTable: 'profiles',
-    operation: 'update',
-    getId: () => user.id,
-  });
+  if (user) {
+    await syncSave({
+      type: 'profile_update',
+      data: { id: user.id, ...updates },
+      localStorageKey: 'cw_profile',
+      supabaseTable: 'profiles',
+      operation: 'update',
+      getId: () => user.id,
+    });
+  }
 
   return updated;
 }
@@ -1032,8 +1060,12 @@ export interface UserSettingsUpdate {
  * Lade User Settings
  */
 export async function loadUserSettings() {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Not authenticated');
+  let user: any = null;
+  try {
+    const { data } = await supabase.auth.getUser();
+    user = data.user;
+  } catch { /* rotated key or network error */ }
+  if (!user) return null;
 
   const { data, error } = await supabase
     .from('user_settings')
@@ -1055,8 +1087,12 @@ export async function loadUserSettings() {
  * Create User Settings
  */
 async function createUserSettings() {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Not authenticated');
+  let user: any = null;
+  try {
+    const { data } = await supabase.auth.getUser();
+    user = data.user;
+  } catch { /* rotated key or network error */ }
+  if (!user) return null;
 
   const { data, error } = await supabase
     .from('user_settings')
@@ -1072,8 +1108,12 @@ async function createUserSettings() {
  * Update User Settings
  */
 export async function updateUserSettings(updates: UserSettingsUpdate) {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Not authenticated');
+  let user: any = null;
+  try {
+    const { data } = await supabase.auth.getUser();
+    user = data.user;
+  } catch { /* rotated key or network error */ }
+  if (!user) return null;
 
   const { data, error } = await supabase
     .from('user_settings')
@@ -1109,8 +1149,12 @@ export interface CycleLogUpdate {
  * Save/Update Cycle Log with all journal fields
  */
 export async function saveCycleLogExtended(log: CycleLogUpdate) {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Not authenticated');
+  let user: any = null;
+  try {
+    const { data } = await supabase.auth.getUser();
+    user = data.user;
+  } catch { /* rotated key or network error */ }
+  if (!user) return null;
 
   const { data, error } = await supabase
     .from('cycle_logs')
@@ -1159,8 +1203,12 @@ export interface ChallengeEntry {
  * Join or Update Challenge for this week
  */
 export async function joinOrUpdateChallenge(entry: ChallengeEntry) {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Not authenticated');
+  let user: any = null;
+  try {
+    const { data } = await supabase.auth.getUser();
+    user = data.user;
+  } catch { /* rotated key or network error */ }
+  if (!user) return null;
 
   const { data, error } = await supabase
     .from('weekly_challenges')
@@ -1179,8 +1227,12 @@ export async function joinOrUpdateChallenge(entry: ChallengeEntry) {
  * Calculate and update Challenge Score based on trades
  */
 export async function updateChallengeScores() {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Not authenticated');
+  let user: any = null;
+  try {
+    const { data } = await supabase.auth.getUser();
+    user = data.user;
+  } catch { /* rotated key or network error */ }
+  if (!user) return null;
 
   // Get current week
   const now = new Date();
@@ -1281,8 +1333,12 @@ export async function loadLeaderboard(challengeType: 'profit' | 'discipline' | '
  * Lade User's Position in allen Challenges
  */
 export async function loadMyChallengPositions() {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Not authenticated');
+  let user: any = null;
+  try {
+    const { data } = await supabase.auth.getUser();
+    user = data.user;
+  } catch { /* rotated key or network error */ }
+  if (!user) return [];
 
   const now = new Date();
   const weekStart = new Date(now);
@@ -1303,8 +1359,12 @@ export async function loadMyChallengPositions() {
  * Check und vergebe Badges basierend auf Performance
  */
 export async function checkAndAwardBadges() {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Not authenticated');
+  let user: any = null;
+  try {
+    const { data } = await supabase.auth.getUser();
+    user = data.user;
+  } catch { /* rotated key or network error */ }
+  if (!user) return [];
 
   const badges: string[] = [];
 
