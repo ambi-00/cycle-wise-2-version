@@ -6,7 +6,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { syncSave, syncLoad } from '@/lib/syncManager';
-import { getWinLossStreak as calculateWinLossStreak, loadTradesFromLocalStorage } from '@/lib/tradeLoaders';
+import { getWinLossStreak as calculateWinLossStreak } from '@/lib/tradeLoaders';
 
 // ============================================
 // TRADES
@@ -74,29 +74,57 @@ export interface TradeInsert {
  * Works in all modes: USER (Supabase), DEMO (localStorage), FILMING (localStorage)
  */
 export async function saveTrade(trade: TradeInsert) {
-  // Defensive: if the Supabase key changed or session is invalid, getUser() may throw.
-  // We still want to save to localStorage in that case, so catch any auth errors here.
-  let user: any = null;
-  try {
-    const { data } = await supabase.auth.getUser();
-    user = data.user;
-  } catch (_authErr) {
-    // Invalid/changed key or no network — treat as unauthenticated, save locally
-    user = null;
-  }
+  // ─────────────────────────────────────────────────────────────────────────
+  // ARCHITECTURE: localStorage-FIRST, Supabase in background (non-blocking)
+  //
+  // Reason: Supabase calls (getUser + insert) can hang for 30+ seconds when
+  // the key was rotated or the network is slow, blocking the entire save and
+  // making the app feel broken.  We ALWAYS write to localStorage immediately,
+  // dispatch the UI event, and let Supabase sync happen silently afterwards.
+  // ─────────────────────────────────────────────────────────────────────────
 
   const tradeData = {
-    user_id: user?.id || 'local-user',
-    id: crypto.randomUUID(), // Generate ID upfront for offline support
+    user_id: 'local-user',
+    id: crypto.randomUUID(),
     ...trade,
     created_at: new Date().toISOString(),
   };
 
-  // Save with offline-first strategy (only if user is authenticated)
-  if (navigator.onLine && user) {
+  // ── Step 1: Write to localStorage RIGHT NOW (synchronous, cannot be blocked) ──
+  const localKey = `cw_journal_${trade.date}`;
+  const dataWithSymbol = {
+    ...tradeData,
+    symbol: tradeData.instrument,
+    r_multiple: (tradeData as any).closed_rrr || (tradeData as any).planned_rrr || 0,
+  };
+  try {
+    const rawData = localStorage.getItem(localKey);
+    const existing = rawData ? JSON.parse(rawData) : { trades: [] };
+    if (!existing.trades || !Array.isArray(existing.trades)) existing.trades = [];
+    existing.trades.push(dataWithSymbol);
+    localStorage.setItem(localKey, JSON.stringify(existing));
+  } catch (_e) {
+    // If read/parse failed, force-write a fresh structure
+    try { localStorage.setItem(localKey, JSON.stringify({ trades: [dataWithSymbol] })); } catch {}
+  }
+
+  // ── Step 2: Notify UI immediately so Day/Journal re-render without delay ──
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('trades-updated', { detail: { tradeId: tradeData.id } }));
+  }
+
+  // ── Step 3: Background Supabase sync (fire-and-forget, never blocks UI) ──
+  (async () => {
     try {
-      // Strip fields not in Supabase schema
-      const { trade_reflection: _refl, ...supabaseTradeData } = tradeData;
+      let user: any = null;
+      try {
+        const { data } = await supabase.auth.getUser();
+        user = data.user;
+      } catch { /* rotated key or network error — skip Supabase */ }
+
+      if (!user || !navigator.onLine) return;
+
+      const { trade_reflection: _refl, ...supabaseTradeData } = { ...tradeData, user_id: user.id };
       const { data, error } = await supabase
         .from('trades')
         .insert(supabaseTradeData)
@@ -104,129 +132,53 @@ export async function saveTrade(trade: TradeInsert) {
         .single();
 
       if (error) throw error;
-      
-      // Calculate and award XP for this trade
+
+      // Replace the local placeholder with the Supabase record (so IDs stay consistent)
+      try {
+        const rawData = localStorage.getItem(localKey);
+        if (rawData) {
+          const existing = JSON.parse(rawData);
+          existing.trades = (existing.trades || []).map((t: any) =>
+            t.id === tradeData.id
+              ? { ...data, symbol: data.instrument, r_multiple: data.closed_rrr || data.planned_rrr || 0 }
+              : t
+          );
+          localStorage.setItem(localKey, JSON.stringify(existing));
+        }
+      } catch {}
+
+      // XP calculation (non-critical)
       try {
         const { xp, reasons } = calculateTradeXP(data);
         if (xp !== 0) {
-          const result = await awardXP(user.id, xp, 'trade_compliant', {
-            trade_id: data.id,
-            reasons,
-          });
-
-          // Trigger XP notification
+          const result = await awardXP(user.id, xp, 'trade_compliant', { trade_id: data.id, reasons });
           if (typeof window !== 'undefined') {
-            const event = new CustomEvent('xp-earned', {
+            window.dispatchEvent(new CustomEvent('xp-earned', {
               detail: { amount: xp, reason: 'trade', reasons: result.reasons || reasons }
-            });
-            window.dispatchEvent(event);
+            }));
           }
         }
-
-        // Check for revenge trading penalty
-        if (data.time) {
-          await checkRevengeTradingPenalty(user.id, data.date, data.time);
-        }
-      } catch (xpError) {
-        console.error('Failed to calculate XP, but trade saved:', xpError);
+        if (data.time) await checkRevengeTradingPenalty(user.id, data.date, data.time);
+      } catch (xpErr) {
+        console.warn('XP calculation failed (trade already saved):', xpErr);
       }
-      
-      // Also cache in localStorage
-      const localKey = `cw_journal_${trade.date}`;
+
+      // Update sync status
       try {
-        const rawData = localStorage.getItem(localKey);
-        const existing = rawData ? JSON.parse(rawData) : { trades: [] };
-        if (!existing.trades || !Array.isArray(existing.trades)) {
-          existing.trades = [];
+        const syncStatus = localStorage.getItem('cw_sync_status');
+        if (syncStatus) {
+          const status = JSON.parse(syncStatus);
+          status.lastSyncTime = new Date().toISOString();
+          status.errors = [];
+          localStorage.setItem('cw_sync_status', JSON.stringify(status));
+          window.dispatchEvent(new CustomEvent('syncStatusChanged', { detail: status }));
         }
-        // Add computed fields for localStorage compatibility
-        const cachedData = { 
-          ...data, 
-          symbol: data.instrument, // Add symbol alias for backward compat
-          r_multiple: data.closed_rrr || data.planned_rrr || 0 // Map closed_rrr to r_multiple for display
-        };
-        existing.trades.push(cachedData);
-        localStorage.setItem(localKey, JSON.stringify(existing));
-      } catch (e) {
-        console.error('Failed to cache trade in localStorage:', e);
-        // Create fresh structure
-        localStorage.setItem(localKey, JSON.stringify({ trades: [data] }));
-      }
-      
-      // Update sync status - successful save
-      const syncStatus = localStorage.getItem('cw_sync_status');
-      if (syncStatus) {
-        const status = JSON.parse(syncStatus);
-        status.lastSyncTime = new Date().toISOString();
-        status.errors = [];
-        localStorage.setItem('cw_sync_status', JSON.stringify(status));
-        window.dispatchEvent(new CustomEvent('syncStatusChanged', { detail: status }));
-      }
-
-      // Notify Dashboard and Day.tsx of new trade (same as offline path)
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('trades-updated', { detail: { tradeId: tradeData.id } }));
-      }
-      
-      return data;
-    } catch (error) {
-      console.error('Failed to save to Supabase, saving locally:', error);
-      // Fall through to offline save
+      } catch {}
+    } catch (err) {
+      console.warn('⚠️ Background Supabase sync failed — trade is safely in localStorage:', err);
     }
-  }
+  })();
 
-  // Offline or no auth: Save to localStorage only
-  const localKey = `cw_journal_${trade.date}`;
-  try {
-    const rawData = localStorage.getItem(localKey);
-    const existing = rawData ? JSON.parse(rawData) : { trades: [] };
-    if (!existing.trades || !Array.isArray(existing.trades)) {
-      existing.trades = [];
-    }
-    // Add computed fields for localStorage compatibility
-    const dataWithSymbol = { 
-      ...tradeData, 
-      symbol: tradeData.instrument, // Add symbol alias for backward compat
-      r_multiple: tradeData.closed_rrr || tradeData.planned_rrr || 0 // Map closed_rrr to r_multiple for display
-    };
-    existing.trades.push(dataWithSymbol);
-    localStorage.setItem(localKey, JSON.stringify(existing));
-  } catch (e) {
-    console.error('Failed to save trade to localStorage:', e);
-    // Create fresh structure
-    localStorage.setItem(localKey, JSON.stringify({ trades: [tradeData] }));
-  }
-
-  // Add to sync queue only if user is authenticated (XP will be calculated when synced)
-  if (user) {
-    await syncSave({
-      type: 'trade',
-      data: tradeData,
-      localStorageKey: localKey,
-      supabaseTable: 'trades',
-      operation: 'insert',
-      getId: (d) => d.id,
-    });
-  } else {
-    // In DEMO/FILMING mode: clear sync status errors and update as "synced"
-    const syncStatus = localStorage.getItem('cw_sync_status');
-    if (syncStatus) {
-      const status = JSON.parse(syncStatus);
-      status.lastSyncTime = new Date().toISOString();
-      status.errors = [];
-      status.pendingCount = 0;
-      localStorage.setItem('cw_sync_status', JSON.stringify(status));
-      window.dispatchEvent(new CustomEvent('syncStatusChanged', { detail: status }));
-    }
-  }
-
-  console.log('✅ Trade saved to localStorage:', tradeData.id, 'for date:', trade.date);
-  
-  // Trigger custom event to notify Dashboard and other components
-  if (typeof window !== 'undefined') {
-    window.dispatchEvent(new CustomEvent('trades-updated', { detail: { tradeId: tradeData.id } }));
-  }
-  
   return tradeData;
 }
 
@@ -312,12 +264,16 @@ export async function loadAllTrades() {
   // Check if we're in DEMO mode first
   const appMode = localStorage.getItem('cw_app_mode');
   if (appMode === 'DEMO') {
-    console.log('📊 loadAllTrades: DEMO mode detected, using demo data');
     return loadTradesFromLocalStorage();
   }
 
-  const { data: { user } } = await supabase.auth.getUser();
-  
+  // Defensive: rotated key or no network will throw — treat as unauthenticated
+  let user: any = null;
+  try {
+    const { data } = await supabase.auth.getUser();
+    user = data.user;
+  } catch { /* invalid/rotated key or no network */ }
+
   // Try loading from Supabase first
   if (navigator.onLine && user) {
     try {
@@ -332,7 +288,7 @@ export async function loadAllTrades() {
           ...trade,
           symbol: trade.instrument, // Add symbol alias
           r_multiple: trade.closed_rrr || trade.planned_rrr || 0, // Map closed_rrr to r_multiple
-          cyclePhase: trade.cycle_phase || trade.cyclePhase || trade.phase, // Map cycle_phase to cyclePhase
+          cyclePhase: trade.cycle_phase, // Map cycle_phase to cyclePhase for UI
           rMultiple: trade.closed_rrr || trade.planned_rrr || 0 // Also add rMultiple for compatibility
         }));
         
@@ -364,14 +320,22 @@ function cacheTradesToLocalStorage(trades: any[]) {
       ...trade,
       symbol: trade.instrument, // Add symbol alias for backward compat
       r_multiple: trade.closed_rrr || trade.planned_rrr || 0, // Map closed_rrr to r_multiple for display
-      cyclePhase: trade.cycle_phase || trade.cyclePhase || trade.phase // Map cycle_phase to cyclePhase for UI
+      cyclePhase: trade.cycle_phase // Map cycle_phase to cyclePhase for UI
     };
     byDate[trade.date].push(enrichedTrade);
   });
 
   Object.entries(byDate).forEach(([date, dateTrades]) => {
     const key = `cw_journal_${date}`;
-    localStorage.setItem(key, JSON.stringify({ trades: dateTrades }));
+    // IMPORTANT: merge into the existing journal entry — do NOT overwrite it.
+    // Overwriting would destroy hasPeriod, mood, energy, quickNote, lessons etc.
+    try {
+      const existing = JSON.parse(localStorage.getItem(key) || '{}');
+      existing.trades = dateTrades;
+      localStorage.setItem(key, JSON.stringify(existing));
+    } catch {
+      localStorage.setItem(key, JSON.stringify({ trades: dateTrades }));
+    }
   });
 }
 
@@ -574,16 +538,20 @@ export interface CycleLogInsert {
  * Speichere oder update einen Cycle Log (mit Offline-First Support)
  */
 export async function saveCycleLog(log: CycleLogInsert) {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Not authenticated');
+  // Defensive: rotated key or no network — fall through to localStorage save
+  let user: any = null;
+  try {
+    const { data } = await supabase.auth.getUser();
+    user = data.user;
+  } catch { /* invalid/rotated key or no network */ }
 
   const cycleData = {
-    user_id: user.id,
+    user_id: user?.id || 'local-user',
     ...log,
   };
 
-  // Try online save first
-  if (navigator.onLine) {
+  // Try online save first (only if authenticated)
+  if (navigator.onLine && user) {
     try {
       const { data, error } = await supabase
         .from('cycle_logs')
