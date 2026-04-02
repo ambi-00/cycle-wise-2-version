@@ -276,54 +276,46 @@ const generateCalendarData = (year: number, monthIndex: number, avgCycleLength: 
   // number of days in month
   const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
 
-  // Helper: Find the most recent period start date that is on or before a given date
-  // Logged periods have PRIORITY over lastPeriodStart prediction
-  const findPeriodStartBeforeDate = (date: Date): Date | null => {
-    // If no logged periods, fall back to the prediction (lastPeriodStart)
-    if (loggedPeriodDays.length === 0) return lastStart;
-    
-    // Get all logged period dates
-    const allLoggedDates = loggedPeriodDays
-      .map(d => new Date(d))
-      .sort((a, b) => a.getTime() - b.getTime()); // Sort ascending
-    
-    // Find all period "groups" (consecutive days = one period)
-    const periodGroups: Date[][] = [];
-    let currentGroup: Date[] = [];
-    
-    for (let i = 0; i < allLoggedDates.length; i++) {
-      if (currentGroup.length === 0) {
-        currentGroup.push(allLoggedDates[i]);
+  // Build all period groups once (sorted ascending by start date)
+  const allLoggedDates = loggedPeriodDays
+    .map(d => new Date(d))
+    .sort((a, b) => a.getTime() - b.getTime());
+
+  const periodGroups: Date[][] = [];
+  let _group: Date[] = [];
+  for (let i = 0; i < allLoggedDates.length; i++) {
+    if (_group.length === 0) {
+      _group.push(allLoggedDates[i]);
+    } else {
+      const diff = allLoggedDates[i].getTime() - _group[_group.length - 1].getTime();
+      if (diff <= msPerDay * 1.5) {
+        _group.push(allLoggedDates[i]);
       } else {
-        const lastInGroup = currentGroup[currentGroup.length - 1].getTime();
-        const current = allLoggedDates[i].getTime();
-        const diff = current - lastInGroup;
-        
-        // If consecutive (within 1.5 days), add to current group
-        if (diff <= msPerDay * 1.5) {
-          currentGroup.push(allLoggedDates[i]);
-        } else {
-          // Gap found - start a new period group
-          periodGroups.push([...currentGroup]);
-          currentGroup = [allLoggedDates[i]];
-        }
+        periodGroups.push([..._group]);
+        _group = [allLoggedDates[i]];
       }
     }
-    // Don't forget the last group
-    if (currentGroup.length > 0) {
-      periodGroups.push(currentGroup);
+  }
+  if (_group.length > 0) periodGroups.push(_group);
+
+  // Sorted list of period group start dates
+  const periodGroupStarts: Date[] = periodGroups.map(g => g[0]);
+
+  // Find the most recent period start on or before a date (logged first, then fallback)
+  const findCurrentPeriodStart = (date: Date): Date | null => {
+    if (periodGroupStarts.length === 0) return lastStart;
+    for (let i = periodGroupStarts.length - 1; i >= 0; i--) {
+      if (periodGroupStarts[i] <= date) return periodGroupStarts[i];
     }
-    
-    // Find the most recent period group that started on or before the target date
-    for (let i = periodGroups.length - 1; i >= 0; i--) {
-      const periodStart = periodGroups[i][0]; // First day of this period
-      if (periodStart <= date) {
-        return periodStart;
-      }
-    }
-    
-    // If no logged period is before this date, fall back to prediction
     return lastStart;
+  };
+
+  // Find the earliest period group start that is STRICTLY AFTER a given date
+  const findNextPeriodStart = (afterDate: Date): Date | null => {
+    for (let i = 0; i < periodGroupStarts.length; i++) {
+      if (periodGroupStarts[i].getTime() > afterDate.getTime()) return periodGroupStarts[i];
+    }
+    return null;
   };
 
   // Helper: get local YYYY-MM-DD string (avoids UTC offset bug with toISOString())
@@ -338,7 +330,7 @@ const generateCalendarData = (year: number, monthIndex: number, avgCycleLength: 
     const isLoggedPeriodDay = loggedPeriodDays.includes(dateStr);
 
     // Find the period start that applies to this date
-    const relevantPeriodStart = findPeriodStartBeforeDate(date) || lastStart;
+    const relevantPeriodStart = findCurrentPeriodStart(date) || lastStart;
 
     // Determine the earliest tracking start date
     let earliestTrackingDate: Date | null = null;
@@ -361,14 +353,21 @@ const generateCalendarData = (year: number, monthIndex: number, avgCycleLength: 
     
     if (!isBeforeTracking && relevantPeriodStart) {
       const diff = Math.floor((date.getTime() - relevantPeriodStart.getTime()) / msPerDay);
-      cycleDay = (diff % avgCycleLength) + 1;
+
+      // Use actual distance to the NEXT logged period start if available,
+      // otherwise fall back to the settings-based average cycle length.
+      const nextPeriodStart = findNextPeriodStart(relevantPeriodStart);
+      const effectiveCycleLength = nextPeriodStart
+        ? Math.max(Math.floor((nextPeriodStart.getTime() - relevantPeriodStart.getTime()) / msPerDay), 1)
+        : avgCycleLength;
+
+      cycleDay = (diff % effectiveCycleLength) + 1;
       
       // Handle negative cycle days (shouldn't happen but just in case)
       if (cycleDay < 1) cycleDay = 1;
 
       // Determine actual period length for THIS specific logged period
       let actualPeriodLength = periodLength; // Default to settings
-      const periodStartStr = relevantPeriodStart.toISOString().split('T')[0];
       
       // Find all consecutive logged period days starting from this period start
       const periodDaysForThisCycle = loggedPeriodDays.filter(d => {
@@ -389,15 +388,13 @@ const generateCalendarData = (year: number, monthIndex: number, avgCycleLength: 
           }
         }
         // Use max of logged consecutive days and settings-based period length.
-        // This ensures that logging day 1 of a period still colours the expected
-        // following days (based on the user's periodLength setting) — not just day 1.
         if (consecutiveCount > 0) {
           actualPeriodLength = Math.max(consecutiveCount, periodLength);
         }
       }
 
-      const follicularEnd = Math.min(actualPeriodLength + 7, avgCycleLength);
-      const ovulationEnd = Math.min(actualPeriodLength + 11, avgCycleLength);
+      const follicularEnd = Math.min(actualPeriodLength + 7, effectiveCycleLength);
+      const ovulationEnd = Math.min(actualPeriodLength + 11, effectiveCycleLength);
       
       // If this day is logged as period, it's definitely menstruation
       // Otherwise use cycle day calculation
@@ -505,6 +502,32 @@ export default function CycleTracker() {
     return currentPeriodStart;
   };
 
+  // Helper: Compute average cycle length from all logged period group starts
+  const computeAvgCycleFromLogs = (loggedDays: string[]): number | null => {
+    if (loggedDays.length === 0) return null;
+    const ms = 1000 * 60 * 60 * 24;
+    const allDates = [...loggedDays].map(d => new Date(d)).sort((a, b) => a.getTime() - b.getTime());
+    // Build period groups
+    const groups: Date[][] = [];
+    let g: Date[] = [];
+    for (const d of allDates) {
+      if (g.length === 0 || d.getTime() - g[g.length - 1].getTime() <= ms * 1.5) {
+        g.push(d);
+      } else {
+        groups.push([...g]);
+        g = [d];
+      }
+    }
+    if (g.length > 0) groups.push(g);
+    if (groups.length < 2) return null; // Need at least 2 periods to compute
+    const starts = groups.map(gr => gr[0].getTime());
+    let total = 0;
+    for (let i = 1; i < starts.length; i++) {
+      total += Math.floor((starts[i] - starts[i - 1]) / ms);
+    }
+    return Math.round(total / (starts.length - 1));
+  };
+
   // load saved settings from localStorage on mount
   useEffect(() => {
     try {
@@ -536,6 +559,13 @@ export default function CycleTracker() {
         setLastPeriodStart(detectedStart);
         localStorage.setItem('cw_lastPeriodStart', detectedStart);
       }
+
+      // Auto-update avgCycleLength from actual logged cycle distances
+      const computedAvg = computeAvgCycleFromLogs(logged);
+      if (computedAvg && computedAvg >= 20 && computedAvg <= 45) {
+        setAvgCycleLength(computedAvg);
+        localStorage.setItem('cw_avgCycleLength', String(computedAvg));
+      }
     } catch (e) {
       // ignore storage errors
     }
@@ -552,6 +582,13 @@ export default function CycleTracker() {
       if (detectedStart) {
         setLastPeriodStart(detectedStart);
         localStorage.setItem('cw_lastPeriodStart', detectedStart);
+      }
+
+      // Auto-update avgCycleLength from actual logged cycle distances
+      const computedAvg = computeAvgCycleFromLogs(logged);
+      if (computedAvg && computedAvg >= 20 && computedAvg <= 45) {
+        setAvgCycleLength(computedAvg);
+        localStorage.setItem('cw_avgCycleLength', String(computedAvg));
       }
     };
 
