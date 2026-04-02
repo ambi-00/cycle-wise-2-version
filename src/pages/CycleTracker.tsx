@@ -269,16 +269,23 @@ function PhaseCard({
 const generateCalendarData = (year: number, monthIndex: number, avgCycleLength: number, lastPeriodStartIso: string, periodLength: number, loggedPeriodDays: string[] = []): DayData[] => {
   const days: DayData[] = [];
   const msPerDay = 1000 * 60 * 60 * 24;
-  const lastStart = lastPeriodStartIso ? new Date(lastPeriodStartIso) : null;
+
+  // Parse ISO date string as LOCAL midnight (not UTC) to avoid timezone off-by-one bugs
+  const parseLocalDate = (iso: string): Date => {
+    const [y, m, d] = iso.split('-').map(Number);
+    return new Date(y, m - 1, d);
+  };
+
+  const lastStart = lastPeriodStartIso ? parseLocalDate(lastPeriodStartIso) : null;
   const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
 
   // Helper: local YYYY-MM-DD string (avoids UTC offset bug)
   const toLocalDateStr = (d: Date) =>
     `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
-  // Build period groups from logged days (sorted ascending)
+  // Build period groups from logged days (sorted ascending) — parse as local midnight
   const allLoggedDates = loggedPeriodDays
-    .map(d => new Date(d))
+    .map(d => parseLocalDate(d))
     .sort((a, b) => a.getTime() - b.getTime());
 
   const periodGroups: Date[][] = [];
