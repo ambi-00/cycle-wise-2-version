@@ -786,7 +786,7 @@ export default function Statistics() {
                   
                   const phaseStats = phases.map(phase => {
                     const phaseTrades = monthTrades.filter(t => {
-                      const tradePhase = (t.cyclePhase || t.cycle_phase || '').toLowerCase();
+                      const tradePhase = (t.cyclePhase || '').toLowerCase();
                       return tradePhase === phase;
                     });
                     const wins = phaseTrades.filter(t => t.result === 'win').length;
@@ -1363,7 +1363,7 @@ export default function Statistics() {
                 <SLOptimizationAnalysis trades={allTrades} />
               </div>
               <div className={`mt-6 ${!hasFeature('full_statistics') ? 'blur-sm pointer-events-none' : ''}`}>
-                <OvertradingAnalysis trades={allTrades} />
+                <OvertradingAnalysis trades={allTrades as any} />
               </div>
             </div>
 
@@ -1403,7 +1403,7 @@ export default function Statistics() {
                     // Normalize phase names: 'Menstrual' -> 'menstruation', etc.
                     const normalizedPhase = phase.toLowerCase().replace('menstrual', 'menstruation').replace('ovulatory', 'ovulation');
                     const phaseTrades = allTrades.filter(t => {
-                      const tradePhase = (t.cyclePhase || t.cycle_phase || '').toLowerCase();
+                      const tradePhase = (t.cyclePhase || '').toLowerCase();
                       return tradePhase === normalizedPhase && t.status === 'closed';
                     });
                     const wins = phaseTrades.filter(t => t.result === 'win').length;
@@ -1477,7 +1477,7 @@ export default function Statistics() {
                       // Normalize phase names to match data
                       const normalizedPhase = phase.toLowerCase().replace('menstrual', 'menstruation').replace('ovulatory', 'ovulation');
                       const phaseTrades = allTrades.filter(t => {
-                        const tradePhase = (t.cyclePhase || t.cycle_phase || '').toLowerCase();
+                        const tradePhase = (t.cyclePhase || '').toLowerCase();
                         return tradePhase === normalizedPhase && t.status === 'closed';
                       });
                       const tradesByDay = phaseTrades.reduce((acc, t) => {
@@ -1511,12 +1511,12 @@ export default function Statistics() {
                       // Normalize phase names to match data
                       const normalizedPhase = phase.toLowerCase().replace('menstrual', 'menstruation').replace('ovulatory', 'ovulation');
                       const phaseTrades = allTrades.filter(t => {
-                        const tradePhase = (t.cyclePhase || t.cycle_phase || '').toLowerCase();
+                        const tradePhase = (t.cyclePhase || '').toLowerCase();
                         return tradePhase === normalizedPhase && t.status === 'closed';
                       });
                       const avgRisk = phaseTrades.length > 0
                         ? (phaseTrades.reduce((sum, t) => {
-                            const rValue = t.r_multiple !== undefined ? t.r_multiple : t.rMultiple;
+                            const rValue = t.rMultiple;
                             return sum + Math.abs(rValue || 0);
                           }, 0) / phaseTrades.length).toFixed(2)
                         : '0';
@@ -1573,7 +1573,7 @@ export default function Statistics() {
                       // Normalize phase names to match data
                       const normalizedPhase = phase.toLowerCase().replace('menstrual', 'menstruation').replace('ovulatory', 'ovulation');
                       const phaseTrades = allTrades.filter(t => {
-                        const tradePhase = (t.cyclePhase || t.cycle_phase || '').toLowerCase();
+                        const tradePhase = (t.cyclePhase || '').toLowerCase();
                         return tradePhase === normalizedPhase && t.status === 'closed' && t.strategy;
                       });
                       const strategyStats = phaseTrades.reduce((acc, t) => {
