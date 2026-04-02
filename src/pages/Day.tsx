@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Plus, Droplets, Brain, Heart, Frown, Smile, Meh, Zap, Moon, Activity, HeartPulse, ChevronLeft, ChevronRight, TrendingUp } from "lucide-react";
+import { Plus, Droplets, Heart, ChevronLeft, ChevronRight, TrendingUp } from "lucide-react";
 import { loadCycleSettings, loadPeriodDates } from "@/lib/demoDataLoaders";
 import { localDateStr } from "@/lib/utils";
 
@@ -328,121 +328,6 @@ export default function Day() {
               </div>
             )}
 
-            {/* ── Mindset Card ── */}
-            <div className="rounded-2xl bg-card p-5 shadow-card space-y-5">
-              <div className="flex items-center gap-3">
-                <div className="rounded-xl bg-cycle-ovulation/20 p-2.5">
-                  <Brain className="h-5 w-5 text-cycle-ovulation" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-foreground">Trading-Mindset</h3>
-                  <p className="text-sm text-muted-foreground">Faktoren die dein Trading beeinflussen</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-x-6 gap-y-5">
-
-                {/* Sleep */}
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-1.5">
-                      <Moon className="h-3.5 w-3.5 text-muted-foreground" />
-                      <span className="font-medium text-foreground">Sleep</span>
-                    </div>
-                    <span className="font-semibold text-foreground">{journal.sleepQuality}/10</span>
-                  </div>
-                  <input type="range" min={0} max={10} value={journal.sleepQuality}
-                    onChange={(e) => saveJournal({ sleepQuality: Number(e.target.value) })}
-                    className="w-full h-2 rounded-lg appearance-none cursor-pointer"
-                    style={{ background: `linear-gradient(to right, rgb(167,154,210) 0%, rgb(167,154,210) ${journal.sleepQuality * 10}%, hsl(var(--muted)) ${journal.sleepQuality * 10}%, hsl(var(--muted)) 100%)` }}
-                  />
-                </div>
-
-                {/* Energy */}
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-1.5">
-                      <Zap className="h-3.5 w-3.5 text-muted-foreground" />
-                      <span className="font-medium text-foreground">Energy</span>
-                    </div>
-                    <span className="font-semibold text-foreground">{journal.energy}/10</span>
-                  </div>
-                  <input type="range" min={0} max={10} value={journal.energy}
-                    onChange={(e) => saveJournal({ energy: Number(e.target.value) })}
-                    className="w-full h-2 rounded-lg appearance-none cursor-pointer"
-                    style={{ background: `linear-gradient(to right, rgb(251,191,90) 0%, rgb(251,191,90) ${journal.energy * 10}%, hsl(var(--muted)) ${journal.energy * 10}%, hsl(var(--muted)) 100%)` }}
-                  />
-                </div>
-
-                {/* Focus */}
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-1.5">
-                      <Activity className="h-3.5 w-3.5 text-muted-foreground" />
-                      <span className="font-medium text-foreground">Focus</span>
-                    </div>
-                    <span className="font-semibold text-foreground">{journal.focus}/10</span>
-                  </div>
-                  <input type="range" min={0} max={10} value={journal.focus}
-                    onChange={(e) => saveJournal({ focus: Number(e.target.value) })}
-                    className="w-full h-2 rounded-lg appearance-none cursor-pointer"
-                    style={{ background: `linear-gradient(to right, rgb(125,211,252) 0%, rgb(125,211,252) ${journal.focus * 10}%, hsl(var(--muted)) ${journal.focus * 10}%, hsl(var(--muted)) 100%)` }}
-                  />
-                </div>
-
-                {/* Stress */}
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-1.5">
-                      <HeartPulse className="h-3.5 w-3.5 text-muted-foreground" />
-                      <span className="font-medium text-foreground">Stress</span>
-                    </div>
-                    <span className="font-semibold text-foreground">{journal.stress}/10</span>
-                  </div>
-                  <input type="range" min={0} max={10} value={journal.stress}
-                    onChange={(e) => saveJournal({ stress: Number(e.target.value) })}
-                    className="w-full h-2 rounded-lg appearance-none cursor-pointer"
-                    style={{ background: `linear-gradient(to right, rgb(249,168,212) 0%, rgb(249,168,212) ${journal.stress * 10}%, hsl(var(--muted)) ${journal.stress * 10}%, hsl(var(--muted)) 100%)` }}
-                  />
-                </div>
-
-                {/* Mood */}
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-1.5">
-                      <Heart className="h-3.5 w-3.5 text-muted-foreground" />
-                      <span className="font-medium text-foreground">Mood</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <span>{journal.mood <= 2 ? '😢' : journal.mood <= 4 ? '😞' : journal.mood <= 6 ? '😐' : journal.mood <= 8 ? '🙂' : '😄'}</span>
-                      <span className="font-semibold text-foreground">{journal.mood}/10</span>
-                    </div>
-                  </div>
-                  <input type="range" min={0} max={10} value={journal.mood}
-                    onChange={(e) => saveJournal({ mood: Number(e.target.value) })}
-                    className="w-full h-2 rounded-lg appearance-none cursor-pointer"
-                    style={{ background: `linear-gradient(to right, rgb(110,231,183) 0%, rgb(110,231,183) ${journal.mood * 10}%, hsl(var(--muted)) ${journal.mood * 10}%, hsl(var(--muted)) 100%)` }}
-                  />
-                </div>
-
-                {/* Confidence */}
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-1.5">
-                      <Smile className="h-3.5 w-3.5 text-muted-foreground" />
-                      <span className="font-medium text-foreground">Confidence</span>
-                    </div>
-                    <span className="font-semibold text-foreground">{journal.confidence}/10</span>
-                  </div>
-                  <input type="range" min={0} max={10} value={journal.confidence}
-                    onChange={(e) => saveJournal({ confidence: Number(e.target.value) })}
-                    className="w-full h-2 rounded-lg appearance-none cursor-pointer"
-                    style={{ background: `linear-gradient(to right, rgb(216,180,254) 0%, rgb(216,180,254) ${journal.confidence * 10}%, hsl(var(--muted)) ${journal.confidence * 10}%, hsl(var(--muted)) 100%)` }}
-                  />
-                </div>
-
-              </div>
-            </div>
           </div>
 
           {/* ── RIGHT COLUMN ── */}
