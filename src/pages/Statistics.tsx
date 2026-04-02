@@ -678,13 +678,13 @@ export default function Statistics() {
                   const totalLosses = Math.abs(monthTrades.filter(t => t.result === 'loss').reduce((sum, t) => sum + (t.pnl || 0), 0));
                   const profitFactor = totalLosses > 0 ? totalWins / totalLosses : totalWins > 0 ? 999 : 0;
                   
-                  // Average RRR - handle both r_multiple and rMultiple
+                  // Average RRR: only winning trades, positive values, exclude 0/null
                   const rrrTrades = monthTrades.filter(t => {
-                    const rValue = t.r_multiple !== undefined ? t.r_multiple : t.rMultiple;
-                    return rValue !== null && rValue !== undefined;
+                    const rValue = Math.abs(t.rMultiple || 0);
+                    return t.result === 'win' && rValue > 0;
                   });
                   const avgRrr = rrrTrades.length > 0 
-                    ? rrrTrades.reduce((sum, t) => sum + ((t.r_multiple !== undefined ? t.r_multiple : t.rMultiple) || 0), 0) / rrrTrades.length 
+                    ? rrrTrades.reduce((sum, t) => sum + Math.abs(t.rMultiple || 0), 0) / rrrTrades.length 
                     : 0;
                   
                   return (
