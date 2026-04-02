@@ -30,7 +30,7 @@ const loadStoredTrades = (dateFilter: string) => {
         tfSmall: t.tfSmall || t.timeframe_small || t.timeframe || null,
         tfLarge: t.tfLarge || t.timeframe_large || t.higher_timeframe || null,
         rMultiple: t.rMultiple ?? t.closed_rrr ?? t.r_multiple ?? null,
-      }));
+      })).sort((a: any, b: any) => (b.createdAt || 0) - (a.createdAt || 0));
     }
 
     const trades: any[] = [];
@@ -84,7 +84,11 @@ const loadStoredTrades = (dateFilter: string) => {
       // ignore
     }
 
-    return trades.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    return trades.sort((a, b) => {
+      const dateDiff = (b.date || '').localeCompare(a.date || '');
+      if (dateDiff !== 0) return dateDiff;
+      return (b.createdAt || 0) - (a.createdAt || 0);
+    });
   } catch (e) {
     return [];
   }
@@ -424,6 +428,11 @@ export default function TradeJournal() {
     .filter((trade: any) => {
       if (dateTo && trade.date) return trade.date <= dateTo;
       return true;
+    })
+    .sort((a: any, b: any) => {
+      const dateDiff = (b.date || '').localeCompare(a.date || '');
+      if (dateDiff !== 0) return dateDiff;
+      return (b.createdAt || 0) - (a.createdAt || 0);
     });
   
   const activeFiltersCount = [resultFilter, directionFilter, cyclePhaseFilter, minR, maxR, dateFrom, dateTo].filter(Boolean).length;
