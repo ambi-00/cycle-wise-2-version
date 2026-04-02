@@ -63,7 +63,7 @@ export function CyclePhaseIndicator({ phase, day, recommendation, cycleLength = 
     : config.color.replace("bg-", "text-");
 
   return (
-    <Link to={`/day/${day}`} aria-label={`Open day ${day} in Cycle Tracker`}>
+    <Link to={`/day/${day}`} className="block" aria-label={`Open day ${day} in Cycle Tracker`}>
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
