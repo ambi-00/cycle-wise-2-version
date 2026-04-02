@@ -91,6 +91,7 @@ export default function Settings() {
   };
 
   const handleLogout = async () => {
+    localStorage.removeItem('cw_remember_me');
     await supabase.auth.signOut();
     navigate('/login');
   };

@@ -14,6 +14,7 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -63,7 +64,16 @@ export default function Login() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
-                <div className="flex justify-end">
+                <div className="flex items-center justify-between">
+                  <label className="flex items-center gap-2 cursor-pointer select-none text-sm text-muted-foreground">
+                    <input
+                      type="checkbox"
+                      checked={rememberMe}
+                      onChange={(e) => setRememberMe(e.target.checked)}
+                      className="w-4 h-4 rounded accent-primary cursor-pointer"
+                    />
+                    Eingeloggt bleiben
+                  </label>
                   <Link to="/reset-password" className="text-sm text-primary underline">
                     Forgot password?
                   </Link>
@@ -73,6 +83,16 @@ export default function Login() {
                     e.preventDefault();
                     setLoading(true);
                     try {
+                      // Set remember-me flag BEFORE login so smartStorage uses the right store
+                      if (rememberMe) {
+                        localStorage.setItem('cw_remember_me', 'true');
+                      } else {
+                        localStorage.removeItem('cw_remember_me');
+                        // Clear any stale session from localStorage so old sessions don't linger
+                        Object.keys(localStorage)
+                          .filter(k => k.startsWith('sb-'))
+                          .forEach(k => localStorage.removeItem(k));
+                      }
                       console.debug('Login: attempting signInWithPassword', { email });
                       const { data, error } = await supabase.auth.signInWithPassword({
                         email,
@@ -125,6 +145,8 @@ export default function Login() {
                   className="w-full flex items-center gap-3 py-5"
                   onClick={async () => {
                     setLoading(true);
+                    // OAuth always remembers session (no checkbox before redirect possible)
+                    localStorage.setItem('cw_remember_me', 'true');
                     try {
                       const { error } = await supabase.auth.signInWithOAuth({
                         provider: 'google',
@@ -154,6 +176,8 @@ export default function Login() {
                   className="w-full flex items-center gap-3 py-5"
                   onClick={async () => {
                     setLoading(true);
+                    // OAuth always remembers session (no checkbox before redirect possible)
+                    localStorage.setItem('cw_remember_me', 'true');
                     try {
                       const { error } = await supabase.auth.signInWithOAuth({
                         provider: 'apple',

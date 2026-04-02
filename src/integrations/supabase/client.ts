@@ -9,9 +9,37 @@ if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
   throw new Error('Missing Supabase environment variables');
 }
 
+/**
+ * Smart storage: uses localStorage when "remember me" is set (cw_remember_me=true),
+ * otherwise uses sessionStorage so the session dies when the browser closes.
+ * removeItem always clears both stores for clean logout.
+ */
+const smartStorage = {
+  getItem: (key: string): string | null => {
+    if (typeof window === 'undefined') return null;
+    if (window.localStorage.getItem('cw_remember_me') === 'true') {
+      return window.localStorage.getItem(key);
+    }
+    return window.sessionStorage.getItem(key);
+  },
+  setItem: (key: string, value: string): void => {
+    if (typeof window === 'undefined') return;
+    if (window.localStorage.getItem('cw_remember_me') === 'true') {
+      window.localStorage.setItem(key, value);
+    } else {
+      window.sessionStorage.setItem(key, value);
+    }
+  },
+  removeItem: (key: string): void => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.removeItem(key);
+    window.sessionStorage.removeItem(key);
+  },
+};
+
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
-    storage: window.localStorage,
+    storage: smartStorage,
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,
