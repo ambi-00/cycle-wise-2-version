@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Plus, Filter, Download, Upload, TrendingUp, TrendingDown, Search, CheckCircle, AlertCircle, Lightbulb, X, Zap, ChevronLeft, ChevronRight, Pencil, Trash2 } from "lucide-react";
 import { deleteTradeEverywhere } from "@/lib/tradeLoaders";
+import { loadCycleSettings, loadPeriodDates } from "@/lib/demoDataLoaders";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useEffect, useState, lazy, Suspense, useRef } from "react";
@@ -884,7 +885,7 @@ export default function TradeJournal() {
                   <th className="px-4 py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">R</th>
                   <th className="px-4 py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground hidden lg:table-cell">Strategy</th>
                   <th className="px-4 py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground hidden lg:table-cell">Phase</th>
-                  <th className="px-4 py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground hidden xl:table-cell">Confirmations</th>
+                  <th className="px-4 py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground hidden xl:table-cell">Rating</th>
                   <th className="px-4 py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground"></th>
                 </tr>
               </thead>
@@ -956,57 +957,15 @@ export default function TradeJournal() {
                     <td className="px-4 py-4 hidden lg:table-cell">
                       <span className="text-xs text-muted-foreground">{trade.cyclePhase || '—'}</span>
                     </td>
-                    <td className="px-6 py-6 hidden xl:table-cell">
-                      {trade.isMTTrade ? (
-                        <div className="flex items-center gap-2">
-                          {!trade.mtData?.is_enriched && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setEnrichmentDialog({
-                                  isOpen: true,
-                                  tradeId: trade.mtTradeId,
-                                  symbol: trade.instrument,
-                                  openTime: trade.date,
-                                });
-                              }}
-                              className="text-xs"
-                            >
-                              Enrich
-                            </Button>
-                          )}
-                          {trade.mtData?.screenshot_url && (
-                            <img src={trade.mtData.screenshot_url} alt="MT screenshot" className="h-12 w-20 object-cover rounded-md border" />
-                          )}
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-3">
-                          <div className="flex items-center gap-1">
-                            {[...Array(4)].map((_, i) => {
-                              const doneCount = (trade.checklist || []).filter((c: any) => c.done).length;
-                              return (
-                                <div
-                                  key={i}
-                                  className={`h-2 w-2 rounded-full ${
-                                    i < doneCount ? "bg-primary" : "bg-muted"
-                                  }`}
-                                />
-                              );
-                            })}
-                          </div>
-                          {([
-                            trade.postImg,
-                            trade.tvLink,
-                            trade.entryImg,
-                            trade.exitImg,
-                            trade.entryLink,
-                            trade.exitLink,
-                          ].filter(Boolean) as string[]).slice(0, 2).map((src, i) => (
-                            <img key={i} src={src} alt={`snap-${i}`} className="h-12 w-20 object-cover rounded-md border" />
+                    <td className="px-4 py-4 hidden xl:table-cell">
+                      {trade.rating ? (
+                        <div className="flex items-center gap-0.5">
+                          {[1,2,3,4,5].map(star => (
+                            <span key={star} className={`text-base ${star <= trade.rating ? 'text-yellow-400' : 'text-muted/30'}`}>★</span>
                           ))}
                         </div>
+                      ) : (
+                        <span className="text-muted-foreground text-xs">—</span>
                       )}
                     </td>                      <td className="px-4 py-4">
                         <div className="flex items-center gap-1">
