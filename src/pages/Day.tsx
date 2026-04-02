@@ -334,7 +334,7 @@ export default function Day() {
                   <input type="range" min={0} max={10} value={journal.sleepQuality}
                     onChange={(e) => saveJournal({ sleepQuality: Number(e.target.value) })}
                     className="w-full h-2 rounded-lg appearance-none cursor-pointer"
-                    style={{ background: `linear-gradient(to right, rgb(99,102,241) 0%, rgb(99,102,241) ${journal.sleepQuality * 10}%, hsl(var(--muted)) ${journal.sleepQuality * 10}%, hsl(var(--muted)) 100%)` }}
+                    style={{ background: `linear-gradient(to right, rgb(167,154,210) 0%, rgb(167,154,210) ${journal.sleepQuality * 10}%, hsl(var(--muted)) ${journal.sleepQuality * 10}%, hsl(var(--muted)) 100%)` }}
                   />
                 </div>
 
@@ -350,7 +350,7 @@ export default function Day() {
                   <input type="range" min={0} max={10} value={journal.energy}
                     onChange={(e) => saveJournal({ energy: Number(e.target.value) })}
                     className="w-full h-2 rounded-lg appearance-none cursor-pointer"
-                    style={{ background: `linear-gradient(to right, rgb(245,158,11) 0%, rgb(245,158,11) ${journal.energy * 10}%, hsl(var(--muted)) ${journal.energy * 10}%, hsl(var(--muted)) 100%)` }}
+                    style={{ background: `linear-gradient(to right, rgb(251,191,90) 0%, rgb(251,191,90) ${journal.energy * 10}%, hsl(var(--muted)) ${journal.energy * 10}%, hsl(var(--muted)) 100%)` }}
                   />
                 </div>
 
@@ -366,7 +366,7 @@ export default function Day() {
                   <input type="range" min={0} max={10} value={journal.focus}
                     onChange={(e) => saveJournal({ focus: Number(e.target.value) })}
                     className="w-full h-2 rounded-lg appearance-none cursor-pointer"
-                    style={{ background: `linear-gradient(to right, rgb(6,182,212) 0%, rgb(6,182,212) ${journal.focus * 10}%, hsl(var(--muted)) ${journal.focus * 10}%, hsl(var(--muted)) 100%)` }}
+                    style={{ background: `linear-gradient(to right, rgb(125,211,252) 0%, rgb(125,211,252) ${journal.focus * 10}%, hsl(var(--muted)) ${journal.focus * 10}%, hsl(var(--muted)) 100%)` }}
                   />
                 </div>
 
@@ -382,7 +382,7 @@ export default function Day() {
                   <input type="range" min={0} max={10} value={journal.stress}
                     onChange={(e) => saveJournal({ stress: Number(e.target.value) })}
                     className="w-full h-2 rounded-lg appearance-none cursor-pointer"
-                    style={{ background: `linear-gradient(to right, rgb(244,63,94) 0%, rgb(244,63,94) ${journal.stress * 10}%, hsl(var(--muted)) ${journal.stress * 10}%, hsl(var(--muted)) 100%)` }}
+                    style={{ background: `linear-gradient(to right, rgb(249,168,212) 0%, rgb(249,168,212) ${journal.stress * 10}%, hsl(var(--muted)) ${journal.stress * 10}%, hsl(var(--muted)) 100%)` }}
                   />
                 </div>
 
@@ -401,7 +401,7 @@ export default function Day() {
                   <input type="range" min={0} max={10} value={journal.mood}
                     onChange={(e) => saveJournal({ mood: Number(e.target.value) })}
                     className="w-full h-2 rounded-lg appearance-none cursor-pointer"
-                    style={{ background: `linear-gradient(to right, rgb(34,197,94) 0%, rgb(34,197,94) ${journal.mood * 10}%, hsl(var(--muted)) ${journal.mood * 10}%, hsl(var(--muted)) 100%)` }}
+                    style={{ background: `linear-gradient(to right, rgb(110,231,183) 0%, rgb(110,231,183) ${journal.mood * 10}%, hsl(var(--muted)) ${journal.mood * 10}%, hsl(var(--muted)) 100%)` }}
                   />
                 </div>
 
@@ -417,7 +417,7 @@ export default function Day() {
                   <input type="range" min={0} max={10} value={journal.confidence}
                     onChange={(e) => saveJournal({ confidence: Number(e.target.value) })}
                     className="w-full h-2 rounded-lg appearance-none cursor-pointer"
-                    style={{ background: `linear-gradient(to right, hsl(var(--primary)) 0%, hsl(var(--primary)) ${journal.confidence * 10}%, hsl(var(--muted)) ${journal.confidence * 10}%, hsl(var(--muted)) 100%)` }}
+                    style={{ background: `linear-gradient(to right, rgb(216,180,254) 0%, rgb(216,180,254) ${journal.confidence * 10}%, hsl(var(--muted)) ${journal.confidence * 10}%, hsl(var(--muted)) 100%)` }}
                   />
                 </div>
 
