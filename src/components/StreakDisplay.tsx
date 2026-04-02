@@ -46,7 +46,7 @@ export function StreakDisplay() {
   const tradingStreak = stats?.trading_streak || 0;
 
   return (
-    <div className="flex gap-3 flex-wrap">
+    <div className="flex gap-3 flex-wrap justify-center">
       {/* Login Streak */}
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
