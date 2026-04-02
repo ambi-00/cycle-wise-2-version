@@ -590,9 +590,9 @@ export default function Statistics() {
                               onClick={() => navigate(`/journal?date=${day.date}`)}
                               className={`
                                 relative min-h-[80px] p-2 rounded-lg border cursor-pointer transition-all
-                                ${!day.isCurrentMonth ? 'opacity-40 bg-muted/5' : hasData && isPositive ? 'bg-green-100 dark:bg-green-900/40' : hasData && !isPositive ? 'bg-red-100 dark:bg-red-900/40' : 'bg-card'}
-                                ${hasData && isPositive ? 'border-green-500 dark:border-green-500' : ''}
-                                ${hasData && !isPositive ? 'border-red-500 dark:border-red-500' : ''}
+                                ${!day.isCurrentMonth ? 'opacity-40 bg-muted/5' : hasData && isPositive ? 'bg-emerald-50 dark:bg-emerald-950/30' : hasData && !isPositive ? 'bg-rose-50 dark:bg-rose-950/30' : 'bg-card'}
+                                ${hasData && isPositive ? 'border-emerald-300 dark:border-emerald-700' : ''}
+                                ${hasData && !isPositive ? 'border-rose-300 dark:border-rose-700' : ''}
                                 ${isSelected ? 'ring-2 ring-primary' : ''}
                                 hover:shadow-md hover:scale-105
                               `}
@@ -602,7 +602,7 @@ export default function Statistics() {
                               </div>
                               {hasData && (
                                 <div className="space-y-1">
-                                  <div className={`text-xs font-bold ${isPositive ? 'text-green-700 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                                  <div className={`text-xs font-bold ${isPositive ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
                                     {isPositive ? '+' : ''}{dayData.pnl.toFixed(2)}
                                   </div>
                                   <div className="text-xs text-muted-foreground">
@@ -614,16 +614,16 @@ export default function Statistics() {
                           );
                         })}
                       {/* Weekly P&L */}
-                      <div className={`min-h-[80px] p-2 rounded-lg border flex flex-col items-center justify-center ${
+                      <div className={`min-h-[80px] p-2 rounded-lg flex flex-col items-center justify-center ${
                         weekHasData
                           ? weekIsPositive 
-                            ? 'border-green-500 bg-green-100 dark:bg-green-900/40 dark:border-green-500' 
-                            : 'border-red-500 bg-red-100 dark:bg-red-900/40 dark:border-red-500'
-                          : 'border-border/30 bg-muted/5'
+                            ? 'border-2 border-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 dark:border-emerald-600' 
+                            : 'border-2 border-rose-400 bg-rose-50 dark:bg-rose-950/30 dark:border-rose-600'
+                          : 'border border-border/30 bg-muted/5'
                       }`}>
                         {weekHasData ? (
                           <>
-                            <div className={`text-xs font-bold ${weekIsPositive ? 'text-green-700 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                            <div className={`text-xs font-bold ${weekIsPositive ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
                               {weekIsPositive ? '+' : ''}{weeklyPnl.toFixed(2)}
                             </div>
                             <div className="text-[10px] text-muted-foreground mt-0.5">P&L</div>
