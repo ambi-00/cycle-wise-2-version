@@ -269,165 +269,157 @@ function PhaseCard({
 const generateCalendarData = (year: number, monthIndex: number, avgCycleLength: number, lastPeriodStartIso: string, periodLength: number, loggedPeriodDays: string[] = []): DayData[] => {
   const days: DayData[] = [];
   const msPerDay = 1000 * 60 * 60 * 24;
-
-  // parse last period start
   const lastStart = lastPeriodStartIso ? new Date(lastPeriodStartIso) : null;
-
-  // number of days in month
   const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
 
-  // Build all period groups once (sorted ascending by start date)
+  // Helper: local YYYY-MM-DD string (avoids UTC offset bug)
+  const toLocalDateStr = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+  // Build period groups from logged days (sorted ascending)
   const allLoggedDates = loggedPeriodDays
     .map(d => new Date(d))
     .sort((a, b) => a.getTime() - b.getTime());
 
   const periodGroups: Date[][] = [];
   let _group: Date[] = [];
-  for (let i = 0; i < allLoggedDates.length; i++) {
-    if (_group.length === 0) {
-      _group.push(allLoggedDates[i]);
+  for (const d of allLoggedDates) {
+    if (_group.length === 0 || d.getTime() - _group[_group.length - 1].getTime() <= msPerDay * 1.5) {
+      _group.push(d);
     } else {
-      const diff = allLoggedDates[i].getTime() - _group[_group.length - 1].getTime();
-      if (diff <= msPerDay * 1.5) {
-        _group.push(allLoggedDates[i]);
-      } else {
-        periodGroups.push([..._group]);
-        _group = [allLoggedDates[i]];
-      }
+      periodGroups.push([..._group]);
+      _group = [d];
     }
   }
   if (_group.length > 0) periodGroups.push(_group);
-
-  // Sorted list of period group start dates
   const periodGroupStarts: Date[] = periodGroups.map(g => g[0]);
 
-  // Find the most recent period start on or before a date (logged first, then fallback)
-  const findCurrentPeriodStart = (date: Date): Date | null => {
-    if (periodGroupStarts.length === 0) return lastStart;
-    for (let i = periodGroupStarts.length - 1; i >= 0; i--) {
-      if (periodGroupStarts[i] <= date) return periodGroupStarts[i];
-    }
-    return lastStart;
-  };
+  // Anchor = earliest known period start (used to count predicted cycles)
+  const anchor: Date | null = (() => {
+    if (lastStart && (periodGroupStarts.length === 0 || lastStart <= periodGroupStarts[0])) return lastStart;
+    return periodGroupStarts.length > 0 ? periodGroupStarts[0] : null;
+  })();
 
-  // Find the earliest period group start that is STRICTLY AFTER a given date
-  const findNextPeriodStart = (afterDate: Date): Date | null => {
-    for (let i = 0; i < periodGroupStarts.length; i++) {
-      if (periodGroupStarts[i].getTime() > afterDate.getTime()) return periodGroupStarts[i];
+  // For a predicted cycle starting at `predictedStart`, find the corresponding
+  // logged period start (if the user actually tracked it). Allows ±50% of cycle length.
+  const findLoggedStartForCycle = (predictedStart: Date): Date | null => {
+    const window = avgCycleLength * 0.5 * msPerDay;
+    for (const ps of periodGroupStarts) {
+      const delta = ps.getTime() - predictedStart.getTime();
+      if (delta >= -window && delta <= window) return ps;
     }
     return null;
   };
 
-  // Helper: get local YYYY-MM-DD string (avoids UTC offset bug with toISOString())
-  const toLocalDateStr = (d: Date) =>
-    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  // Earliest tracking date (before this = neutral/grey)
+  const earliestTracking: Date | null = anchor;
 
   for (let i = 1; i <= daysInMonth; i++) {
     const date = new Date(year, monthIndex, i);
     const dateStr = toLocalDateStr(date);
-
-    // Check if this date is a logged period day
     const isLoggedPeriodDay = loggedPeriodDays.includes(dateStr);
 
-    // Find the period start that applies to this date
-    const relevantPeriodStart = findCurrentPeriodStart(date) || lastStart;
+    // Before any tracking data → neutral
+    const isBeforeTracking = !earliestTracking || date.getTime() < earliestTracking.getTime();
 
-    // Determine the earliest tracking start date
-    let earliestTrackingDate: Date | null = null;
-    
-    // Use the earliest logged period day if available
-    if (loggedPeriodDays.length > 0) {
-      const sortedLoggedDays = [...loggedPeriodDays].sort();
-      earliestTrackingDate = new Date(sortedLoggedDays[0]);
-    } else if (lastStart) {
-      // Otherwise use lastPeriodStart
-      earliestTrackingDate = lastStart;
-    }
-
-    // Check if this date is before tracking started
-    const isBeforeTracking = earliestTrackingDate && date.getTime() < earliestTrackingDate.getTime();
-
-    // compute cycle day relative to relevant period start
     let cycleDay = 1;
     let phase: "menstruation" | "follicular" | "ovulation" | "luteal" = "menstruation";
-    
-    if (!isBeforeTracking && relevantPeriodStart) {
-      const diff = Math.floor((date.getTime() - relevantPeriodStart.getTime()) / msPerDay);
 
-      // Use actual distance to the NEXT logged period start if available,
-      // otherwise fall back to the settings-based average cycle length.
-      const nextPeriodStart = findNextPeriodStart(relevantPeriodStart);
-      const effectiveCycleLength = nextPeriodStart
-        ? Math.max(Math.floor((nextPeriodStart.getTime() - relevantPeriodStart.getTime()) / msPerDay), 1)
-        : avgCycleLength;
+    if (!isBeforeTracking && anchor) {
+      // ── Step 1: Find the predicted cycle start for this date ──────────────
+      const daysSinceAnchor = Math.floor((date.getTime() - anchor.getTime()) / msPerDay);
+      const n = Math.floor(daysSinceAnchor / avgCycleLength);
+      const predictedCycleStart = new Date(anchor.getTime() + n * avgCycleLength * msPerDay);
 
-      cycleDay = (diff % effectiveCycleLength) + 1;
-      
-      // Handle negative cycle days (shouldn't happen but just in case)
-      if (cycleDay < 1) cycleDay = 1;
+      // ── Step 2: Find corresponding logged period (if user tracked it) ─────
+      const loggedCycleStart = findLoggedStartForCycle(predictedCycleStart);
 
-      // Determine actual period length for THIS specific logged period
-      let actualPeriodLength = periodLength; // Default to settings
-      
-      // Find all consecutive logged period days starting from this period start
-      const periodDaysForThisCycle = loggedPeriodDays.filter(d => {
-        const loggedDate = new Date(d);
-        const daysSinceStart = Math.floor((loggedDate.getTime() - relevantPeriodStart.getTime()) / msPerDay);
-        return daysSinceStart >= 0 && daysSinceStart < 15; // Look within first 15 days
-      }).sort();
-      
-      if (periodDaysForThisCycle.length > 0) {
-        // Find consecutive days from the start
-        let consecutiveCount = 0;
-        for (const pd of periodDaysForThisCycle) {
-          const dayNum = Math.floor((new Date(pd).getTime() - relevantPeriodStart.getTime()) / msPerDay);
-          if (dayNum === consecutiveCount) {
-            consecutiveCount++;
-          } else {
-            break;
+      // ── Step 3: Determine effective cycle start + luteal-extension flag ───
+      //   Case A: period came late (logged > predicted)
+      //     → days between predicted and logged-1 are LUTEAL (extending prev luteal)
+      //     → from logged start: new cycle begins
+      //   Case B: period came early or on time (logged <= predicted)
+      //     → use logged start directly
+      //   Case C: no logged period yet → use prediction
+      let effectiveCycleStart: Date = predictedCycleStart;
+      let isLutealExtension = false;
+
+      if (loggedCycleStart) {
+        if (date.getTime() < loggedCycleStart.getTime()) {
+          // Before the actual logged start
+          if (date.getTime() >= predictedCycleStart.getTime()) {
+            // Predicted period window but user hasn't had it yet → luteal extension
+            isLutealExtension = true;
           }
+          effectiveCycleStart = predictedCycleStart; // used for cycleDay in luteal extension
+        } else {
+          // On or after actual logged start
+          effectiveCycleStart = loggedCycleStart;
         }
-        // Use max of logged consecutive days and settings-based period length.
-        if (consecutiveCount > 0) {
-          actualPeriodLength = Math.max(consecutiveCount, periodLength);
+      }
+      // else: no logged period → effectiveCycleStart stays = predictedCycleStart
+
+      // ── Step 4: Effective cycle length (distance to next logged start) ────
+      let effectiveCycleLength = avgCycleLength;
+      for (const ps of periodGroupStarts) {
+        if (ps.getTime() > effectiveCycleStart.getTime()) {
+          const dist = Math.floor((ps.getTime() - effectiveCycleStart.getTime()) / msPerDay);
+          if (dist > 10) { effectiveCycleLength = dist; break; }
         }
       }
 
+      // ── Step 5: Compute cycleDay ──────────────────────────────────────────
+      cycleDay = Math.floor((date.getTime() - effectiveCycleStart.getTime()) / msPerDay) + 1;
+      if (cycleDay < 1) cycleDay = 1;
+
+      // ── Step 6: Determine period length for this cycle ───────────────────
+      let actualPeriodLength = periodLength;
+      const periodDaysForThisCycle = loggedPeriodDays.filter(d => {
+        const ld = new Date(d);
+        const diff = Math.floor((ld.getTime() - effectiveCycleStart.getTime()) / msPerDay);
+        return diff >= 0 && diff < 15;
+      }).sort();
+
+      if (periodDaysForThisCycle.length > 0) {
+        let consecutive = 0;
+        for (const pd of periodDaysForThisCycle) {
+          const dayNum = Math.floor((new Date(pd).getTime() - effectiveCycleStart.getTime()) / msPerDay);
+          if (dayNum === consecutive) consecutive++;
+          else break;
+        }
+        if (consecutive > 0) actualPeriodLength = Math.max(consecutive, periodLength);
+      }
+
+      // ── Step 7: Assign phase ──────────────────────────────────────────────
       const follicularEnd = Math.min(actualPeriodLength + 7, effectiveCycleLength);
-      const ovulationEnd = Math.min(actualPeriodLength + 11, effectiveCycleLength);
-      
-      // If this day is logged as period, it's definitely menstruation
-      // Otherwise use cycle day calculation
-      phase = isLoggedPeriodDay 
-        ? "menstruation" 
-        : cycleDay <= actualPeriodLength 
-          ? "menstruation" 
-          : cycleDay <= follicularEnd 
-            ? "follicular" 
-            : cycleDay <= ovulationEnd 
-              ? "ovulation" 
+      const ovulationEnd  = Math.min(actualPeriodLength + 11, effectiveCycleLength);
+
+      if (isLutealExtension) {
+        phase = "luteal";
+      } else if (isLoggedPeriodDay) {
+        phase = "menstruation";
+      } else {
+        phase = cycleDay <= actualPeriodLength ? "menstruation"
+              : cycleDay <= follicularEnd      ? "follicular"
+              : cycleDay <= ovulationEnd       ? "ovulation"
               : "luteal";
+      }
     }
 
-    // Load real trades from journal instead of demo data
-    const dateIso = toLocalDateStr(date);
+    // Load trades for this day
     let trades = 0;
     let pnl = 0;
-    
     try {
-      const journalData = localStorage.getItem(`cw_journal_${dateIso}`);
+      const journalData = localStorage.getItem(`cw_journal_${dateStr}`);
       if (journalData) {
         const journal = JSON.parse(journalData);
         if (journal.trades && Array.isArray(journal.trades)) {
           trades = journal.trades.length;
-          pnl = journal.trades.reduce((sum: number, trade: any) => {
-            return sum + (typeof trade.pnl === 'number' ? trade.pnl : 0);
-          }, 0);
+          pnl = journal.trades.reduce((sum: number, trade: any) =>
+            sum + (typeof trade.pnl === 'number' ? trade.pnl : 0), 0);
         }
       }
-    } catch {
-      // ignore parse errors
-    }
+    } catch { /* ignore */ }
 
     days.push({
       day: i,

@@ -591,7 +591,7 @@ export default function Statistics() {
                               className={`
                                 relative min-h-[80px] p-2 rounded-lg border cursor-pointer transition-all
                                 ${!day.isCurrentMonth ? 'opacity-40 bg-muted/5' : 'bg-card'}
-                                ${hasData && isPositive ? 'border-accent/40 bg-accent/50' : ''}
+                                ${hasData && isPositive ? 'border-green-500/60 bg-green-500/10' : ''}
                                 ${hasData && !isPositive ? 'border-destructive/40 bg-destructive/5' : ''}
                                 ${isSelected ? 'ring-2 ring-primary' : ''}
                                 hover:shadow-md hover:scale-105
@@ -602,7 +602,7 @@ export default function Statistics() {
                               </div>
                               {hasData && (
                                 <div className="space-y-1">
-                                  <div className={`text-xs font-bold ${isPositive ? 'text-accent-foreground' : 'text-destructive'}`}>
+                                  <div className={`text-xs font-bold ${isPositive ? 'text-green-600 dark:text-green-400' : 'text-destructive'}`}>
                                     {isPositive ? '+' : ''}{dayData.pnl.toFixed(2)}
                                   </div>
                                   <div className="text-xs text-muted-foreground">
@@ -617,13 +617,13 @@ export default function Statistics() {
                       <div className={`min-h-[80px] p-2 rounded-lg border flex flex-col items-center justify-center ${
                         weekHasData
                           ? weekIsPositive 
-                            ? 'border-accent/40 bg-accent/50' 
+                            ? 'border-green-500/60 bg-green-500/10' 
                             : 'border-destructive/40 bg-destructive/5'
                           : 'border-border/30 bg-muted/5'
                       }`}>
                         {weekHasData ? (
                           <>
-                            <div className={`text-xs font-bold ${weekIsPositive ? 'text-accent-foreground' : 'text-destructive'}`}>
+                            <div className={`text-xs font-bold ${weekIsPositive ? 'text-green-600 dark:text-green-400' : 'text-destructive'}`}>
                               {weekIsPositive ? '+' : ''}{weeklyPnl.toFixed(2)}
                             </div>
                             <div className="text-[10px] text-muted-foreground mt-0.5">P&L</div>
