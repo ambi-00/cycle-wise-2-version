@@ -780,7 +780,7 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
         return; // Stay on page until user closes modal, then navigate in onOpenChange
       }
 
-      navigate(dateParam ? `/day/${dateParam}` : '/journal');
+      navigate('/journal');
     } catch (e: any) {
       console.error('Save error:', e);
       alert(`Failed to save trade: ${e.message || 'Unknown error'}`);
@@ -806,7 +806,7 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
       }
     }
 
-    navigate(dateParam ? `/day/${dateParam}` : '/journal');
+    navigate('/journal');
   };
 
   return (
@@ -1952,7 +1952,7 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
               setPendingTradeId(null);
               setPendingIsEdit(false);
               setShowTradeReview(false);
-              navigate(dateParam ? `/day/${dateParam}` : '/journal');
+              navigate('/journal');
             }
           }}
           onComplete={handleTradeReviewComplete}

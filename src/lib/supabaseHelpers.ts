@@ -284,17 +284,25 @@ export async function loadAllTrades() {
 
       if (!error && data) {
         // Map Supabase fields to UI-friendly names
-        const mappedData = data.map(trade => ({
+        const supabaseTrades = data.map(trade => ({
           ...trade,
-          symbol: trade.instrument, // Add symbol alias
-          r_multiple: trade.closed_rrr || trade.planned_rrr || 0, // Map closed_rrr to r_multiple
-          cyclePhase: trade.cycle_phase, // Map cycle_phase to cyclePhase for UI
-          rMultiple: trade.closed_rrr || trade.planned_rrr || 0 // Also add rMultiple for compatibility
+          symbol: trade.instrument,
+          r_multiple: trade.closed_rrr || trade.planned_rrr || 0,
+          cyclePhase: trade.cycle_phase,
+          rMultiple: trade.closed_rrr || trade.planned_rrr || 0
         }));
-        
+
+        // Also load localStorage trades and merge (avoids gap when Supabase sync is incomplete)
+        const localTrades = loadTradesFromLocalStorage();
+        const supabaseIds = new Set(supabaseTrades.map((t: any) => t.id));
+        const localOnly = localTrades.filter((t: any) => t.id && !supabaseIds.has(t.id));
+        const merged = [...supabaseTrades, ...localOnly].sort((a: any, b: any) =>
+          (b.date || '').localeCompare(a.date || '')
+        );
+
         // Update localStorage cache
         cacheTradesToLocalStorage(data);
-        return mappedData;
+        return merged;
       }
     } catch (error) {
       console.error('Failed to load from Supabase, using localStorage:', error);
@@ -359,7 +367,17 @@ function loadTradesFromLocalStorage(): any[] {
     }
   }
 
-  return allTrades.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+  // Normalise field names so all consumers get a consistent shape
+  return allTrades
+    .map((t: any) => ({
+      ...t,
+      instrument: t.instrument || t.symbol || 'Unknown',
+      pnl: t.pnl ?? t.closed_pnl ?? null,
+      rMultiple: t.rMultiple ?? t.closed_rrr ?? t.r_multiple ?? null,
+      cyclePhase: t.cyclePhase || t.cycle_phase || t.phase || null,
+      status: t.status || (t.result ? 'closed' : 'open'),
+    }))
+    .sort((a, b) => (b.date || '').localeCompare(a.date || ''));
 }
 
 /**
