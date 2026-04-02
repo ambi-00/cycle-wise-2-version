@@ -987,7 +987,8 @@ export default function CycleTracker() {
               
               {calendarData.filter(day => day !== null).map((day) => {
                 const isTodayCell = isSameDay(day.date, todayDate);
-                const dayIso = day.date.toISOString().slice(0,10);
+                // Use LOCAL date string to avoid UTC timezone off-by-one (toISOString uses UTC)
+                const dayIso = `${day.date.getFullYear()}-${String(day.date.getMonth()+1).padStart(2,'0')}-${String(day.date.getDate()).padStart(2,'0')}`;
                 const isPeriodDay = periodDays.includes(dayIso);
                 const isLoggedPeriod = loggedPeriodDays.includes(dayIso);
                 
@@ -1088,7 +1089,7 @@ export default function CycleTracker() {
                   <div className="mt-4 flex gap-2">
                     <Button
                       onClick={() => {
-                        const iso = todayDayData.date.toISOString().slice(0,10);
+                        const iso = `${todayDayData.date.getFullYear()}-${String(todayDayData.date.getMonth()+1).padStart(2,'0')}-${String(todayDayData.date.getDate()).padStart(2,'0')}`;
                         setLastPeriodStart(iso);
                         if (!periodDays.includes(iso)) setPeriodDays([...periodDays, iso]);
                         saveSettings();
@@ -1101,7 +1102,7 @@ export default function CycleTracker() {
                     <Button
                       variant="outline"
                       onClick={() => {
-                        const iso = todayDayData.date.toISOString().slice(0,10);
+                        const iso = `${todayDayData.date.getFullYear()}-${String(todayDayData.date.getMonth()+1).padStart(2,'0')}-${String(todayDayData.date.getDate()).padStart(2,'0')}`;
                         if (periodDays.includes(iso)) {
                           setPeriodDays(periodDays.filter(d => d !== iso));
                         } else {
@@ -1111,7 +1112,7 @@ export default function CycleTracker() {
                         setIsDirty(false);
                       }}
                     >
-                      {periodDays.includes(todayDayData.date.toISOString().slice(0,10)) ? 'Unmark Period Day' : 'Mark Period Day'}
+                      {periodDays.includes(`${todayDayData.date.getFullYear()}-${String(todayDayData.date.getMonth()+1).padStart(2,'0')}-${String(todayDayData.date.getDate()).padStart(2,'0')}`) ? 'Unmark Period Day' : 'Mark Period Day'}
                     </Button>
 
                     {/* Clear Period Start removed — setting a different start will recompute period */}
