@@ -591,7 +591,7 @@ export default function Statistics() {
                               className={`
                                 relative min-h-[80px] p-2 rounded-lg border cursor-pointer transition-all
                                 ${!day.isCurrentMonth ? 'opacity-40 bg-muted/5' : 'bg-card'}
-                                ${hasData && isPositive ? 'border-accent/70 bg-accent/25' : ''}
+                                ${hasData && isPositive ? 'border-accent bg-accent/70' : ''}
                                 ${hasData && !isPositive ? 'border-destructive/50 bg-destructive/10' : ''}
                                 ${isSelected ? 'ring-2 ring-primary' : ''}
                                 hover:shadow-md hover:scale-105
@@ -617,7 +617,7 @@ export default function Statistics() {
                       <div className={`min-h-[80px] p-2 rounded-lg border flex flex-col items-center justify-center ${
                         weekHasData
                           ? weekIsPositive 
-                            ? 'border-accent/70 bg-accent/25' 
+                            ? 'border-accent bg-accent/70' 
                             : 'border-destructive/50 bg-destructive/10'
                           : 'border-border/30 bg-muted/5'
                       }`}>
