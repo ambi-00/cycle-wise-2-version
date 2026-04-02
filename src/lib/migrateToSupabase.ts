@@ -35,7 +35,7 @@ export async function migrateLocalStorageToSupabase(): Promise<MigrationResult> 
 
   try {
     // Check ob User eingeloggt ist
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = (await supabase.auth.getSession()).data.session?.user ?? null;
     if (!user) {
       result.errors.push('Not authenticated');
       return result;
@@ -583,7 +583,7 @@ async function migrateAIInsights(userId: string) {
  */
 export async function checkMigrationStatus(): Promise<boolean> {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = (await supabase.auth.getSession()).data.session?.user ?? null;
     if (!user) return false;
 
     // Check if trades exist in DB

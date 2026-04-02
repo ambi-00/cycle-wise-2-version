@@ -25,7 +25,7 @@ export function useAppMode(): AppModeState {
   useEffect(() => {
     const loadAppMode = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const user = (await supabase.auth.getSession()).data.session?.user ?? null;
         
         console.log('🎬 App Mode Debug - User:', user?.id);
         

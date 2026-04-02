@@ -97,7 +97,7 @@ export default function Settings() {
 
   const handleDeleteAccount = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = (await supabase.auth.getSession()).data.session?.user ?? null;
       if (!user) return;
 
       // Delete all user data from every table (DSGVO Art. 17 – right to erasure)

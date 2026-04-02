@@ -55,7 +55,7 @@ export function ChallengePrivacySettings() {
 
   const loadProfile = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = (await supabase.auth.getSession()).data.session?.user ?? null;
       if (!user) return;
 
       const { data, error } = await supabase
@@ -87,7 +87,7 @@ export function ChallengePrivacySettings() {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = (await supabase.auth.getSession()).data.session?.user ?? null;
       if (!user) throw new Error('Not authenticated');
 
       const { error } = await supabase

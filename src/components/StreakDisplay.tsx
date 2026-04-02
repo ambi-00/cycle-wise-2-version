@@ -15,7 +15,7 @@ export function StreakDisplay() {
 
   async function loadStats() {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = (await supabase.auth.getSession()).data.session?.user ?? null;
       if (!user) {
         setLoading(false);
         console.log('No user found');

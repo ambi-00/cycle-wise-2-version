@@ -183,7 +183,7 @@ export default function Dashboard() {
     // Load user name from Supabase
     const loadUserName = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const user = (await supabase.auth.getSession()).data.session?.user ?? null;
         if (user?.user_metadata?.name) {
           setUserName(user.user_metadata.name);
         } else {

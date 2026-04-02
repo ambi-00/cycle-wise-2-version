@@ -46,11 +46,12 @@ export function useMTTrade() {
 
   const uploadScreenshot = async (file: File, tradeId: string): Promise<string | null> => {
     try {
-      const user = await supabase.auth.getUser();
-      if (!user.data.user) throw new Error('Not authenticated');
+      const { data: mtAuthData } = await supabase.auth.getSession();
+      const user = mtAuthData.session?.user ?? null;
+      if (!user) throw new Error('Not authenticated');
 
       const fileName = `mt-trade-${tradeId}-${Date.now()}.png`;
-      const filePath = `${user.data.user.id}/${fileName}`;
+      const filePath = `${user.id}/${fileName}`;
 
       const { data, error } = await supabase.storage
         .from('mt-screenshots')

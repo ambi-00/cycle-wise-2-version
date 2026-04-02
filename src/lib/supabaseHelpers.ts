@@ -118,8 +118,8 @@ export async function saveTrade(trade: TradeInsert) {
     try {
       let user: any = null;
       try {
-        const { data } = await supabase.auth.getUser();
-        user = data.user;
+        const { data } = await supabase.auth.getSession();
+        user = data.session?.user ?? null;
       } catch { /* rotated key or network error — skip Supabase */ }
 
       if (!user || !navigator.onLine) return;
@@ -270,8 +270,8 @@ export async function loadAllTrades() {
   // Defensive: rotated key or no network will throw — treat as unauthenticated
   let user: any = null;
   try {
-    const { data } = await supabase.auth.getUser();
-    user = data.user;
+    const { data } = await supabase.auth.getSession();
+    user = data.session?.user ?? null;
   } catch { /* invalid/rotated key or no network */ }
 
   // Try loading from Supabase first
@@ -417,8 +417,8 @@ export interface StrategyInsert {
 export async function saveStrategy(strategy: StrategyInsert) {
   let user: any = null;
   try {
-    const { data } = await supabase.auth.getUser();
-    user = data.user;
+    const { data } = await supabase.auth.getSession();
+    user = data.session?.user ?? null;
   } catch { /* rotated key or network error */ }
 
   const strategyData = {
@@ -544,8 +544,8 @@ export async function saveCycleLog(log: CycleLogInsert) {
   // Defensive: rotated key or no network — fall through to localStorage save
   let user: any = null;
   try {
-    const { data } = await supabase.auth.getUser();
-    user = data.user;
+    const { data } = await supabase.auth.getSession();
+    user = data.session?.user ?? null;
   } catch { /* invalid/rotated key or no network */ }
 
   const cycleData = {
@@ -679,8 +679,8 @@ export interface PropFirmAccountInsert {
 export async function savePropFirmAccount(account: PropFirmAccountInsert) {
   let user: any = null;
   try {
-    const { data } = await supabase.auth.getUser();
-    user = data.user;
+    const { data } = await supabase.auth.getSession();
+    user = data.session?.user ?? null;
   } catch { /* rotated key or network error */ }
   if (!user) throw new Error('Not authenticated');
 
@@ -732,8 +732,8 @@ export async function deletePropFirmAccount(id: string) {
 export async function uploadTradeImage(file: File, folder: 'before' | 'after' = 'before'): Promise<string> {
   let user: any = null;
   try {
-    const { data } = await supabase.auth.getUser();
-    user = data.user;
+    const { data } = await supabase.auth.getSession();
+    user = data.session?.user ?? null;
   } catch { /* rotated key or network error */ }
   if (!user) throw new Error('Not authenticated');
 
@@ -796,8 +796,8 @@ export interface AIInsightInsert {
 export async function saveAIInsight(insight: AIInsightInsert) {
   let user: any = null;
   try {
-    const { data } = await supabase.auth.getUser();
-    user = data.user;
+    const { data } = await supabase.auth.getSession();
+    user = data.session?.user ?? null;
   } catch { /* rotated key or network error */ }
 
   const insightData = {
@@ -931,8 +931,8 @@ export interface ProfileUpdate {
 export async function loadProfile() {
   let user: any = null;
   try {
-    const { data } = await supabase.auth.getUser();
-    user = data.user;
+    const { data } = await supabase.auth.getSession();
+    user = data.session?.user ?? null;
   } catch { /* rotated key or network error */ }
 
   if (!user) {
@@ -984,8 +984,8 @@ export async function loadProfile() {
 export async function updateProfile(updates: ProfileUpdate) {
   let user: any = null;
   try {
-    const { data } = await supabase.auth.getUser();
-    user = data.user;
+    const { data } = await supabase.auth.getSession();
+    user = data.session?.user ?? null;
   } catch { /* rotated key or network error */ }
 
   // Try online update first
@@ -1062,8 +1062,8 @@ export interface UserSettingsUpdate {
 export async function loadUserSettings() {
   let user: any = null;
   try {
-    const { data } = await supabase.auth.getUser();
-    user = data.user;
+    const { data } = await supabase.auth.getSession();
+    user = data.session?.user ?? null;
   } catch { /* rotated key or network error */ }
   if (!user) return null;
 
@@ -1089,8 +1089,8 @@ export async function loadUserSettings() {
 async function createUserSettings() {
   let user: any = null;
   try {
-    const { data } = await supabase.auth.getUser();
-    user = data.user;
+    const { data } = await supabase.auth.getSession();
+    user = data.session?.user ?? null;
   } catch { /* rotated key or network error */ }
   if (!user) return null;
 
@@ -1110,8 +1110,8 @@ async function createUserSettings() {
 export async function updateUserSettings(updates: UserSettingsUpdate) {
   let user: any = null;
   try {
-    const { data } = await supabase.auth.getUser();
-    user = data.user;
+    const { data } = await supabase.auth.getSession();
+    user = data.session?.user ?? null;
   } catch { /* rotated key or network error */ }
   if (!user) return null;
 
@@ -1151,8 +1151,8 @@ export interface CycleLogUpdate {
 export async function saveCycleLogExtended(log: CycleLogUpdate) {
   let user: any = null;
   try {
-    const { data } = await supabase.auth.getUser();
-    user = data.user;
+    const { data } = await supabase.auth.getSession();
+    user = data.session?.user ?? null;
   } catch { /* rotated key or network error */ }
   if (!user) return null;
 
@@ -1205,8 +1205,8 @@ export interface ChallengeEntry {
 export async function joinOrUpdateChallenge(entry: ChallengeEntry) {
   let user: any = null;
   try {
-    const { data } = await supabase.auth.getUser();
-    user = data.user;
+    const { data } = await supabase.auth.getSession();
+    user = data.session?.user ?? null;
   } catch { /* rotated key or network error */ }
   if (!user) return null;
 
@@ -1229,8 +1229,8 @@ export async function joinOrUpdateChallenge(entry: ChallengeEntry) {
 export async function updateChallengeScores() {
   let user: any = null;
   try {
-    const { data } = await supabase.auth.getUser();
-    user = data.user;
+    const { data } = await supabase.auth.getSession();
+    user = data.session?.user ?? null;
   } catch { /* rotated key or network error */ }
   if (!user) return null;
 
@@ -1335,8 +1335,8 @@ export async function loadLeaderboard(challengeType: 'profit' | 'discipline' | '
 export async function loadMyChallengPositions() {
   let user: any = null;
   try {
-    const { data } = await supabase.auth.getUser();
-    user = data.user;
+    const { data } = await supabase.auth.getSession();
+    user = data.session?.user ?? null;
   } catch { /* rotated key or network error */ }
   if (!user) return [];
 
@@ -1361,8 +1361,8 @@ export async function loadMyChallengPositions() {
 export async function checkAndAwardBadges() {
   let user: any = null;
   try {
-    const { data } = await supabase.auth.getUser();
-    user = data.user;
+    const { data } = await supabase.auth.getSession();
+    user = data.session?.user ?? null;
   } catch { /* rotated key or network error */ }
   if (!user) return [];
 

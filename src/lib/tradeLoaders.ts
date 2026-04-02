@@ -299,7 +299,7 @@ export async function deleteTradeEverywhere(tradeId: string): Promise<boolean> {
 
   // 2. Also delete from Supabase when online and authenticated
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = (await supabase.auth.getSession()).data.session?.user ?? null;
     if (user && navigator.onLine) {
       const { error } = await supabase
         .from('trades')

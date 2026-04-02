@@ -318,7 +318,7 @@ export function clearSyncQueue() {
  */
 async function checkAuth(): Promise<boolean> {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = (await supabase.auth.getSession()).data.session?.user ?? null;
     return !!user;
   } catch (e) {
     return false;

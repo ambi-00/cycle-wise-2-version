@@ -16,7 +16,7 @@ export function XPBar() {
 
   async function loadStats() {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = (await supabase.auth.getSession()).data.session?.user ?? null;
       if (!user) {
         // Create fallback stats from localStorage trades
         createFallbackStats();

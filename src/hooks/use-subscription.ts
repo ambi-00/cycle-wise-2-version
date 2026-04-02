@@ -79,7 +79,7 @@ export function useSubscription() {
 
   async function loadSubscription() {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = (await supabase.auth.getSession()).data.session?.user ?? null;
       
       if (!user) {
         setSubscription({ tier: 'free', status: 'active' });

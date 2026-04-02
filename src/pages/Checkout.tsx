@@ -87,7 +87,7 @@ export default function Checkout() {
     
     try {
       // Get current user ID from Supabase auth
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = (await supabase.auth.getSession()).data.session?.user ?? null;
       
       if (!user) {
         throw new Error('User not authenticated');

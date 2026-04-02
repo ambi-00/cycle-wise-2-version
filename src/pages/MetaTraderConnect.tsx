@@ -72,7 +72,7 @@ export default function MetaTraderConnect() {
 
   const loadAccounts = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = (await supabase.auth.getSession()).data.session?.user ?? null;
       if (!user) return;
 
       const { data, error } = await (supabase
@@ -100,7 +100,7 @@ export default function MetaTraderConnect() {
 
     setIsConnecting(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = (await supabase.auth.getSession()).data.session?.user ?? null;
       if (!user) throw new Error('Nicht authentifiziert');
 
       // Teste Verbindung mit MT API

@@ -21,12 +21,9 @@ export function withServerSideLoad<P extends object>(
       const loadData = async () => {
         try {
           // Get current user
-          const {
-            data: { user },
-            error: userError,
-          } = await supabase.auth.getUser();
+          const user = (await supabase.auth.getSession()).data.session?.user ?? null;
 
-          if (userError || !user) {
+          if (!user) {
             if (isMounted) navigate('/login');
             return;
           }
@@ -91,7 +88,7 @@ export function useServerSideData() {
 
     const load = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const user = (await supabase.auth.getSession()).data.session?.user ?? null;
 
         if (!user) {
           if (isMounted) navigate('/login');

@@ -141,7 +141,7 @@ export function usePaymentSuccess() {
     try {
       let uid = userId;
       if (!uid) {
-        const { data: { user } } = await supabase.auth.getUser();
+        const user = (await supabase.auth.getSession()).data.session?.user ?? null;
         uid = user?.id;
       }
       
