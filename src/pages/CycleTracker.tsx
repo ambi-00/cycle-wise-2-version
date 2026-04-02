@@ -545,14 +545,10 @@ export default function CycleTracker() {
         try { setPeriodDays(JSON.parse(pd)); } catch { setPeriodDays([]); }
       }
       
-      // Auto-update lastPeriodStart based on logged period days
-      const detectedStart = findLastPeriodStartFromLogs(logged);
-      if (detectedStart) {
-        setLastPeriodStart(detectedStart);
-        localStorage.setItem('cw_lastPeriodStart', detectedStart);
-      }
-
       // Auto-update avgCycleLength from actual logged cycle distances
+      // NOTE: We do NOT overwrite lastPeriodStart here — it must stay as the
+      // original prediction anchor from settings. Logged period days are passed
+      // separately to generateCalendarData which already handles actual-vs-predicted.
       const computedAvg = computeAvgCycleFromLogs(logged);
       if (computedAvg && computedAvg >= 20 && computedAvg <= 45) {
         setAvgCycleLength(computedAvg);
@@ -569,14 +565,8 @@ export default function CycleTracker() {
       const logged = loadPeriodDates();
       setLoggedPeriodDays(logged);
       
-      // Auto-update lastPeriodStart
-      const detectedStart = findLastPeriodStartFromLogs(logged);
-      if (detectedStart) {
-        setLastPeriodStart(detectedStart);
-        localStorage.setItem('cw_lastPeriodStart', detectedStart);
-      }
-
       // Auto-update avgCycleLength from actual logged cycle distances
+      // NOTE: We do NOT overwrite lastPeriodStart — must stay as original anchor.
       const computedAvg = computeAvgCycleFromLogs(logged);
       if (computedAvg && computedAvg >= 20 && computedAvg <= 45) {
         setAvgCycleLength(computedAvg);
@@ -625,7 +615,11 @@ export default function CycleTracker() {
 
   // derived stats
   const msPerDay = 1000 * 60 * 60 * 24;
-  const currentCycleDay = lastPeriodStart ? (((Math.floor((todayDate.getTime() - new Date(lastPeriodStart).getTime()) / msPerDay) % avgCycleLength) + avgCycleLength) % avgCycleLength) + 1 : null;
+  // For display (current cycle day / next period countdown), use the most recent
+  // logged period start if available, otherwise fall back to the settings anchor.
+  const detectedLastStart = findLastPeriodStartFromLogs(loggedPeriodDays);
+  const displayLastPeriodStart = detectedLastStart || lastPeriodStart;
+  const currentCycleDay = displayLastPeriodStart ? (((Math.floor((todayDate.getTime() - new Date(displayLastPeriodStart).getTime()) / msPerDay) % avgCycleLength) + avgCycleLength) % avgCycleLength) + 1 : null;
   const nextPeriodIn = currentCycleDay ? (avgCycleLength - currentCycleDay + 1) : null;
   const tradesLogged = calendarData.reduce((s, d) => s + (d.trades || 0), 0);
 
