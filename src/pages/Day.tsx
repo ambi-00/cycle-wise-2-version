@@ -110,6 +110,19 @@ export default function Day() {
     cramps: number; // can be distracting while trading
   };
 
+  type CheckIn = {
+    date: string;
+    nutrition: 'poor' | 'fair' | 'good' | 'excellent';
+    mood: number;
+    concentration: number;
+    sleep: number;
+    stress: number;
+    hasExercised: boolean;
+    recommendations: string[];
+    riskAdjustment: 'reduce' | 'maintain' | 'increase' | null;
+    riskReduction: number;
+  };
+
   const defaultJournal = (): Journal => ({ 
     quickNote: "", 
     trades: [], 
@@ -126,6 +139,7 @@ export default function Day() {
     cramps: 0,
   });
   const [journal, setJournal] = useState<Journal>(defaultJournal());
+  const [checkIn, setCheckIn] = useState<CheckIn | null>(null);
 
   // Map stored journal trades to the shape RecentTradesTable expects
   type RecentTrade = {
@@ -189,6 +203,12 @@ export default function Day() {
         }
       } catch (e) {
         setJournal(defaultJournal());
+      }
+      try {
+        const ciRaw = localStorage.getItem(`cw_daily_checkin_${isoDate}`);
+        setCheckIn(ciRaw ? JSON.parse(ciRaw) : null);
+      } catch {
+        setCheckIn(null);
       }
     };
     loadJournal();
@@ -427,6 +447,75 @@ export default function Day() {
 
           {/* ── RIGHT COLUMN ── */}
           <div className="w-full lg:w-[340px] flex-shrink-0 space-y-6">
+
+            {/* Morning Check-In Summary */}
+            {checkIn ? (
+              <div className="rounded-2xl bg-card p-5 shadow-card space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="rounded-xl bg-primary/10 p-2.5">
+                      <Heart className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-foreground">Morning Check-In</h3>
+                      <p className="text-xs text-muted-foreground">Logged today</p>
+                    </div>
+                  </div>
+                  {checkIn.riskAdjustment && (
+                    <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
+                      checkIn.riskAdjustment === 'reduce'
+                        ? 'bg-rose-100 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400'
+                        : checkIn.riskAdjustment === 'increase'
+                        ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400'
+                        : 'bg-muted text-muted-foreground'
+                    }`}>
+                      {checkIn.riskAdjustment === 'reduce' ? `↓ Risk −${checkIn.riskReduction}%` : checkIn.riskAdjustment === 'increase' ? '↑ Risk +' : '✓ Normal risk'}
+                    </span>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-x-5 gap-y-3">
+                  {[
+                    { label: 'Mood', value: checkIn.mood, color: 'rgb(110,231,183)' },
+                    { label: 'Sleep', value: checkIn.sleep, color: 'rgb(167,154,210)' },
+                    { label: 'Focus', value: checkIn.concentration, color: 'rgb(125,211,252)' },
+                    { label: 'Stress', value: checkIn.stress, color: 'rgb(249,168,212)' },
+                  ].map(({ label, value, color }) => (
+                    <div key={label} className="space-y-1">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-muted-foreground">{label}</span>
+                        <span className="font-semibold text-foreground">{value}/10</span>
+                      </div>
+                      <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                        <div className="h-full rounded-full transition-all" style={{ width: `${value * 10}%`, backgroundColor: color }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex items-center justify-between text-sm pt-1">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <span>🥗 Nutrition:</span>
+                    <span className="font-medium text-foreground capitalize">{checkIn.nutrition}</span>
+                  </div>
+                  {checkIn.hasExercised && (
+                    <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">🏃 Exercised</span>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="rounded-2xl bg-card p-4 shadow-card">
+                <div className="flex items-center gap-3">
+                  <div className="rounded-xl bg-muted p-2.5">
+                    <Heart className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-foreground">Morning Check-In</p>
+                    <p className="text-xs text-muted-foreground">No check-in logged for this day</p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <CyclePhaseIndicator
               phase={phase}
