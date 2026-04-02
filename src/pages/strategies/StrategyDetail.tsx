@@ -275,9 +275,9 @@ export default function StrategyDetail() {
           >
             <Trophy className="mt-0.5 h-5 w-5 shrink-0 text-amber-500" />
             <div>
-              <p className="text-sm font-semibold text-amber-600 dark:text-amber-400">Beispiel-Statistiken</p>
+              <p className="text-sm font-semibold text-amber-600 dark:text-amber-400">Sample Statistics</p>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Diese Zahlen sind Beispielwerte. Sobald du Trades mit dieser Strategie loggst, werden sie automatisch durch deine echten Daten ersetzt.
+                These are sample values. Once you log trades with this strategy, they will automatically be replaced by your real data.
               </p>
             </div>
           </motion.div>

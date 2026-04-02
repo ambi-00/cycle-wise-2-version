@@ -173,9 +173,9 @@ export default function Strategies() {
               {isMock(strategy) && (liveStats[strategy.name]?.tradesCount ?? 0) === 0 && (
                 <div className="mt-3 flex items-center gap-1.5">
                   <Badge variant="outline" className="text-xs border-amber-500/40 text-amber-600 dark:text-amber-400 bg-amber-500/10">
-                    📊 Beispiel-Statistiken
+                    📊 Sample Statistics
                   </Badge>
-                  <span className="text-xs text-muted-foreground">werden durch deine echten Daten ersetzt</span>
+                  <span className="text-xs text-muted-foreground">will be replaced by your real data</span>
                 </div>
               )}
 

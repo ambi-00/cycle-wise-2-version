@@ -74,37 +74,37 @@ export function StreakDisplay() {
         </div>
       </motion.div>
 
-      {/* Win Streak */}
-      {winLossStreak.currentType === 'win' && (
-        <motion.div
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ delay: 0.2 }}
-          className="flex items-center gap-2 bg-card rounded-lg px-3 py-2 shadow-soft border border-border"
-        >
-          <TrendingUp className="h-5 w-5 text-green-500" />
-          <div>
-            <p className="text-xs text-muted-foreground">Win Streak</p>
-            <p className="text-sm font-bold text-foreground tabular-nums">{winLossStreak.winStreak} wins</p>
-          </div>
-        </motion.div>
-      )}
+      {/* Win Streak - always visible */}
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ delay: 0.2 }}
+        className="flex items-center gap-2 bg-card rounded-lg px-3 py-2 shadow-soft border border-border"
+      >
+        <TrendingUp className={`h-5 w-5 ${winLossStreak.currentType === 'win' ? 'text-green-500' : 'text-muted-foreground'}`} />
+        <div>
+          <p className="text-xs text-muted-foreground">Win Streak</p>
+          <p className={`text-sm font-bold tabular-nums ${winLossStreak.currentType === 'win' ? 'text-green-500' : 'text-foreground'}`}>
+            {winLossStreak.currentType === 'win' ? winLossStreak.winStreak : 0} wins
+          </p>
+        </div>
+      </motion.div>
 
-      {/* Loss Streak */}
-      {winLossStreak.currentType === 'loss' && (
-        <motion.div
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ delay: 0.2 }}
-          className="flex items-center gap-2 bg-card rounded-lg px-3 py-2 shadow-soft border border-border"
-        >
-          <TrendingDown className="h-5 w-5 text-red-500" />
-          <div>
-            <p className="text-xs text-muted-foreground">Loss Streak</p>
-            <p className="text-sm font-bold text-foreground tabular-nums">{winLossStreak.lossStreak} losses</p>
-          </div>
-        </motion.div>
-      )}
+      {/* Loss Streak - always visible */}
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ delay: 0.3 }}
+        className="flex items-center gap-2 bg-card rounded-lg px-3 py-2 shadow-soft border border-border"
+      >
+        <TrendingDown className={`h-5 w-5 ${winLossStreak.currentType === 'loss' ? 'text-red-500' : 'text-muted-foreground'}`} />
+        <div>
+          <p className="text-xs text-muted-foreground">Loss Streak</p>
+          <p className={`text-sm font-bold tabular-nums ${winLossStreak.currentType === 'loss' ? 'text-red-500' : 'text-foreground'}`}>
+            {winLossStreak.currentType === 'loss' ? winLossStreak.lossStreak : 0} losses
+          </p>
+        </div>
+      </motion.div>
     </div>
   );
 }
