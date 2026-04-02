@@ -72,7 +72,7 @@ export default function Login() {
                       onChange={(e) => setRememberMe(e.target.checked)}
                       className="w-4 h-4 rounded accent-primary cursor-pointer"
                     />
-                    Eingeloggt bleiben
+                    Remember me
                   </label>
                   <Link to="/reset-password" className="text-sm text-primary underline">
                     Forgot password?
