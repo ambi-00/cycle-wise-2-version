@@ -877,16 +877,16 @@ export default function TradeJournal() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border bg-muted/30">
-                  <th className="px-4 py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">Date</th>
-                  <th className="px-4 py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">Instrument</th>
-                  <th className="px-4 py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">Direction</th>
-                  <th className="px-4 py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground hidden lg:table-cell">Timeframes</th>
-                  <th className="px-4 py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">Result</th>
-                  <th className="px-4 py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">R</th>
-                  <th className="px-4 py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground hidden lg:table-cell">Strategy</th>
-                  <th className="px-4 py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground hidden lg:table-cell">Phase</th>
-                  <th className="px-4 py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground hidden xl:table-cell">Rating</th>
-                  <th className="px-4 py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground"></th>
+                  <th className="px-4 py-4 text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground">Date</th>
+                  <th className="px-4 py-4 text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground">Instrument</th>
+                  <th className="px-4 py-4 text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground">Direction</th>
+                  <th className="px-4 py-4 text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground hidden lg:table-cell">Timeframes</th>
+                  <th className="px-4 py-4 text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground">Result</th>
+                  <th className="px-4 py-4 text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground">R</th>
+                  <th className="px-4 py-4 text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground hidden lg:table-cell">Strategy</th>
+                  <th className="px-4 py-4 text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground hidden lg:table-cell">Phase</th>
+                  <th className="px-4 py-4 text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground hidden xl:table-cell">Rating</th>
+                  <th className="px-4 py-4 text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground"></th>
                 </tr>
               </thead>
               <tbody>
@@ -899,14 +899,14 @@ export default function TradeJournal() {
                     className="border-b border-border/50 hover:bg-muted/20 transition-colors cursor-pointer"
                     onClick={() => navigate(`/trade/new?id=${trade.id}&date=${trade.date}`)}
                   >
-                    <td className="px-4 py-4">
+                    <td className="px-4 py-4 text-center">
                       <div>
                         <p className="text-sm font-medium text-foreground">{trade.date}</p>
                         <p className="text-xs text-muted-foreground">{trade.time}</p>
                       </div>
                     </td>
-                    <td className="px-4 py-4">
-                      <div className="flex items-center gap-2">
+                    <td className="px-4 py-4 text-center">
+                      <div className="flex items-center justify-center gap-2">
                         <span className="text-sm font-semibold text-foreground">{trade.instrument}</span>
                         {trade.isMTTrade && (
                           <Badge variant="outline" className="text-xs gap-1 flex items-center">
@@ -916,7 +916,7 @@ export default function TradeJournal() {
                         )}
                       </div>
                     </td>
-                    <td className="px-4 py-4">
+                    <td className="px-4 py-4 text-center">
                       <div className={`inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium ${
                         trade.direction === "long" ? "bg-accent/30 text-accent-foreground" : "bg-destructive/10 text-destructive"
                       }`}>
@@ -924,16 +924,16 @@ export default function TradeJournal() {
                         {trade.direction}
                       </div>
                     </td>
-                    <td className="px-4 py-4 hidden lg:table-cell">
+                    <td className="px-4 py-4 hidden lg:table-cell text-center">
                       {trade.isMTTrade ? (
-                        <div className="flex flex-col gap-1">
+                        <div className="flex flex-col items-center gap-1">
                           <span className="text-xs text-muted-foreground">Entry</span>
                           <span className="text-sm font-medium">${trade.entryPrice?.toFixed(5)}</span>
                           <span className="text-xs text-muted-foreground">Exit</span>
                           <span className="text-sm font-medium">${trade.exitPrice?.toFixed(5)}</span>
                         </div>
                       ) : (
-                        <div className="flex flex-col gap-1">
+                        <div className="flex flex-col items-center gap-1">
                           <span className="text-xs text-muted-foreground">Small</span>
                           <span className="text-sm font-medium">{trade.tfSmall || trade.tf || '—'}</span>
                           <span className="text-xs text-muted-foreground">Context</span>
@@ -941,8 +941,8 @@ export default function TradeJournal() {
                         </div>
                       )}
                     </td>
-                    <td className="px-4 py-4">{getResultBadge(trade.result, trade.pnl)}</td>
-                    <td className={`px-4 py-4 text-sm font-bold ${
+                    <td className="px-4 py-4 text-center">{getResultBadge(trade.result, trade.pnl)}</td>
+                    <td className={`px-4 py-4 text-sm font-bold text-center ${
                       (trade.rMultiple ?? 0) > 0 ? "text-accent-foreground" : (trade.rMultiple ?? 0) < 0 ? "text-destructive" : "text-muted-foreground"
                     }`}>
                       {trade.isMTTrade && trade.mtData?.rrr ? (
@@ -953,13 +953,13 @@ export default function TradeJournal() {
                         <span className="text-muted-foreground font-normal">—</span>
                       )}
                     </td>
-                    <td className="px-4 py-4 text-sm text-foreground hidden lg:table-cell">{trade.strategy}</td>
-                    <td className="px-4 py-4 hidden lg:table-cell">
+                    <td className="px-4 py-4 text-sm text-foreground hidden lg:table-cell text-center">{trade.strategy}</td>
+                    <td className="px-4 py-4 hidden lg:table-cell text-center">
                       <span className="text-xs text-muted-foreground">{trade.cyclePhase || '—'}</span>
                     </td>
-                    <td className="px-4 py-4 hidden xl:table-cell">
+                    <td className="px-4 py-4 hidden xl:table-cell text-center">
                       {trade.rating ? (
-                        <div className="flex items-center gap-0.5">
+                        <div className="flex items-center justify-center gap-0.5">
                           {[1,2,3,4,5].map(star => (
                             <span key={star} className={`text-base ${star <= trade.rating ? 'text-yellow-400' : 'text-muted/30'}`}>★</span>
                           ))}
