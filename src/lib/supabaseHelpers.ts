@@ -1583,6 +1583,16 @@ export async function awardXP(userId: string, amount: number, reason: string, de
 
     if (updateError) throw updateError;
 
+    // Update local cache
+    try {
+      const cacheKey = `cw_xp_stats_${userId}`;
+      const cached = localStorage.getItem(cacheKey);
+      const stats = cached ? JSON.parse(cached) : {};
+      stats.total_xp = Math.max(0, newTotalXP);
+      stats.monthly_xp = Math.max(0, newMonthlyXP);
+      localStorage.setItem(cacheKey, JSON.stringify(stats));
+    } catch {}
+
     return { success: true, newTotalXP, newMonthlyXP, reasons: details?.reasons };
   } catch (error) {
     console.error('Failed to award XP:', error);
@@ -1649,6 +1659,16 @@ export async function updateLoginStreak(userId: string) {
       .eq('id', userId);
 
     if (updateError) throw updateError;
+
+    // Update local cache so XPBar always shows current streak
+    try {
+      const cacheKey = `cw_xp_stats_${userId}`;
+      const cached = localStorage.getItem(cacheKey);
+      const stats = cached ? JSON.parse(cached) : {};
+      stats.login_streak = newStreak;
+      stats.last_login = today;
+      localStorage.setItem(cacheKey, JSON.stringify(stats));
+    } catch {}
 
     // Award XP
     if (xpAwarded > 0) {
@@ -1719,9 +1739,10 @@ export async function checkRevengeTradingPenalty(userId: string, tradeDate: stri
 }
 
 /** 
- * Get user's gamification stats
+ * Get user's gamification stats (with localStorage cache fallback)
  */
 export async function getGamificationStats(userId: string): Promise<GamificationProfile | null> {
+  const cacheKey = `cw_xp_stats_${userId}`;
   try {
     const { data, error } = await supabase
       .from('profiles')
@@ -1730,9 +1751,16 @@ export async function getGamificationStats(userId: string): Promise<Gamification
       .single();
 
     if (error) throw error;
+    // Cache successful result
+    try { localStorage.setItem(cacheKey, JSON.stringify(data)); } catch {}
     return data as any;
   } catch (error) {
-    console.error('Failed to get gamification stats:', error);
+    console.error('Failed to get gamification stats, using cache:', error);
+    // Fallback: return cached data so XP bar never shows 0 after a successful session
+    try {
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) return JSON.parse(cached);
+    } catch {}
     return null;
   }
 }

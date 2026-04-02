@@ -118,6 +118,18 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
   const [rrr, setRrr] = useState<number | ''>('');
   const [riskPct, setRiskPct] = useState<number | ''>('');
   const [closedPnl, setClosedPnl] = useState<number | ''>('');
+
+  // Auto-negate PnL & RRR when result switches to loss; auto-positive when win
+  useEffect(() => {
+    if (result === 'loss') {
+      if (closedPnl !== '' && Number(closedPnl) > 0) setClosedPnl(-Math.abs(Number(closedPnl)));
+      if (closedRrr !== '' && Number(closedRrr) > 0) setClosedRrr(-Math.abs(Number(closedRrr)));
+    } else if (result === 'win') {
+      if (closedPnl !== '' && Number(closedPnl) < 0) setClosedPnl(Math.abs(Number(closedPnl)));
+      if (closedRrr !== '' && Number(closedRrr) < 0) setClosedRrr(Math.abs(Number(closedRrr)));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [result]);
   const [closedRrr, setClosedRrr] = useState<number | ''>('');
   const [maxRReached, setMaxRReached] = useState<number | ''>(''); // Maximum R achieved before reversal
   const [idealSlSize, setIdealSlSize] = useState<number | ''>(''); // Ideal SL size that would have worked
@@ -1418,11 +1430,32 @@ export default function NewTrade({ dateProp }: { dateProp?: string } = {}) {
                         <div className="grid grid-cols-2 gap-3 mt-3">
                           <div>
                             <label className="text-xs text-muted-foreground mb-1.5 block">PnL (closed)</label>
-                            <Input type="number" value={closedPnl as any} onChange={(e) => setClosedPnl(e.target.value === '' ? '' : Number(e.target.value))} placeholder="Enter PnL" />
+                            <Input
+                              type="number"
+                              value={closedPnl as any}
+                              onChange={(e) => {
+                                const val = e.target.value === '' ? '' : Number(e.target.value);
+                                if (val !== '' && result === 'loss') setClosedPnl(-Math.abs(Number(val)));
+                                else if (val !== '' && result === 'win') setClosedPnl(Math.abs(Number(val)));
+                                else setClosedPnl(val);
+                              }}
+                              placeholder={result === 'loss' ? 'z.B. -50' : result === 'win' ? 'z.B. 100' : 'Enter PnL'}
+                            />
                           </div>
                           <div>
                             <label className="text-xs text-muted-foreground mb-1.5 block">RR (closed)</label>
-                            <Input type="number" value={closedRrr as any} onChange={(e) => setClosedRrr(e.target.value === '' ? '' : Number(e.target.value))} placeholder="Enter RR" />
+                            <Input
+                              type="number"
+                              step="0.1"
+                              value={closedRrr as any}
+                              onChange={(e) => {
+                                const val = e.target.value === '' ? '' : Number(e.target.value);
+                                if (val !== '' && result === 'loss') setClosedRrr(-Math.abs(Number(val)));
+                                else if (val !== '' && result === 'win') setClosedRrr(Math.abs(Number(val)));
+                                else setClosedRrr(val);
+                              }}
+                              placeholder={result === 'loss' ? 'z.B. -1.5' : result === 'win' ? 'z.B. 2' : 'Enter RR'}
+                            />
                           </div>
                         </div>
 
